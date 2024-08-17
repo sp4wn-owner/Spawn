@@ -1,1 +1,2 @@
 # microcontrollers
+v0_robot works with the esp32. Simply flash the esp32 using the arduino IDE at 115200 baud rate then you should be able to connect it to your web browser on sp4wn.com either before or after going live. 
