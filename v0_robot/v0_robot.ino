@@ -13,15 +13,7 @@
 #define IN3 2 //IN3
 #define IN4 4 //IN4
 
-
-Servo myServoPan;  // create servo object to control a servo
-Servo myServoTilt;  // create servo object to control a servo
-
-int servoPanPin = 12;  // GPIO pin connected to the servo
-int servoTiltPin = 13;  // GPIO pin connected to the servo
 int dataBLE;
-int panPosition;  // change this value to set the servo to a specific position
-int tiltPosition;  // change this value to set the servo to a specific position
 
 BLECharacteristic *pCharacteristic;
 bool deviceConnected = false;
@@ -48,18 +40,8 @@ class MyServerCallbacks: public BLEServerCallbacks {
 class MyCallbacks: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     value = pCharacteristic->getValue().c_str();
-    if (value.length() > 0) {
-      //servos
+    if (value.length() > 0) {      
       dataBLE = value.toInt();
-      if (dataBLE < 1999) {
-        if (dataBLE > 999) {
-          tiltPosition = dataBLE - 1000;
-          myServoTilt.write(tiltPosition);
-          } else {
-          panPosition = dataBLE;
-          myServoPan.write(panPosition);
-          }  
-      } else {
         //wheels
         //forward
         if (dataBLE == 2000) {
@@ -102,11 +84,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
 };
 
 void setup() {
-  myServoPan.attach(servoPanPin);  // attaches the servo on GPIO pin 2 to the servo object
-  myServoTilt.attach(servoTiltPin);  // attaches the servo on GPIO pin 4 to the servo object
   Serial.begin(115200);
-  panPosition = 90;
-  tiltPosition = 90;
 
   // Initialize BLE
   BLEDevice::init("ESP32_BLE_Server");
@@ -139,8 +117,6 @@ void setup() {
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
-  myServoPan.write(panPosition);
-  myServoTilt.write(tiltPosition);
 }
 
 void loop() {
