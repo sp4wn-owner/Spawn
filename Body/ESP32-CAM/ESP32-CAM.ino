@@ -12,8 +12,6 @@
 #define IN3 2 //IN3
 #define IN4 4 //IN4
 
-int dataBLE;
-
 BLECharacteristic *pCharacteristic;
 bool deviceConnected = false;
 String value;
@@ -39,39 +37,37 @@ class MyServerCallbacks: public BLEServerCallbacks {
 class MyCallbacks: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     value = pCharacteristic->getValue().c_str();
-    if (value.length() > 0) {      
-      dataBLE = value.toInt();
-      //wheels
+    if (value.length() > 0) {    
       //forward
-      if (dataBLE == 2000) {
+      if (value == "forward") {
         digitalWrite(IN1, HIGH);
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, HIGH);
         digitalWrite(IN4, LOW);
       } 
       //left
-      if (dataBLE == 2001) {
+      if (value == "left") {
         digitalWrite(IN1, LOW);
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, HIGH);
         digitalWrite(IN4, LOW);
       }
       //right
-      if (dataBLE == 2002) {
+      if (value == "right") {
         digitalWrite(IN1, HIGH);
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, LOW);
         digitalWrite(IN4, LOW);
       }
       //reverse
-      if (dataBLE == 2003) {
+      if (value == "reverse") {
         digitalWrite(IN1, LOW);
         digitalWrite(IN2, HIGH);
         digitalWrite(IN3, LOW);
         digitalWrite(IN4, HIGH);
       }
       //motors off
-      if (dataBLE == 2004) {
+      if (value == "park") {
         digitalWrite(IN1, LOW);
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, LOW);
