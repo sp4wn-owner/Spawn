@@ -2,6 +2,7 @@
 //Select ESP32 Dev Module in board manager
 //CP210x USB driver is required to flash this board https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
 //To update driver go to device manager then find the usb driver then update by pointing to the folder you extracted
+//Flash at 115200 Baud and 40MHz (if 80MHz doesn't work properly)
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
@@ -14,10 +15,8 @@
 // Define motor control pins
 #define IN1 12 //IN1
 #define IN2 14 //IN2
-#define IN3 37 //IN3
+#define IN3 27 //IN3
 #define IN4 26 //IN4
-
-//int dataBLE;
 
 BLECharacteristic *pCharacteristic;
 bool deviceConnected = false;
