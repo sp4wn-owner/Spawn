@@ -2,7 +2,7 @@
 //Select ESP32 Dev Module in board manager
 //CP210x USB driver is required to flash this board https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
 //To update driver go to device manager then find the usb driver then update by pointing to the folder you extracted
-//Flash at 115200 Baud and 40MHz (if 80MHz doesn't work properly)
+//Flash at 115200 Baud
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
@@ -52,6 +52,9 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, HIGH);
         digitalWrite(IN4, LOW);
+        String response = "Moving forward";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
       } 
       //left
       if (value == "left") {
@@ -59,6 +62,9 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, HIGH);
         digitalWrite(IN4, LOW);
+        String response = "turning left";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
       }
       //right
       if (value == "right") {
@@ -66,6 +72,9 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, LOW);
         digitalWrite(IN4, LOW);
+        String response = "Turning right";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
       }
       //reverse
       if (value == "reverse") {
@@ -73,6 +82,9 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         digitalWrite(IN2, HIGH);
         digitalWrite(IN3, LOW);
         digitalWrite(IN4, HIGH);
+        String response = "Reversing";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
       }
       //motors off
       if (value == "park") {
@@ -80,6 +92,9 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, LOW);
         digitalWrite(IN4, LOW);
+        String response = "In park";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
       }
       //A button
       if (value == "a") {
