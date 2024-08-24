@@ -44,9 +44,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     value = pCharacteristic->getValue().c_str();
     if (value.length() > 0) {      
-      //dataBLE = value.toInt();
-      //wheels
-      //forward
+      //left joystick up
       if (value == "forward") {
         digitalWrite(IN1, HIGH);
         digitalWrite(IN2, LOW);
@@ -56,7 +54,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         pCharacteristic->setValue(response);
         pCharacteristic->notify();
       } 
-      //left
+      //left joystick left
       if (value == "left") {
         digitalWrite(IN1, LOW);
         digitalWrite(IN2, LOW);
@@ -66,7 +64,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         pCharacteristic->setValue(response);
         pCharacteristic->notify();
       }
-      //right
+      //left joystick right
       if (value == "right") {
         digitalWrite(IN1, HIGH);
         digitalWrite(IN2, LOW);
@@ -76,7 +74,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         pCharacteristic->setValue(response);
         pCharacteristic->notify();
       }
-      //reverse
+      //left joystick down
       if (value == "reverse") {
         digitalWrite(IN1, LOW);
         digitalWrite(IN2, HIGH);
@@ -86,7 +84,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         pCharacteristic->setValue(response);
         pCharacteristic->notify();
       }
-      //motors off
+      //left joystick center
       if (value == "park") {
         digitalWrite(IN1, LOW);
         digitalWrite(IN2, LOW);
@@ -96,90 +94,132 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         pCharacteristic->setValue(response);
         pCharacteristic->notify();
       }
+      //right joystick up
+      if (value == "rju") {
+        String response = "right stick up";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
+      }
+      //right joystick left
+      if (value == "rjl") {
+        String response = "right stick left";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
+      }
+      //right joystick right
+      if (value == "rjr") {
+        String response = "right stick right";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
+      }
+      //right joystick down
+      if (value == "rjd") {
+        String response = "right stick down";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
+      }
+      //right joystick center
+      if (value == "rjc") {
+        String response = "right stick center";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
+      }
       //A button
-      if (value == "a") {
+      if (value == "0") {
         String response = "Button pressed: A";
         pCharacteristic->setValue(response);
         pCharacteristic->notify();
       }  
       //B button
-      if (value == "b") {
+      if (value == "1") {
         String response = "Button pressed: B";
         pCharacteristic->setValue(response);
         pCharacteristic->notify();        
       } 
       //X button
-      if (value == "x") {
+      if (value == "2") {
         String response = "Button pressed: X";
         pCharacteristic->setValue(response);
         pCharacteristic->notify();         
       } 
       //Y button
-      if (value == "y") {
+      if (value == "3") {
         String response = "Button pressed: Y";
         pCharacteristic->setValue(response);
         pCharacteristic->notify();         
       } 
-      //R1 button
-      if (value == "r1") {
-        String response = "Button pressed: R1";
+      //L1 button
+      if (value == "4") {
+        String response = "Button pressed: L1";
         pCharacteristic->setValue(response);
         pCharacteristic->notify();         
       } 
-      //R2 button
-      if (value == "r2") {        
-        String response = "Button pressed: R2";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
-      } 
-      //L1 button
-      if (value == "l1") {
-        String response = "Button pressed: L1";
+      //R1 button
+      if (value == "5") {        
+        String response = "Button pressed: R1";
         pCharacteristic->setValue(response);
         pCharacteristic->notify();        
       } 
       //L2 button
-      if (value == "l2") {
+      if (value == "6") {
         String response = "Button pressed: L2";
         pCharacteristic->setValue(response);
         pCharacteristic->notify();        
       } 
-      //D-pad Left
-      if (value == "dpleft") {
-        String response = "Button pressed: D-PAD LEFT";
+      //R2 button
+      if (value == "7") {
+        String response = "Button pressed: R2";
         pCharacteristic->setValue(response);
         pCharacteristic->notify();        
       } 
-      //D-pad right
-      if (value == "dpright") {
-        String response = "Button pressed: D-PAD RIGHT";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
-      } 
-      //D-pad up
-      if (value == "dpup") {
-        String response = "Button pressed: D-PAD UP";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
-      } 
-      //D-pad down
-      if (value == "dpdown") {
-        String response = "Button pressed: D-PAD DOWN";
+      //Select
+      if (value == "8") {
+        String response = "Button pressed: SELECT";
         pCharacteristic->setValue(response);
         pCharacteristic->notify();        
       } 
       //Start
-      if (value == "start") {
+      if (value == "9") {
         String response = "Button pressed: START";
         pCharacteristic->setValue(response);
         pCharacteristic->notify();        
-      }
-      //Select
-      if (value == "select") {
-        String response = "Button pressed: SELECT";
+      } 
+      //Left Joystick Pressed
+      if (value == "10") {
+        String response = "Button pressed: Left Stick";
         pCharacteristic->setValue(response);
         pCharacteristic->notify();        
-      }           
+      } 
+      //Right Joystick Pressed
+      if (value == "11") {
+        String response = "Button pressed: Right Stick";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();        
+      } 
+      //D-pad up
+      if (value == "12") {
+        String response = "Button pressed: D-pad UP";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();        
+      }
+      //D-pad down
+      if (value == "13") {
+        String response = "Button pressed: D-pad DOWN";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();        
+      } 
+      //D-pad left
+      if (value == "14") {
+        String response = "Button pressed: D-pad LEFT";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();        
+      }
+      //D-pad right
+      if (value == "15") {
+        String response = "Button pressed: D-pad RIGHT";
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();        
+      }          
     }
   }
 };
