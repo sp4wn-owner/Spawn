@@ -7,16 +7,28 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 #include <BLE2902.h>
+#include <ESP32Servo.h>
 
 // Define the UUIDs for the service and characteristic
 #define SERVICE_UUID        "12345678-1234-1234-1234-123456789012"
 #define CHARACTERISTIC_UUID "abcdef12-1234-1234-1234-abcdef123456"
+#define deviceName "v0_Robot"
 
 // Define motor control pins
 #define IN1 12 //IN1
 #define IN2 14 //IN2
 #define IN3 27 //IN3
 #define IN4 26 //IN4
+
+// Set up servos
+const int MIN_VALUE = 0;
+const int MAX_VALUE = 180;
+Servo myServoPan;
+Servo myServoTilt;
+int servoPanPin = 18;
+int servoTiltPin = 19; 
+int panPosition;  // change this value to set the servo to a specific position
+int tiltPosition;  // change this value to set the servo to a specific position
 
 BLECharacteristic *pCharacteristic;
 bool deviceConnected = false;
@@ -44,15 +56,15 @@ class MyCallbacks: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     value = pCharacteristic->getValue().c_str();
     if (value.length() > 0) {      
+      String response;
+      response = "unknown command";
       //left joystick up
       if (value == "forward") {
         digitalWrite(IN1, HIGH);
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, HIGH);
         digitalWrite(IN4, LOW);
-        String response = "Moving forward";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+        response = "Moving forward";
       } 
       //left joystick left
       if (value == "left") {
@@ -60,9 +72,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, HIGH);
         digitalWrite(IN4, LOW);
-        String response = "turning left";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+        response = "turning left";
       }
       //left joystick right
       if (value == "right") {
@@ -70,9 +80,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, LOW);
         digitalWrite(IN4, LOW);
-        String response = "Turning right";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+        response = "Turning right";        
       }
       //left joystick down
       if (value == "reverse") {
@@ -80,9 +88,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         digitalWrite(IN2, HIGH);
         digitalWrite(IN3, LOW);
         digitalWrite(IN4, HIGH);
-        String response = "Reversing";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+        response = "Reversing";
       }
       //left joystick center
       if (value == "park") {
@@ -90,145 +96,141 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         digitalWrite(IN2, LOW);
         digitalWrite(IN3, LOW);
         digitalWrite(IN4, LOW);
-        String response = "In park";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+        response = "In park";
       }
       //right joystick up
       if (value == "rju") {
-        String response = "right stick up";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+        tiltPosition += 5; //changes servo position by this number
+        if (tiltPosition > MAX_VALUE) {
+          tiltPosition = 180;
+        }
+        if (tiltPosition < MIN_VALUE) {
+          tiltPosition = 0;
+        }
+        myServoTilt.write(tiltPosition);
+        response = "tilt servo position: " + tiltPosition;
       }
       //right joystick left
       if (value == "rjl") {
-        String response = "right stick left";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+        panPosition -= 5; //changes servo position by this number
+        if (panPosition > MAX_VALUE) {
+          panPosition = 180;
+        }
+        if (panPosition < MIN_VALUE) {
+          panPosition = 0;
+        }
+        myServoPan.write(panPosition);
+        response = "pan servo position: " + panPosition;
       }
       //right joystick right
       if (value == "rjr") {
-        String response = "right stick right";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+        panPosition += 5; //changes servo position by this number
+        if (panPosition > MAX_VALUE) {
+          panPosition = 180;
+        }
+        if (panPosition < MIN_VALUE) {
+          panPosition = 0;
+        }
+        myServoPan.write(panPosition);
+        response = "pan servo position: " + panPosition;
       }
       //right joystick down
       if (value == "rjd") {
-        String response = "right stick down";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+        tiltPosition -= 5; //changes servo position by this number
+        if (tiltPosition > MAX_VALUE) {
+          tiltPosition = 180;
+        }
+        if (tiltPosition < MIN_VALUE) {
+          tiltPosition = 0;
+        }
+        myServoTilt.write(tiltPosition);
+        response = "tilt servo position: " + tiltPosition;
       }
       //right joystick center
       if (value == "rjc") {
-        String response = "right stick center";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+        response = "right stick center";
       }
       //A button
       if (value == "0") {
-        String response = "Button pressed: A";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+        response = "Button pressed: A";
       }  
       //B button
       if (value == "1") {
-        String response = "Button pressed: B";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
+        response = "Button pressed: B";       
       } 
       //X button
       if (value == "2") {
-        String response = "Button pressed: X";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();         
+        response = "Button pressed: X";        
       } 
       //Y button
       if (value == "3") {
-        String response = "Button pressed: Y";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();         
+        response = "Button pressed: Y";        
       } 
       //L1 button
       if (value == "4") {
-        String response = "Button pressed: L1";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();         
+        response = "Button pressed: L1";        
       } 
       //R1 button
       if (value == "5") {        
-        String response = "Button pressed: R1";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
-      } 
-      //L2 button
+        response = "Button pressed: R1";
+        }      //L2 button
       if (value == "6") {
-        String response = "Button pressed: L2";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
+        response = "Button pressed: L2";      
       } 
       //R2 button
       if (value == "7") {
-        String response = "Button pressed: R2";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
+        response = "Button pressed: R2";       
       } 
       //Select
       if (value == "8") {
-        String response = "Button pressed: SELECT";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
+        response = "Button pressed: SELECT";       
       } 
       //Start
       if (value == "9") {
-        String response = "Button pressed: START";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
+        response = "Button pressed: START";     
       } 
       //Left Joystick Pressed
       if (value == "10") {
-        String response = "Button pressed: Left Stick";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
+        response = "Button pressed: Left Stick";       
       } 
       //Right Joystick Pressed
       if (value == "11") {
-        String response = "Button pressed: Right Stick";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
+        response = "Button pressed: Right Stick";     
       } 
       //D-pad up
       if (value == "12") {
-        String response = "Button pressed: D-pad UP";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
+        response = "Button pressed: D-pad UP";      
       }
       //D-pad down
       if (value == "13") {
-        String response = "Button pressed: D-pad DOWN";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
+        response = "Button pressed: D-pad DOWN";  
       } 
       //D-pad left
       if (value == "14") {
-        String response = "Button pressed: D-pad LEFT";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
+        response = "Button pressed: D-pad LEFT";     
       }
       //D-pad right
       if (value == "15") {
-        String response = "Button pressed: D-pad RIGHT";
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();        
+        response = "Button pressed: D-pad RIGHT";      
       }          
+      pCharacteristic->setValue(response);
+      pCharacteristic->notify();
     }
   }
 };
 
 void setup() {
+
+  myServoPan.attach(servoPanPin);
+  myServoTilt.attach(servoTiltPin);
   Serial.begin(115200);
+  panPosition = 90; //centers servo when initialized
+  tiltPosition = 90;
+  myServoPan.write(panPosition);
+  myServoTilt.write(tiltPosition);
 
   // Initialize BLE
-  BLEDevice::init("v0_Robot");
+  BLEDevice::init(deviceName);
 
   // Create a BLE server
   BLEServer *pServer = BLEDevice::createServer();

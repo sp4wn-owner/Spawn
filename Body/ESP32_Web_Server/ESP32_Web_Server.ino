@@ -1,3 +1,8 @@
+//ESP32 WROOM 32D
+//Select ESP32 Dev Module in board manager
+//CP210x USB driver is required to flash this board https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
+//To update driver go to device manager then find the usb driver then update by pointing to the folder you extracted
+//Flash at 115200 Baud
 #include <WiFi.h>
 #include <WebSocketsServer.h>
 #include <ESP32Servo.h>
