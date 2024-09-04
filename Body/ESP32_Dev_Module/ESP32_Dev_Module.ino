@@ -173,7 +173,8 @@ class MyCallbacks: public BLECharacteristicCallbacks {
       //R1 button
       if (value == "5") {        
         response = "Button pressed: R1";
-        }      //L2 button
+        }      
+      //L2 button
       if (value == "6") {
         response = "Button pressed: L2";      
       } 
