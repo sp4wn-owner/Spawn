@@ -14,28 +14,27 @@ const char* password = "";
 // Set the hostname
 const char* hostname = "ESP32WebServer";
 
-// WebSocket server on port 81
 WebSocketsServer webSocket = WebSocketsServer(81);
 
 // Define motor control pins
 #define IN12 12
-#define IN14 14
+#define IN14 13
 #define IN27 27
 #define IN26 26
 
-// Define GPIO pins
-#define IN2 2
-#define IN4 4
+// Define servo pins
+#define IN25 25
+#define IN33 33
 
 // Set up servos
 const int MIN_VALUE = 0;
 const int MAX_VALUE = 180;
 Servo myServoPan;
 Servo myServoTilt;
-int servoPanPin = 13;
-int servoTiltPin = 15; 
-int panPosition;  // change this value to set the servo to a specific position
-int tiltPosition;  // change this value to set the servo to a specific position
+int servoPanPin = IN25;
+int servoTiltPin = IN33; 
+int panPosition;
+int tiltPosition;
 
 void setup() {
   myServoPan.attach(servoPanPin);
