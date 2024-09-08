@@ -16,7 +16,7 @@
 
 // Define motor control pins
 #define IN1 12 //IN1
-#define IN2 14 //IN2
+#define IN2 13 //IN2
 #define IN3 27 //IN3
 #define IN4 26 //IN4
 
@@ -25,16 +25,15 @@ const int MIN_VALUE = 0;
 const int MAX_VALUE = 180;
 Servo myServoPan;
 Servo myServoTilt;
-int servoPanPin = 18;
-int servoTiltPin = 19; 
-int panPosition;  // change this value to set the servo to a specific position
-int tiltPosition;  // change this value to set the servo to a specific position
+int servoPanPin = 25;
+int servoTiltPin = 33; 
+int panPosition;
+int tiltPosition;
 
 BLECharacteristic *pCharacteristic;
 bool deviceConnected = false;
 String value;
 
-// Callback class to handle client connections
 class MyServerCallbacks: public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) {
     deviceConnected = true;
@@ -44,14 +43,13 @@ class MyServerCallbacks: public BLEServerCallbacks {
     deviceConnected = false;
     resetBLE(pServer);
   }
-  // Function to reset BLE (stop and start advertising)
+
   void resetBLE(BLEServer* pServer) {
-    delay(500); // Short delay to ensure disconnection is complete
-    pServer->startAdvertising(); // Restart advertising
+    delay(500); 
+    pServer->startAdvertising(); 
   }
 };
 
-// Callback class to handle characteristic writes
 class MyCallbacks: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     value = pCharacteristic->getValue().c_str();
@@ -251,10 +249,8 @@ void setup() {
   pCharacteristic->addDescriptor(new BLE2902());  // Needed for NOTIFY
   pCharacteristic->setCallbacks(new MyCallbacks());
 
-  // Start the service
   pService->start();
 
-  // Start advertising
   pServer->getAdvertising()->start();
 
   // Set motor control pins as outputs
