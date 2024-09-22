@@ -8,8 +8,8 @@
 #include <ESP32Servo.h>
 
 // Replace these with your network credentials
-const char* ssid = "";
-const char* password = "";
+const char* ssid = "28 Lake Shore";
+const char* password = "Fishandchips!";
 
 // Set the hostname
 const char* hostname = "ESP32WebServer";
@@ -67,6 +67,7 @@ void setup() {
   // Start WebSocket server
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
+  Serial.println(WiFi.localIP());
 }
 
 void loop() {
