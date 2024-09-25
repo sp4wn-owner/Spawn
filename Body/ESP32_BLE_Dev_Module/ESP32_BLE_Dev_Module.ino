@@ -14,6 +14,10 @@
 #define CHARACTERISTIC_UUID "abcdef12-1234-1234-1234-abcdef123456"
 #define deviceName "v0_Robot"
 
+// GPIO pins to control
+const int gpioPins[] = {2,4,5,12,13,14,15,18,19,21,22,23,26,27};
+const int numPins = sizeof(gpioPins) / sizeof(gpioPins[0]);
+
 // Define motor control pins
 #define IN1 12 //IN1
 #define IN2 13 //IN2
@@ -40,10 +44,9 @@ class MyServerCallbacks: public BLEServerCallbacks {
   }
 
   void onDisconnect(BLEServer* pServer) {
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, LOW);
+    for (int i = 0; i < numPins; i++) {
+        digitalWrite(gpioPins[i], LOW);  // Turn off each GPIO pin
+    }
     deviceConnected = false;
     resetBLE(pServer);
   }
@@ -215,7 +218,13 @@ class MyCallbacks: public BLECharacteristicCallbacks {
       //D-pad right
       if (value == "15") {
         response = "Button pressed: D-pad RIGHT";      
-      }          
+      }       
+      if (value == "off") {
+        for (int i = 0; i < numPins; i++) {
+          digitalWrite(gpioPins[i], LOW);  // Turn off each GPIO pin
+        }
+        response = "Pins off";
+      }
       pCharacteristic->setValue(response);
       pCharacteristic->notify();
     }
@@ -257,11 +266,10 @@ void setup() {
 
   pServer->getAdvertising()->start();
 
-  // Set motor control pins as outputs
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  pinMode(IN3, OUTPUT);
-  pinMode(IN4, OUTPUT);
+  // Initialize GPIO pins
+    for (int i = 0; i < numPins; i++) {
+        pinMode(gpioPins[i], OUTPUT);
+    }
 }
 
 void loop() {

@@ -8,13 +8,17 @@
 #include <ESP32Servo.h>
 
 // Replace these with your network credentials
-const char* ssid = "28 Lake Shore";
-const char* password = "Fishandchips!";
+const char* ssid = "";
+const char* password = "";
 
 // Set the hostname
 const char* hostname = "ESP32WebServer";
 
 WebSocketsServer webSocket = WebSocketsServer(81);
+
+// GPIO pins to control
+const int gpioPins[] = {2,4,5,12,14,15,18,19,21,22,23};
+const int numPins = sizeof(gpioPins) / sizeof(gpioPins[0]);
 
 // Define motor control pins
 #define IN12 12
@@ -35,6 +39,7 @@ int servoPanPin = IN25;
 int servoTiltPin = IN33; 
 int panPosition;
 int tiltPosition;
+bool isConnected = false;
 
 void setup() {
   myServoPan.attach(servoPanPin);
@@ -48,15 +53,10 @@ void setup() {
   // Set the hostname
   WiFi.setHostname(hostname);
 
-  // Set motor control pins as outputs
-  pinMode(IN12, OUTPUT);
-  pinMode(IN14, OUTPUT);
-  pinMode(IN27, OUTPUT);
-  pinMode(IN26, OUTPUT);
-  
-  // Initialize GPIO pins
-  //pinMode(IN2, OUTPUT);
-  //pinMode(IN4, OUTPUT);
+// Initialize GPIO pins
+    for (int i = 0; i < numPins; i++) {
+        pinMode(gpioPins[i], OUTPUT);
+    }
   
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -72,11 +72,28 @@ void setup() {
 
 void loop() {
   webSocket.loop();
+
+  // Check connection status and reset GPIO pins if disconnected
+  if (!isConnected && WiFi.status() == WL_CONNECTED) {
+    setAllGPIOOff();
+  }
+
+}
+
+void setAllGPIOOff() {
+  for (int i = 0; i < numPins; i++) {
+        digitalWrite(gpioPins[i], LOW);  // Turn off each GPIO pin
+    }
 }
 
 // WebSocket event handler
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length) {
-  if (type == WStype_TEXT) {
+  if (type == WStype_DISCONNECTED) {
+    isConnected = false; // Update connection status
+    setAllGPIOOff(); // Set all GPIO pins to OFF on disconnect
+  } else if (type == WStype_CONNECTED) {
+    isConnected = true; // Update connection status
+  } else if (type == WStype_TEXT) {
     String value = String((char*)payload);
     String response;
     // Default response if no valid command is received
