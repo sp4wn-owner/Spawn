@@ -232,7 +232,6 @@ class MyCallbacks: public BLECharacteristicCallbacks {
 };
 
 void setup() {
-
   myServoPan.attach(servoPanPin);
   myServoTilt.attach(servoTiltPin);
   Serial.begin(115200);
