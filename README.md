@@ -1,8 +1,11 @@
-# microcontrollers
+# [Spawn](https://sp4wn.com)
 
-https://sp4wn.com
+A platform where you can share access to your telepresence robot without worrying about networking/communication protocols. Just build your bot, flash our code onto your microcontroller, and you're ready to go! 
 
-A platform where you can share access to your telepresence robot without worrying about networking/communication protocols. Just build your bot, flash our code onto your microcontroller, and you're ready to go!  **Please note that webRTC may not be functioning properly on iOS. -Currently supporting the following robot types: phone + esp32 || Raspberry Pi
+**Please note that WebRTC may not be functioning properly on iOS.**
+
+- Currently supporting the following robot types: phone + ESP32 || Raspberry Pi
+
 
 ## Features:
 
