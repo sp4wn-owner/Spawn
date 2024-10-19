@@ -9,7 +9,7 @@ A platform where you can share access to your telepresence robot without worryin
 
 ## Features:
 
--- Quick and easy setup (no coding required)  
+- Quick and easy setup (no coding required)  
     &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running. You will need to handle setting it up such as installing required packages.
 
 - Charge for access to your robot (tokens/min)  
