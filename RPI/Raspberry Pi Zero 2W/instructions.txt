@@ -1,0 +1,26 @@
+sudo apt update
+sudo apt full-upgrade
+sudo raspi-config
+--update 
+sudo rpi-update
+sudo reboot
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+//sudo apt-get install nsolid -y
+//sudo apt-get install ffmpeg
+sudo apt-get install -y nodejs
+sudo npm install -g node-pre-gyp --force
+mkdir bot
+cd bot
+npm intsall node ws sharp wrtc
+//npm install node
+//npm install ws
+//npm install sharp
+//npm install wrtc
+
+sudo nano /boot/firmware/config.txt
+camera_auto_detect=0
+start_x=1
+gpu_mem=16
+
+sudo chmod a+rw /pi/video0
+
