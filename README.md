@@ -10,7 +10,7 @@ A platform where you can share access to your telepresence robot without worryin
 ## Features:
 
 - Quick and easy setup (no coding required)  
-    &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running. You will need to handle setting it up such as installing required packages.
+    &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running.
 
 - Charge for access to your robot (tokens/min)  
     &nbsp;&nbsp;&nbsp;&nbsp;- i.e. Peer A sets the number of tokens per minute for their robot. Peer B is charged the rate/min every minute until they disconnect. Turn telepresence robots into income-generating assets.
