@@ -1,22 +1,26 @@
 const WebSocket = require('ws');
 const sharp = require('sharp');
 const fs = require('fs');
-const { spawn, exec } = require('child_process');
+const { spawn } = require('child_process');
 const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
-
 const url = 'https://sp4wn-signaling-server.onrender.com';
-const location = "Outer Space";
-const description = "Raspberry Pi robot - Build your own! Update the code and handle remote user inputs however you want."
+
+//ENTER USERNAME AND PASSWORD HERE
+////////////////////////////////////
 const username = "piBot";
+const password = "";
+///////////////////////////////////
+
+let location;
+let description;
+let tokenrate;
 const botdevicetype = "pi";
 let peerConnection;
 let signalingSocket;
 let inputChannel;
 let videoChannel;
 let intervalIds = [];
-const tokenrate = 0;
 let connectedUser;
-libcameraVid = null;
 
 let configuration = {
     iceServers: [
@@ -60,7 +64,6 @@ async function startWebRTC() {
     } catch (error) {
         console.log("unable to create data channels");
     }
-    
 
     if(!signalingSocket) {
         await initializeSignalingAndStartCapture();
@@ -106,7 +109,6 @@ async function startWebRTC() {
     };      
 }
 
-
 async function connectToSignalingServer() {
     return new Promise((resolve, reject) => {
         signalingSocket = new WebSocket(url);
@@ -115,6 +117,7 @@ async function connectToSignalingServer() {
             send({
                 type: "robot",
                 username: username,
+                password: password
             });
             resolve();
         };
@@ -122,6 +125,11 @@ async function connectToSignalingServer() {
         signalingSocket.onmessage = async (event) => {
             const message = JSON.parse(event.data);
             switch (message.type) {
+
+                case "authenticated":
+                    handleLogin(message.success, message.tokenrate, message.location, message.description);
+                    break;
+
                 case 'offer':
                     if (peerConnection) {
                         await peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer));
@@ -162,10 +170,6 @@ async function connectToSignalingServer() {
                 case "watch":
                     watchStream(message.name);
                     break;
-
-                case "leave":
-                    //cleanup();
-                    break;
             }
         };
 
@@ -204,6 +208,22 @@ function send(message) {
     signalingSocket.send(JSON.stringify(message));
  };
  
+ function handleLogin(success, tr, loc, des) {
+    if (success)  {
+        if(tr) {
+            tokenrate = tr;
+        }
+        if(loc) {
+            location = loc;
+        }
+        if(tr) {
+            description = des;
+        }
+    } else {
+        console.log("failed to login");
+    }
+ }
+
  async function createDataChannel(type) {
     let dataChannel;
 
@@ -248,7 +268,8 @@ function handleInputChannel(inputChannel) {
     inputChannel.onmessage = (event) => {
         console.log("Received input data:", event.data);
         inputChannel.send(event.data);
-        // Process input commands here
+        // UPDATE THIS FUNCTION TO HANDLE INPUT COMMANDS
+        ///////////////////////////////////////////////////////////////
     };
 
     inputChannel.onclose = () => {
@@ -259,7 +280,6 @@ function handleInputChannel(inputChannel) {
         console.error("Input channel error:", error);
     };
 }
-
 
 let v4l2Process = null;
 const delayBeforeOpening = 3000; 
@@ -536,7 +556,6 @@ function cleanup() {
     console.log("Cleaning up...");
     endScript();
 }
-
 
 (async () => {
     await startWebRTC();
