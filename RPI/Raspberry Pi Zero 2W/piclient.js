@@ -4,6 +4,9 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
 const url = 'https://sp4wn-signaling-server.onrender.com';
+const rpio = require('rpio');
+
+const pins = [2, 4, 7, 8, 10, 12, 14, 16, 18, 20];
 
 //ENTER USERNAME AND PASSWORD HERE
 ////////////////////////////////////
@@ -119,6 +122,7 @@ async function connectToSignalingServer() {
                 username: username,
                 password: password
             });
+            
             resolve();
         };
 
@@ -219,9 +223,15 @@ function send(message) {
         if(tr) {
             description = des;
         }
-    } else {
-        console.log("failed to login");
+        pins.forEach(pin => {
+            rpio.open(pin, rpio.OUTPUT, rpio.LOW);
+            console.log(`GPIO pin ${pin} set as OUTPUT`);
+        });
     }
+    if (!success) {
+        console.log("user already logged in");
+    }
+
  }
 
  async function createDataChannel(type) {
