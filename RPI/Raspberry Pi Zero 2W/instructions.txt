@@ -11,16 +11,34 @@ sudo apt-get install -y nodejs
 sudo npm install -g node-pre-gyp --force
 mkdir bot
 cd bot
-npm intsall node ws sharp wrtc
+npm intsall node ws sharp wrtc @sp4wn/pipins
 //npm install node
 //npm install ws
 //npm install sharp
 //npm install wrtc
+//npm install pigpio
+//@sp4wn/pipins
 
+sudo chmod a+rw /pi/video0
 sudo nano /boot/firmware/config.txt
 camera_auto_detect=0
 start_x=1
 gpu_mem=16
+dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
 
-sudo chmod a+rw /pi/video0
+
+sudo apt install libraspberrypi-bin
+
+# Enable PWM
+sudo nano /etc/udev/rules.d/99-com.rules
+
+SUBSYSTEM=="pwm*", PROGRAM="/bin/sh -c '\
+    chown -R root:gpio /sys/class/pwm && chmod -R 770 /sys/class/pwm;\
+    chown -R root:gpio /sys/devices/platform/soc/*.pwm/pwm/pwmchip* && chmod -R 770 /sys/devices/platform/soc/*.pwm/pwm/pwmchip*\
+'"
+
+
+
+
+
 

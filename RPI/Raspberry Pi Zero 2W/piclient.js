@@ -4,15 +4,23 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
 const url = 'https://sp4wn-signaling-server.onrender.com';
-const rpio = require('rpio');
+const pipins = require('@sp4wn/pipins');
 
-const pins = [2, 4, 7, 8, 10, 12, 14, 16, 18, 20];
+const gpioPins = [27, 22, 23, 24];
+const pwmChannels = [0, 1]; // Corresponds to the PWM channel (0 for pwm0)
 
 //ENTER USERNAME AND PASSWORD HERE
 ////////////////////////////////////
 const username = "piBot";
 const password = "";
 ///////////////////////////////////
+
+let servoPanPin = 1;
+let servoTiltPin = 0; 
+let tiltPosition = 90; // Initial servo position
+let panPosition = 90; // Initial servo position
+const MIN_VALUE = 0;
+const MAX_VALUE = 180;
 
 let location;
 let description;
@@ -223,8 +231,16 @@ function send(message) {
         if(tr) {
             description = des;
         }
-        pins.forEach(pin => {
-            rpio.open(pin, rpio.OUTPUT, rpio.LOW);
+        gpioPins.forEach(pin => {
+            pipins.exportPin(pin);
+            pipins.setPinDirection(pin, 'out');
+            pipins.writePinValue(pin, 0); // Initial value LOW
+            console.log(`GPIO pin ${pin} set as OUTPUT`);
+        });
+        pwmChannels.forEach(pin => {
+            pipins.exportPwm(pin);
+            pipins.setPwmDirection(pin, 'out');
+            pipins.writePwmValue(pin, 0); // Initial value LOW
             console.log(`GPIO pin ${pin} set as OUTPUT`);
         });
     }
@@ -277,9 +293,125 @@ function handleInputChannel(inputChannel) {
 
     inputChannel.onmessage = (event) => {
         console.log("Received input data:", event.data);
-        inputChannel.send(event.data);
-        // UPDATE THIS FUNCTION TO HANDLE INPUT COMMANDS
-        ///////////////////////////////////////////////////////////////
+        const value = event.data;
+        let response = "unknown command";
+    
+        switch(value) {
+            case "forward":
+                pipins.writePinValue(12, 1);
+                pipins.writePinValue(16, 0);
+                pipins.writePinValue(18, 1);
+                pipins.writePinValue(22, 0);
+                response = "Moving forward";
+                break;
+            case "left":
+                pipins.writePinValue(12, 0);
+                pipins.writePinValue(16, 0);
+                pipins.writePinValue(18, 1);
+                pipins.writePinValue(22, 0);
+                response = "Turning left";
+                break;
+            case "right":
+                pipins.writePinValue(12, 1);
+                pipins.writePinValue(16, 0);
+                pipins.writePinValue(18, 0);
+                pipins.writePinValue(22, 0);
+                response = "Turning right";
+                break;
+            case "reverse":
+                pipins.writePinValue(12, 0);
+                pipins.writePinValue(16, 1);
+                pipins.writePinValue(18, 0);
+                pipins.writePinValue(22, 1);
+                response = "Reversing";
+                break;
+            case "park":
+                pipins.writePinValue(12, 0);
+                pipins.writePinValue(16, 0);
+                pipins.writePinValue(18, 0);
+                pipins.writePinValue(22, 0);
+                response = "In park";
+                break;
+            case "rju":
+                tiltPosition = Math.min(MAX_VALUE, tiltPosition + 5);
+                pipins.setServoPosition(0, tiltPosition);
+                response = `Tilt servo position: ${tiltPosition}`;
+                break;
+            case "rjl":
+                panPosition = Math.max(MIN_VALUE, panPosition - 5);
+                pipins.setServoPosition(1, panPosition);
+                response = `Pan servo position: ${panPosition}`;
+                break;
+            case "rjr":
+                panPosition = Math.min(MAX_VALUE, panPosition + 5);
+                pipins.setServoPosition(1, panPosition);
+                response = `Pan servo position: ${panPosition}`;
+                break;
+            case "rjd":
+                tiltPosition = Math.max(MIN_VALUE, tiltPosition - 5);
+                pipins.setServoPosition(0, tiltPosition);
+                response = `Tilt servo position: ${tiltPosition}`;
+                break;
+            case "rjc":
+                response = "Right stick center";
+                break;
+            case "0":
+                response = "Button pressed: A";
+                break;
+            case "1":
+                response = "Button pressed: B";
+                break;
+            case "2":
+                response = "Button pressed: X";
+                break;
+            case "3":
+                response = "Button pressed: Y";
+                break;
+            case "4":
+                response = "Button pressed: L1";
+                break;
+            case "5":
+                response = "Button pressed: R1";
+                break;
+            case "6":
+                response = "Button pressed: L2";
+                break;
+            case "7":
+                response = "Button pressed: R2";
+                break;
+            case "8":
+                response = "Button pressed: SELECT";
+                break;
+            case "9":
+                response = "Button pressed: START";
+                break;
+            case "10":
+                response = "Button pressed: Left Stick";
+                break;
+            case "11":
+                response = "Button pressed: Right Stick";
+                break;
+            case "12":
+                response = "Button pressed: D-pad UP";
+                break;
+            case "13":
+                response = "Button pressed: D-pad DOWN";
+                break;
+            case "14":
+                response = "Button pressed: D-pad LEFT";
+                break;
+            case "15":
+                response = "Button pressed: D-pad RIGHT";
+                break;
+            case "off":
+                gpioPins.forEach(pin => pipins.writePinValue(pin, 0));
+                response = "Pins off";
+                break;
+            default:
+                response = "unknown command";
+                break;
+        }
+        inputChannel.send(response);
     };
 
     inputChannel.onclose = () => {
@@ -559,7 +691,18 @@ async function captureImage(customWidth = 640, customHeight = 480) {
 
 function endScript() {
     console.log("Peer connection closed. Exiting script...");
-        process.exit(0);
+    gpioPins.forEach(pin => {
+        pipins.writePinValue(pin, 0); // Turn the pin off before exiting
+        console.log(`GPIO pin ${pin} turned OFF before exit`);
+        pipins.unexportPin(pin); // Unexport the GPIO pin
+        console.log(`GPIO pin ${pin} unexported on exit`);
+    });
+    pwmChannels.forEach(pin => {
+        pipins.unexportPwm(pin); // Unexport the GPIO pin
+        console.log(`PWM channel unexported on exit`);
+    });
+    
+    process.exit(0);
 }
 
 function cleanup() {
