@@ -9,6 +9,7 @@ curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 //sudo apt-get install ffmpeg
 sudo apt-get install -y nodejs
 sudo npm install -g node-pre-gyp --force
+sudo apt install ffmpeg
 mkdir bot
 cd bot
 npm intsall node ws sharp wrtc @sp4wn/pipins

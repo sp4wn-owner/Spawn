@@ -10,13 +10,15 @@ const pipins = require('@sp4wn/pipins');
 const gpioPins = [27, 22, 23, 24];
 const pwmChannels = [0, 1]; // Corresponds to the PWM channel (0 for pwm0)
 const period = 20000000; // 20 ms period (50 Hz)
-const dutyCycle = 1000000; // 1 ms duty cycle (5%)
+const dutyCycle = 0; // 1 ms duty cycle (5%)
 //ENTER USERNAME AND PASSWORD HERE
 ////////////////////////////////////
 const username = "pi_robot"; //username should be all lowercase
 const password = "";
+const twitchKey = "";
+let isStreamToTwitch = false;
 ///////////////////////////////////
-
+let isStreamToSpawn = false;
 let servoPanPin = 1;
 let servoTiltPin = 0; 
 let tiltPosition = 90;
@@ -73,8 +75,11 @@ async function startWebRTC() {
                 break;
             case 'connected':
                 console.log('ICE Connection has been established.');
+                isStreamToSpawn = true;
                 stopImageCapture();
-                sendVideoToVideoChannel();
+                if(!isStreamToTwitch) {
+                    startStream();
+                }
                 break;
             case 'completed':
                 console.log('ICE Connection is completed.');
@@ -93,15 +98,19 @@ async function connectToSignalingServer() {
     return new Promise((resolve, reject) => {
         signalingSocket = new WebSocket(url);
 
-        signalingSocket.onopen = () => {
+        const connectionTimeout = setTimeout(() => {
+            console.log('Connection timed out');
+            cleanup();
+            reject(new Error('Connection timed out after 10 seconds'));
+          }, 10000);
 
+        signalingSocket.onopen = () => {
+            clearTimeout(connectionTimeout);
             send({
                 type: "robot",
                 username: username,
                 password: password
             });
-            
-            
         };
 
         signalingSocket.onmessage = async (event) => {
@@ -159,13 +168,15 @@ async function connectToSignalingServer() {
         signalingSocket.onclose = () => {
             console.log('Disconnected from signaling server');
             reject(new Error('WebSocket closed unexpectedly')); 
-            setTimeout(() => connectToSignalingServer().then(resolve).catch(reject), 2000); 
+            cleanup();
+            //setTimeout(() => connectToSignalingServer().then(resolve).catch(reject), 2000); 
         };
 
         signalingSocket.onerror = (error) => {
             console.error('WebSocket error:', error);
             reject(error); 
-            setTimeout(() => connectToSignalingServer().then(resolve).catch(reject), 2000);
+            cleanup();
+            //setTimeout(() => connectToSignalingServer().then(resolve).catch(reject), 2000);
         };
     });
 }
@@ -217,11 +228,13 @@ function send(message) {
             pipins.enablePwm(pin);
             console.log(`PWM pin ${pin} enabled`);
         });
+        if(isStreamToTwitch) {
+            startStream();
+        }
     }
     if (!success) {
         console.log("user already logged in or there was an error");
     }
-
  }
 
  async function createDataChannel(type) {
@@ -404,7 +417,7 @@ let lastSentTime = 0;
 let sendQueue = []; 
 let isSending = false; 
 
-function sendVideoToVideoChannel() {
+function startStream() {
 
     function startCameraStream() {
 
@@ -414,44 +427,73 @@ function sendVideoToVideoChannel() {
                 '--stream-to=-',
                 '--device=/dev/video0',
                 '--set-fmt-video=width=640,height=480,pixelformat=H264'
-            ]);
+            ]);        
+
+            if (isStreamToTwitch) {
+                console.log("Starting Twitch stream");
+                ffmpeg = spawn('ffmpeg', [
+                    '-fflags', 'nobuffer',
+                    '-re', // Read input at native frame rate
+                    '-f', 'h264', '-i', 'pipe:0',
+                    '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', // Twitch-compatible audio source
+                    '-vcodec', 'h264_omx', // Hardware-accelerated codec
+                    '-b:v', '2500k', // Lower bitrate for Pi and Twitch compatibility
+                    '-maxrate', '3000k', // Maintain a stable bitrate
+                    '-bufsize', '6000k', // Buffer size for stability
+                    '-pix_fmt', 'yuv420p',
+                    '-g', '60', // GOP size for 30 FPS
+                    '-r', '30', // Frame rate
+                    '-f', 'flv',
+                    `rtmp://live.twitch.tv/app/${twitchKey}`
+                  ]);
+            }            
 
             v4l2Process.stdout.on('data', (chunk) => {
-                const currentTime = Date.now();
-                if (currentTime - lastSentTime >= sendInterval) {
-                  lastSentTime = currentTime;
-                  if (isDataChannelOpen('video')) {
+                if(isStreamToTwitch) {
                     try {
-                      const data = new Uint8Array(chunk);
-                      const nalUnits = extractNALUnits(data);
-                      nalUnits.forEach(nalUnit => {
-                        const nalType = nalUnit[0] & 0x1F;
-                        if (nalType === 7) {
-                          sps = nalUnit;
-                        } else if (nalType === 8) {
-                          pps = nalUnit;
-                        } else if (nalType === 5) {
-                          if (sps) {
-                            sendQueue.push(prependStartCode(sps));
-                          }
-                          if (pps) {
-                            sendQueue.push(prependStartCode(pps));
-                          }
-                          sendQueue.push(prependStartCode(nalUnit));
-                        } else {
-                          sendQueue.push(prependStartCode(nalUnit));
+                        ffmpeg.stdin.write(chunk);
+                      } catch (error) {
+                        console.error('Error writing to FFmpeg:', error);
+                    };
+                }                
+                if(isStreamToSpawn) {
+                    const currentTime = Date.now();
+                    if (currentTime - lastSentTime >= sendInterval) {
+                        lastSentTime = currentTime;
+                        if (isDataChannelOpen('video')) {
+                            try {
+                            const data = new Uint8Array(chunk);
+                            const nalUnits = extractNALUnits(data);
+                            nalUnits.forEach(nalUnit => {
+                                const nalType = nalUnit[0] & 0x1F;
+                                if (nalType === 7) {
+                                sps = nalUnit;
+                                } else if (nalType === 8) {
+                                pps = nalUnit;
+                                } else if (nalType === 5) {
+                                if (sps) {
+                                    sendQueue.push(prependStartCode(sps));
+                                }
+                                if (pps) {
+                                    sendQueue.push(prependStartCode(pps));
+                                }
+                                sendQueue.push(prependStartCode(nalUnit));
+                                } else {
+                                sendQueue.push(prependStartCode(nalUnit));
+                                }
+                            });
+                            if (!isSending) {
+                                isSending = true;
+                                sendNextNALUnit();
+                            }
+                            } catch (error) {
+                            console.error('Failed to send video data:', error);
+                            }
                         }
-                      });
-                      if (!isSending) {
-                        isSending = true;
-                        sendNextNALUnit();
-                      }
-                    } catch (error) {
-                      console.error('Failed to send video data:', error);
                     }
-                  }
                 }
-              });
+                
+            });
 
             v4l2Process.on('exit', (code) => {
                 //console.log(`v4l2-ctl process exited with code ${code}`);
@@ -469,7 +511,7 @@ function sendVideoToVideoChannel() {
 }
 
 function sendNextNALUnit() {
-    if (sendQueue.length > 0 && isDataChannelOpen('video')) {
+    if (sendQueue.length > 0) {
         const nalWithStartCode = sendQueue.shift(); 
 
         if(videoChannel && videoChannel.readyState === "open") {
@@ -546,7 +588,7 @@ function startImageCapture(interval) {
       captureImage(); 
     }, interval);
    intervalIds.push(intervalId);
-   console.log(`Started interval #${intervalIds.length - 1}`);
+   console.log(`Started image capture interval #${intervalIds.length - 1}`);
 }
 
 function stopImageCapture() {
