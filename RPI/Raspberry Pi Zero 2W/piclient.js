@@ -1,3 +1,4 @@
+//////TODO: WORKER THREADS FOR VIDEO/INPUT CHANNELS
 const WebSocket = require('ws');
 const sharp = require('sharp');
 const fs = require('fs');
@@ -33,41 +34,12 @@ let inputChannel;
 let videoChannel;
 let intervalIds = [];
 let connectedUser;
-
-let configuration = {
-    iceServers: [
-        {
-          urls: "stun:stun2.1.google.com:19302",
-        },
-        {
-          urls: "stun:stun.relay.metered.ca:80",
-        },
-        {
-          urls: "turn:standard.relay.metered.ca:80",
-          username: "27669f6c0372d71cb8aa8e67",
-          credential: "1YAoI8sksn13VTSc",
-        },
-        {
-          urls: "turn:standard.relay.metered.ca:80?transport=tcp",
-          username: "27669f6c0372d71cb8aa8e67",
-          credential: "1YAoI8sksn13VTSc",
-        },
-        {
-          urls: "turn:standard.relay.metered.ca:443",
-          username: "27669f6c0372d71cb8aa8e67",
-          credential: "1YAoI8sksn13VTSc",
-        },
-        {
-          urls: "turns:standard.relay.metered.ca:443?transport=tcp",
-          username: "27669f6c0372d71cb8aa8e67",
-          credential: "1YAoI8sksn13VTSc",
-        },
-    ],
-    'sdpSemantics': 'unified-plan',
-};
+let configuration;
 
 async function startWebRTC() {
     console.log('Starting WebRTC client...');
+    await initializeSignalingAndStartCapture();
+
     peerConnection = new RTCPeerConnection(configuration);
     try {
         await createDataChannel('video');
@@ -77,11 +49,7 @@ async function startWebRTC() {
         console.log("unable to create data channels");
     }
 
-    if(!signalingSocket) {
-        await initializeSignalingAndStartCapture();
-    } else {
-        console.log("already connected to server");
-    }
+    
     
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
@@ -126,13 +94,14 @@ async function connectToSignalingServer() {
         signalingSocket = new WebSocket(url);
 
         signalingSocket.onopen = () => {
+
             send({
                 type: "robot",
                 username: username,
                 password: password
             });
             
-            resolve();
+            
         };
 
         signalingSocket.onmessage = async (event) => {
@@ -140,7 +109,8 @@ async function connectToSignalingServer() {
             switch (message.type) {
 
                 case "authenticated":
-                    handleLogin(message.success, message.tokenrate, message.location, message.description);
+                    handleLogin(message.success, message.tokenrate, message.location, message.description, message.configuration);
+                    resolve();
                     break;
 
                 case 'offer':
@@ -221,16 +191,17 @@ function send(message) {
     signalingSocket.send(JSON.stringify(message));
  };
  
- function handleLogin(success, tr, loc, des) {
+ function handleLogin(success, tr, loc, des, config) {
     if (success)  {
         console.log("Successfully logged in");
+        configuration = config;
         if(tr) {
             tokenrate = tr;
         }
         if(loc) {
             location = loc;
         }
-        if(tr) {
+        if(des) {
             description = des;
         }
         gpioPins.forEach(pin => {
