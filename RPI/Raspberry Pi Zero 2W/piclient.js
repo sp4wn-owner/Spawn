@@ -8,17 +8,18 @@ const pipins = require('@sp4wn/pipins');
 
 const gpioPins = [27, 22, 23, 24];
 const pwmChannels = [0, 1]; // Corresponds to the PWM channel (0 for pwm0)
-
+const period = 20000000; // 20 ms period (50 Hz)
+const dutyCycle = 1000000; // 1 ms duty cycle (5%)
 //ENTER USERNAME AND PASSWORD HERE
 ////////////////////////////////////
-const username = "piBot";
+const username = "pi_robot"; //username should be all lowercase
 const password = "";
 ///////////////////////////////////
 
 let servoPanPin = 1;
 let servoTiltPin = 0; 
-let tiltPosition = 90; // Initial servo position
-let panPosition = 90; // Initial servo position
+let tiltPosition = 90;
+let panPosition = 90;
 const MIN_VALUE = 0;
 const MAX_VALUE = 180;
 
@@ -104,11 +105,11 @@ async function startWebRTC() {
                 break;
             case 'connected':
                 console.log('ICE Connection has been established.');
+                stopImageCapture();
+                sendVideoToVideoChannel();
                 break;
             case 'completed':
                 console.log('ICE Connection is completed.');
-                stopImageCapture();
-                sendVideoToVideoChannel();
                 break;
             case 'failed':
             case 'disconnected':
@@ -222,6 +223,7 @@ function send(message) {
  
  function handleLogin(success, tr, loc, des) {
     if (success)  {
+        console.log("Successfully logged in");
         if(tr) {
             tokenrate = tr;
         }
@@ -234,18 +236,19 @@ function send(message) {
         gpioPins.forEach(pin => {
             pipins.exportPin(pin);
             pipins.setPinDirection(pin, 'out');
-            pipins.writePinValue(pin, 0); // Initial value LOW
+            pipins.writePinValue(pin, 0);
             console.log(`GPIO pin ${pin} set as OUTPUT`);
         });
         pwmChannels.forEach(pin => {
             pipins.exportPwm(pin);
-            pipins.setPwmDirection(pin, 'out');
-            pipins.writePwmValue(pin, 0); // Initial value LOW
-            console.log(`GPIO pin ${pin} set as OUTPUT`);
+            pipins.setPwmPeriod(pin, period);
+            pipins.setPwmDutyCycle(pin, dutyCycle);
+            pipins.enablePwm(pin);
+            console.log(`PWM pin ${pin} enabled`);
         });
     }
     if (!success) {
-        console.log("user already logged in");
+        console.log("user already logged in or there was an error");
     }
 
  }
@@ -295,61 +298,61 @@ function handleInputChannel(inputChannel) {
         console.log("Received input data:", event.data);
         const value = event.data;
         let response = "unknown command";
-    
+        ///////////////////////////////////////// Handle inputs here
         switch(value) {
             case "forward":
-                pipins.writePinValue(12, 1);
-                pipins.writePinValue(16, 0);
-                pipins.writePinValue(18, 1);
+                pipins.writePinValue(27, 1);
                 pipins.writePinValue(22, 0);
+                pipins.writePinValue(23, 1);
+                pipins.writePinValue(24, 0);
                 response = "Moving forward";
                 break;
             case "left":
-                pipins.writePinValue(12, 0);
-                pipins.writePinValue(16, 0);
-                pipins.writePinValue(18, 1);
+                pipins.writePinValue(27, 0);
                 pipins.writePinValue(22, 0);
+                pipins.writePinValue(23, 1);
+                pipins.writePinValue(24, 0);
                 response = "Turning left";
                 break;
             case "right":
-                pipins.writePinValue(12, 1);
-                pipins.writePinValue(16, 0);
-                pipins.writePinValue(18, 0);
+                pipins.writePinValue(27, 1);
                 pipins.writePinValue(22, 0);
+                pipins.writePinValue(23, 0);
+                pipins.writePinValue(24, 0);
                 response = "Turning right";
                 break;
             case "reverse":
-                pipins.writePinValue(12, 0);
-                pipins.writePinValue(16, 1);
-                pipins.writePinValue(18, 0);
+                pipins.writePinValue(27, 0);
                 pipins.writePinValue(22, 1);
+                pipins.writePinValue(23, 0);
+                pipins.writePinValue(24, 1);
                 response = "Reversing";
                 break;
             case "park":
-                pipins.writePinValue(12, 0);
-                pipins.writePinValue(16, 0);
-                pipins.writePinValue(18, 0);
+                pipins.writePinValue(27, 0);
                 pipins.writePinValue(22, 0);
+                pipins.writePinValue(23, 0);
+                pipins.writePinValue(24, 0);
                 response = "In park";
                 break;
             case "rju":
                 tiltPosition = Math.min(MAX_VALUE, tiltPosition + 5);
-                pipins.setServoPosition(0, tiltPosition);
+                pipins.setServoPosition(servoTiltPin, tiltPosition);
                 response = `Tilt servo position: ${tiltPosition}`;
                 break;
             case "rjl":
                 panPosition = Math.max(MIN_VALUE, panPosition - 5);
-                pipins.setServoPosition(1, panPosition);
+                pipins.setServoPosition(servoPanPin, panPosition);
                 response = `Pan servo position: ${panPosition}`;
                 break;
             case "rjr":
                 panPosition = Math.min(MAX_VALUE, panPosition + 5);
-                pipins.setServoPosition(1, panPosition);
+                pipins.setServoPosition(servoPanPin, panPosition);
                 response = `Pan servo position: ${panPosition}`;
                 break;
             case "rjd":
                 tiltPosition = Math.max(MIN_VALUE, tiltPosition - 5);
-                pipins.setServoPosition(0, tiltPosition);
+                pipins.setServoPosition(servoTiltPin, tiltPosition);
                 response = `Tilt servo position: ${tiltPosition}`;
                 break;
             case "rjc":
@@ -424,11 +427,9 @@ function handleInputChannel(inputChannel) {
 }
 
 let v4l2Process = null;
-const delayBeforeOpening = 3000; 
+const delayBeforeOpening = 2000; 
 const sendInterval = 0; 
-const spsPpsInterval = 1000; 
 let lastSentTime = 0; 
-let lastSpsPpsSentTime = 0; 
 let sendQueue = []; 
 let isSending = false; 
 
@@ -447,51 +448,39 @@ function sendVideoToVideoChannel() {
             v4l2Process.stdout.on('data', (chunk) => {
                 const currentTime = Date.now();
                 if (currentTime - lastSentTime >= sendInterval) {
-                    lastSentTime = currentTime;
-
-                    if (isDataChannelOpen('video')) {
-                        
-                        try {
-                            const data = new Uint8Array(chunk);
-                            const nalUnits = extractNALUnits(data);
-
-                            let sps = null;
-                            let pps = null;
-
-                            nalUnits.forEach(nalUnit => {
-                                const nalType = nalUnit[0] & 0x1F; 
-
-                                if (nalType === 7) { 
-                                    sps = nalUnit;
-                                } else if (nalType === 8) { 
-                                    pps = nalUnit;
-                                } else {
-                                    sendQueue.push(prependStartCode(nalUnit));
-                                }
-                            });
-
-                            if (currentTime - lastSpsPpsSentTime >= spsPpsInterval) {
-                                if (sps) {
-                                    sendQueue.unshift(prependStartCode(sps)); 
-                                }
-
-                                if (pps) {
-                                    sendQueue.unshift(prependStartCode(pps)); 
-                                }
-
-                                lastSpsPpsSentTime = currentTime;
-                            }
-
-                            if (!isSending) {
-                                isSending = true;
-                                sendNextNALUnit();
-                            }
-                        } catch (error) {
-                            console.error('Failed to send video data:', error);
+                  lastSentTime = currentTime;
+                  if (isDataChannelOpen('video')) {
+                    try {
+                      const data = new Uint8Array(chunk);
+                      const nalUnits = extractNALUnits(data);
+                      nalUnits.forEach(nalUnit => {
+                        const nalType = nalUnit[0] & 0x1F;
+                        if (nalType === 7) {
+                          sps = nalUnit;
+                        } else if (nalType === 8) {
+                          pps = nalUnit;
+                        } else if (nalType === 5) {
+                          if (sps) {
+                            sendQueue.push(prependStartCode(sps));
+                          }
+                          if (pps) {
+                            sendQueue.push(prependStartCode(pps));
+                          }
+                          sendQueue.push(prependStartCode(nalUnit));
+                        } else {
+                          sendQueue.push(prependStartCode(nalUnit));
                         }
+                      });
+                      if (!isSending) {
+                        isSending = true;
+                        sendNextNALUnit();
+                      }
+                    } catch (error) {
+                      console.error('Failed to send video data:', error);
                     }
+                  }
                 }
-            });
+              });
 
             v4l2Process.on('exit', (code) => {
                 //console.log(`v4l2-ctl process exited with code ${code}`);
@@ -505,7 +494,6 @@ function sendVideoToVideoChannel() {
 
         }, delayBeforeOpening);
     }
-
     startCameraStream(); 
 }
 
@@ -692,13 +680,13 @@ async function captureImage(customWidth = 640, customHeight = 480) {
 function endScript() {
     console.log("Peer connection closed. Exiting script...");
     gpioPins.forEach(pin => {
-        pipins.writePinValue(pin, 0); // Turn the pin off before exiting
+        pipins.writePinValue(pin, 0);
         console.log(`GPIO pin ${pin} turned OFF before exit`);
-        pipins.unexportPin(pin); // Unexport the GPIO pin
+        pipins.unexportPin(pin);
         console.log(`GPIO pin ${pin} unexported on exit`);
     });
     pwmChannels.forEach(pin => {
-        pipins.unexportPwm(pin); // Unexport the GPIO pin
+        pipins.unexportPwm(pin);
         console.log(`PWM channel unexported on exit`);
     });
     
