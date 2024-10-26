@@ -20,6 +20,7 @@ npm intsall node ws sharp wrtc @sp4wn/pipins
 //npm install pigpio
 //@sp4wn/pipins
 
+
 sudo chmod a+rw /pi/video0
 sudo nano /boot/firmware/config.txt
 camera_auto_detect=0
@@ -38,7 +39,35 @@ SUBSYSTEM=="pwm*", PROGRAM="/bin/sh -c '\
     chown -R root:gpio /sys/devices/platform/soc/*.pwm/pwm/pwmchip* && chmod -R 770 /sys/devices/platform/soc/*.pwm/pwm/pwmchip*\
 '"
 
+////////////////////
+--Starting script at boot
+//
+sudo nano /etc/systemd/system/piclient.service
+//
+[Unit]
+Description=Start piclient.js script
+After=network.target
 
+[Service]
+ExecStart=/usr/bin/node /home/dev/bot/piclient.js
+WorkingDirectory=/home/dev/bot
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/dev/bot/piclient.log
+StandardError=append:/home/dev/bot/piclient.log
+
+[Install]
+WantedBy=multi-user.target
+//
+
+sudo systemctl daemon-reload
+//
+sudo systemctl enable piclient.service
+//
+sudo systemctl status piclient.service
+///////////////////
+sudo systemctl stop piclient.service
+journalctl -u piclient.service
 
 
 

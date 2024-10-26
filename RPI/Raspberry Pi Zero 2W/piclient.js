@@ -25,7 +25,7 @@ let tiltPosition = 90;
 let panPosition = 90;
 const MIN_VALUE = 0;
 const MAX_VALUE = 180;
-
+let connectionTimeout;
 let location;
 let description;
 let tokenrate;
@@ -50,8 +50,6 @@ async function startWebRTC() {
     } catch (error) {
         console.log("unable to create data channels");
     }
-
-    
     
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
@@ -75,14 +73,14 @@ async function startWebRTC() {
                 break;
             case 'connected':
                 console.log('ICE Connection has been established.');
-                isStreamToSpawn = true;
-                stopImageCapture();
-                if(!isStreamToTwitch) {
-                    startStream();
-                }
+                
+                
                 break;
             case 'completed':
                 console.log('ICE Connection is completed.');
+                if(!isStreamToTwitch) {
+                    startStream();
+                }
                 break;
             case 'failed':
             case 'disconnected':
@@ -97,12 +95,6 @@ async function startWebRTC() {
 async function connectToSignalingServer() {
     return new Promise((resolve, reject) => {
         signalingSocket = new WebSocket(url);
-
-        const connectionTimeout = setTimeout(() => {
-            console.log('Connection timed out');
-            cleanup();
-            reject(new Error('Connection timed out after 10 seconds'));
-          }, 10000);
 
         signalingSocket.onopen = () => {
             clearTimeout(connectionTimeout);
@@ -184,14 +176,18 @@ async function connectToSignalingServer() {
 async function initializeSignalingAndStartCapture() {
     if (!signalingSocket || signalingSocket.readyState !== WebSocket.OPEN) {
         console.log("Connecting to signaling server...");
+        connectionTimeout = setTimeout(() => {
+            console.log('Connection timed out after 10 seconds');
+            cleanup();
+          }, 5000);
+    
         await connectToSignalingServer(); 
     }
 
     if (signalingSocket.readyState === WebSocket.OPEN) {
         console.log("Connected to signaling server");
-        
         captureImage();
-        startImageCapture(5000);
+        startImageCapture(15000);
         addlive(); 
     } else {
         console.error("Failed to connect to signaling server.");
@@ -411,11 +407,8 @@ function handleInputChannel(inputChannel) {
 }
 
 let v4l2Process = null;
-const delayBeforeOpening = 2000; 
-const sendInterval = 0; 
-let lastSentTime = 0; 
-let sendQueue = []; 
-let isSending = false; 
+let ffmpeg = null;
+const delayBeforeOpening = 0; 
 
 function startStream() {
 
@@ -426,73 +419,30 @@ function startStream() {
                 '--stream-mmap',
                 '--stream-to=-',
                 '--device=/dev/video0',
-                '--set-fmt-video=width=640,height=480,pixelformat=H264'
+                '--set-fmt-video=width=640,height=480,pixelformat=H264',
             ]);        
 
             if (isStreamToTwitch) {
                 console.log("Starting Twitch stream");
                 ffmpeg = spawn('ffmpeg', [
-                    '-fflags', 'nobuffer',
-                    '-re', // Read input at native frame rate
-                    '-f', 'h264', '-i', 'pipe:0',
-                    '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', // Twitch-compatible audio source
-                    '-vcodec', 'h264_omx', // Hardware-accelerated codec
-                    '-b:v', '2500k', // Lower bitrate for Pi and Twitch compatibility
-                    '-maxrate', '3000k', // Maintain a stable bitrate
-                    '-bufsize', '6000k', // Buffer size for stability
-                    '-pix_fmt', 'yuv420p',
-                    '-g', '60', // GOP size for 30 FPS
-                    '-r', '30', // Frame rate
+                    '-re',
+                    '-i', 'pipe:0',
+                    '-c:v', 'copy', // Copy the H.264 stream directly
                     '-f', 'flv',
                     `rtmp://live.twitch.tv/app/${twitchKey}`
                   ]);
             }            
 
             v4l2Process.stdout.on('data', (chunk) => {
-                if(isStreamToTwitch) {
-                    try {
-                        ffmpeg.stdin.write(chunk);
-                      } catch (error) {
-                        console.error('Error writing to FFmpeg:', error);
-                    };
-                }                
-                if(isStreamToSpawn) {
-                    const currentTime = Date.now();
-                    if (currentTime - lastSentTime >= sendInterval) {
-                        lastSentTime = currentTime;
-                        if (isDataChannelOpen('video')) {
-                            try {
-                            const data = new Uint8Array(chunk);
-                            const nalUnits = extractNALUnits(data);
-                            nalUnits.forEach(nalUnit => {
-                                const nalType = nalUnit[0] & 0x1F;
-                                if (nalType === 7) {
-                                sps = nalUnit;
-                                } else if (nalType === 8) {
-                                pps = nalUnit;
-                                } else if (nalType === 5) {
-                                if (sps) {
-                                    sendQueue.push(prependStartCode(sps));
-                                }
-                                if (pps) {
-                                    sendQueue.push(prependStartCode(pps));
-                                }
-                                sendQueue.push(prependStartCode(nalUnit));
-                                } else {
-                                sendQueue.push(prependStartCode(nalUnit));
-                                }
-                            });
-                            if (!isSending) {
-                                isSending = true;
-                                sendNextNALUnit();
-                            }
-                            } catch (error) {
-                            console.error('Failed to send video data:', error);
-                            }
-                        }
-                    }
+                if (isStreamToTwitch && ffmpeg && ffmpeg.stdin.writable) {
+                  ffmpeg.stdin.write(chunk);
                 }
-                
+          
+                if (isStreamToSpawn) {
+                  if (videoChannel && videoChannel.readyState === "open") {
+                    videoChannel.send(chunk);
+                  }
+                }
             });
 
             v4l2Process.on('exit', (code) => {
@@ -508,62 +458,6 @@ function startStream() {
         }, delayBeforeOpening);
     }
     startCameraStream(); 
-}
-
-function sendNextNALUnit() {
-    if (sendQueue.length > 0) {
-        const nalWithStartCode = sendQueue.shift(); 
-
-        if(videoChannel && videoChannel.readyState === "open") {
-            videoChannel.send(nalWithStartCode);
-            //console.log(nalWithStartCode);
-            setTimeout(sendNextNALUnit, sendInterval);
-        }
-        
-    } else {
-        isSending = false; 
-    }
-}
-
-function prependStartCode(nalUnit) {
-    const startCode = new Uint8Array([0x00, 0x00, 0x00, 0x01]); 
-    const result = new Uint8Array(startCode.length + nalUnit.length);
-    result.set(startCode);
-    result.set(nalUnit, startCode.length);
-    return result;
-}
-function extractNALUnits(rawData) {
-    const nalUnits = [];
-    let startIndex = 0;
-
-    while (startIndex < rawData.length) {
-        const startCodeIndex = findStartCode(rawData, startIndex);
-        if (startCodeIndex === -1) break; 
-
-        const startCodeLength = (rawData[startCodeIndex + 2] === 1) ? 3 : 4;
-        startIndex = startCodeIndex + startCodeLength;
-
-        const nextStartCodeIndex = findStartCode(rawData, startIndex);
-        const nalUnitEndIndex = nextStartCodeIndex === -1 ? rawData.length : nextStartCodeIndex;
-
-        const nalUnit = rawData.slice(startIndex, nalUnitEndIndex);
-        nalUnits.push(nalUnit);
-
-        startIndex = nalUnitEndIndex;
-    }
-
-    return nalUnits;
-}
-
-function findStartCode(data, startIndex) {
-    for (let i = startIndex; i < data.length - 3; i++) {
-        if (data[i] === 0 && data[i + 1] === 0 && data[i + 2] === 1) {
-            return i; 
-        } else if (data[i] === 0 && data[i + 1] === 0 && data[i + 2] === 0 && data[i + 3] === 1) {
-            return i;
-        }
-    }
-    return -1; 
 }
 
 function addlive() {
@@ -601,15 +495,15 @@ function stopImageCapture() {
 
 async function watchStream(name) {
     connectedUser = name;
-
+    stopImageCapture();
+    deletelive();
+    isStreamToSpawn = true;
     if (peerConnection) {
         const iceState = peerConnection.iceConnectionState;
         if (iceState === "connected" || iceState === "completed") {
             return;
         } else {
             try {
-                
-
                 await createOffer();
                 console.log("Offer created and sent");
             } catch (error) {
@@ -640,21 +534,6 @@ async function watchStream(name) {
             .catch(err => reject(err));
     });
  }
-
-function isDataChannelOpen(channelName) {
-    let channel;
-
-    if (channelName === "input") {
-        channel = inputChannel;
-    } else if (channelName === "video") {
-        channel = videoChannel;
-    } else {
-        console.error("Unknown channel name:", channelName);
-        return false; 
-    }
-
-    return channel ? channel.readyState === "open" : false;
-}
 
 async function captureImage(customWidth = 640, customHeight = 480) {
     
