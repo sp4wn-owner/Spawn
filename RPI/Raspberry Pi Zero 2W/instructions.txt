@@ -1,73 +1,62 @@
+//To SSH into your Pi you'll need PuTTY and FileZilla or similar programs
+//To set up SSD card you'll need to install the Raspberry Pi Imager
+
 sudo apt update
 sudo apt full-upgrade
-sudo raspi-config
---update 
+sudo raspi-config  //then update 
 sudo rpi-update
 sudo reboot
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-//sudo apt-get install nsolid -y
-//sudo apt-get install ffmpeg
+sudo apt-get install ffmpeg//////run this command if you plan to stream to twitch
 sudo apt-get install -y nodejs
 sudo npm install -g node-pre-gyp --force
-sudo apt install ffmpeg
 mkdir bot
 cd bot
-npm intsall node ws sharp wrtc @sp4wn/pipins
-//npm install node
-//npm install ws
-//npm install sharp
-//npm install wrtc
-//npm install pigpio
-//@sp4wn/pipins
+npm install node ws sharp wrtc @sp4wn/pipins
 
+sudo chmod a+rw /pi/video0 //change pi to your username
 
-sudo chmod a+rw /pi/video0
 sudo nano /boot/firmware/config.txt
-camera_auto_detect=0
+camera_auto_detect=0 //default is 1, but you'll need to change this to 0
+//add the following three lines at the bottom of this file
 start_x=1
-gpu_mem=16
+gpu_mem=128
 dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
-
-
-sudo apt install libraspberrypi-bin
-
-# Enable PWM
-sudo nano /etc/udev/rules.d/99-com.rules
-
-SUBSYSTEM=="pwm*", PROGRAM="/bin/sh -c '\
-    chown -R root:gpio /sys/class/pwm && chmod -R 770 /sys/class/pwm;\
-    chown -R root:gpio /sys/devices/platform/soc/*.pwm/pwm/pwmchip* && chmod -R 770 /sys/devices/platform/soc/*.pwm/pwm/pwmchip*\
-'"
-
-////////////////////
---Starting script at boot
 //
+sudo reboot
+
+sudo node piclient.js //runs your script
+
+//Starting script at boot and restarting after cleanup
+
 sudo nano /etc/systemd/system/piclient.service
-//
+
+//add the following text into this file and save
+////////////////////////
 [Unit]
 Description=Start piclient.js script
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/node /home/dev/bot/piclient.js
-WorkingDirectory=/home/dev/bot
+ExecStart=/usr/bin/node /home/pi/bot/piclient.js
+WorkingDirectory=/home/pi/bot
 Restart=always
 RestartSec=10
-StandardOutput=append:/home/dev/bot/piclient.log
-StandardError=append:/home/dev/bot/piclient.log
+StandardOutput=append:/home/pi/bot/piclient.log
+StandardError=append:/home/pi/bot/piclient.log
 
 [Install]
 WantedBy=multi-user.target
-//
+/////////////////////////
 
 sudo systemctl daemon-reload
-//
+
 sudo systemctl enable piclient.service
-//
-sudo systemctl status piclient.service
+
 ///////////////////
-sudo systemctl stop piclient.service
-journalctl -u piclient.service
+sudo systemctl status piclient.service //gets status
+sudo systemctl stop piclient.service //stops piclient from restarting after exit
+journalctl -u piclient.service //inspect logs from piclient
 
 
 

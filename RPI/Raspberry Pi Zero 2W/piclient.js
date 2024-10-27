@@ -460,7 +460,7 @@ function startStream() {
             v4l2Process.on('exit', (code) => {
                 //console.log(`v4l2-ctl process exited with code ${code}`);
                 //restartCameraStream();
-                cleanup();
+                //cleanup();
             });
 
             v4l2Process.stderr.on('data', (error) => {
