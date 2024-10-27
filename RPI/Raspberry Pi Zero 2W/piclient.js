@@ -13,10 +13,10 @@ const period = 20000000; // 20 ms period (50 Hz)
 const dutyCycle = 0; // 1 ms duty cycle (5%)
 //ENTER USERNAME AND PASSWORD HERE
 ////////////////////////////////////
-const username = "pi_robot"; //username should be all lowercase
+const username = "pi_robot"; //Username should be all lowercase
 const password = "";
-const twitchKey = "";
-let isStreamToTwitch = false;
+const twitchKey = ""; //Copy your key from Twitch stream manager
+let isStreamToTwitch = false; //Change to true if you'd like to stream to Twitch
 ///////////////////////////////////
 let isStreamToSpawn = false;
 let servoPanPin = 1;
@@ -288,16 +288,16 @@ function handleInputChannel(inputChannel) {
                 response = "Moving forward";
                 break;
             case "left":
-                pipins.writePinValue(27, 0);
+                pipins.writePinValue(27, 1);
                 pipins.writePinValue(22, 0);
-                pipins.writePinValue(23, 1);
+                pipins.writePinValue(23, 0);
                 pipins.writePinValue(24, 0);
                 response = "Turning left";
                 break;
             case "right":
-                pipins.writePinValue(27, 1);
+                pipins.writePinValue(27, 0);
                 pipins.writePinValue(22, 0);
-                pipins.writePinValue(23, 0);
+                pipins.writePinValue(23, 1);
                 pipins.writePinValue(24, 0);
                 response = "Turning right";
                 break;
@@ -434,13 +434,25 @@ function startStream() {
             }            
 
             v4l2Process.stdout.on('data', (chunk) => {
+
                 if (isStreamToTwitch && ffmpeg && ffmpeg.stdin.writable) {
-                  ffmpeg.stdin.write(chunk);
+                    if (isStreamToTwitch && ffmpeg && ffmpeg.stdin.writable) {
+                        try {
+                          ffmpeg.stdin.write(chunk);
+                        } catch (error) {
+                          console.error('FFmpeg write error:', error);
+                          ffmpeg.stdin.end();
+                        }
+                    }
                 }
           
                 if (isStreamToSpawn) {
                   if (videoChannel && videoChannel.readyState === "open") {
-                    videoChannel.send(chunk);
+                    try {
+                        videoChannel.send(chunk);
+                      } catch (error) {
+                        console.error('Error sending to Data Channel:', error);
+                      }
                   }
                 }
             });
@@ -448,10 +460,11 @@ function startStream() {
             v4l2Process.on('exit', (code) => {
                 //console.log(`v4l2-ctl process exited with code ${code}`);
                 //restartCameraStream();
+                cleanup();
             });
 
             v4l2Process.stderr.on('data', (error) => {
-                //console.error(`Error from v4l2-ctl: ${error}`);
+                console.error(`Error from v4l2-ctl: ${error}`);
                 //restartCameraStream();
             });
 
@@ -498,6 +511,7 @@ async function watchStream(name) {
     stopImageCapture();
     deletelive();
     isStreamToSpawn = true;
+    isStreamToTwitch = false;
     if (peerConnection) {
         const iceState = peerConnection.iceConnectionState;
         if (iceState === "connected" || iceState === "completed") {
