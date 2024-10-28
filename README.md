@@ -12,7 +12,7 @@ A platform where you can share access to your telepresence robot without worryin
 - Quick and easy setup (no coding required)  
     &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running.
 
-- Near real-time sub-second latency
+- Near real-time sub-second latency  
     &nbsp;&nbsp;&nbsp;&nbsp;- Teleoperate robots with minimal delay. 
 
 - Charge for access to your robot (tokens/min)  
