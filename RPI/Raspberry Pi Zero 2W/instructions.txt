@@ -5,6 +5,7 @@ sudo apt update
 sudo apt full-upgrade
 sudo raspi-config  //then update 
 sudo rpi-update
+
 sudo nano /boot/firmware/config.txt
 camera_auto_detect=0 //default is 1, but you'll need to change this to 0
 //add the following three lines at the bottom of this file
@@ -12,7 +13,9 @@ start_x=1
 gpu_mem=128
 dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
 //
+
 sudo reboot
+
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 sudo apt-get install ffmpeg//////run this command if you plan to stream to twitch
 sudo apt-get install -y nodejs
@@ -23,9 +26,7 @@ npm install node ws sharp wrtc @sp4wn/pipins
 
 sudo chmod a+rw /pi/video0 //change pi to your username
 
-
-
-sudo node piclient.js //runs your script
+sudo node piclient.js //run your script after transferring the file over using FileZilla
 
 //Starting script at boot and restarting after cleanup
 

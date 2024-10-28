@@ -13,15 +13,15 @@ const period = 20000000; // 20 ms period (50 Hz)
 const dutyCycle = 0; // 1 ms duty cycle (5%)
 //ENTER USERNAME AND PASSWORD HERE
 ////////////////////////////////////
-const username = "pi_robot"; //Username should be all lowercase
+const username = "pi_robot_2wd"; //Username should be all lowercase
 const password = "";
 const twitchKey = ""; //Copy your key from Twitch stream manager
 let isStreamToTwitch = false; //Change to true if you'd like to stream to Twitch
 ///////////////////////////////////
 let isStreamToSpawn = false;
-let servoPanPin = 1;
+let servoPanPin = 1; //These channels are configured in config.txt. RPI Zero 2W has two PWM channels (0,1)
 let servoTiltPin = 0; 
-let tiltPosition = 90;
+let tiltPosition = 90; //Set starting positions
 let panPosition = 90;
 const MIN_VALUE = 0;
 const MAX_VALUE = 180;
@@ -161,14 +161,12 @@ async function connectToSignalingServer() {
             console.log('Disconnected from signaling server');
             reject(new Error('WebSocket closed unexpectedly')); 
             cleanup();
-            //setTimeout(() => connectToSignalingServer().then(resolve).catch(reject), 2000); 
         };
 
         signalingSocket.onerror = (error) => {
             console.error('WebSocket error:', error);
             reject(error); 
             cleanup();
-            //setTimeout(() => connectToSignalingServer().then(resolve).catch(reject), 2000);
         };
     });
 }
@@ -459,13 +457,11 @@ function startStream() {
 
             v4l2Process.on('exit', (code) => {
                 //console.log(`v4l2-ctl process exited with code ${code}`);
-                //restartCameraStream();
                 //cleanup();
             });
 
             v4l2Process.stderr.on('data', (error) => {
                 console.error(`Error from v4l2-ctl: ${error}`);
-                //restartCameraStream();
             });
 
         }, delayBeforeOpening);
