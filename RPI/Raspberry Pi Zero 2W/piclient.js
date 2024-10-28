@@ -425,7 +425,7 @@ function startStream() {
                 ffmpeg = spawn('ffmpeg', [
                     '-re',
                     '-i', 'pipe:0',
-                    '-c:v', 'copy', // Copy the H.264 stream directly
+                    '-c:v', 'copy',
                     '-f', 'flv',
                     `rtmp://live.twitch.tv/app/${twitchKey}`
                   ]);
@@ -547,7 +547,7 @@ async function watchStream(name) {
 
 async function captureImage(customWidth = 640, customHeight = 480) {
     
-    const imagePath = 'robot1.jpg'; 
+    const imagePath = 'robot.jpg'; 
 
     if (!fs.existsSync(imagePath)) {
         console.error("Image file not found:", imagePath);
