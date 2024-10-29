@@ -24,7 +24,7 @@ mkdir bot
 cd bot
 npm install node ws sharp wrtc @sp4wn/pipins
 
-sudo chmod a+rw /dev/video0 //change pi to your username
+sudo chmod a+rw /dev/video0
 
 sudo node piclient.js //run your script after transferring the file over using FileZilla
 
