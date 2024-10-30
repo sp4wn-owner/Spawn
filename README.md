@@ -26,12 +26,13 @@ A platform where you can share access to your telepresence robot without worryin
 ### To SSH into your Pi you'll need PuTTY and FileZilla or similar programs
 
 ### To set up SSD card you'll need to install the Raspberry Pi Imager
+```bash
 sudo apt update
 sudo apt full-upgrade
 sudo raspi-config
 
 ### then update
-bash
+
 sudo rpi-update
 
 sudo nano /boot/firmware/config.txt
@@ -40,7 +41,6 @@ sudo nano /boot/firmware/config.txt
 camera_auto_detect=0
 
 ### add the following three lines at the bottom of this file
-bash
 start_x=1
 gpu_mem=128
 dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
@@ -94,6 +94,7 @@ sudo systemctl stop piclient.service
 
 ### Inspect logs from piclient
 journalctl -u piclient.service
+
 
 
 
