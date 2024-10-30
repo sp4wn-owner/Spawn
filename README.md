@@ -1,5 +1,5 @@
 [![Features](https://img.shields.io/badge/-Features-blue?style=for-the-badge)](#features)
-[![Pi Robot](https://img.shields.io/badge/-Pi%20Robot-green?style=for-the-badge)](#Pi-Robot)
+[![Pi Robot](https://img.shields.io/badge/-Pi%20Robot-purple?style=for-the-badge)](#Pi-Robot)
 
 # [Spawn](https://sp4wn.com)
 
