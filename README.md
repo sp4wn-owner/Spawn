@@ -1,11 +1,5 @@
-# Navigation
-
-<div style="text-align: center;">
-
-[![Features](https://img.shields.io/badge/-Features-blue?style=for-the-badge)](#features)
-[![Pi Robot](https://img.shields.io/badge/-Pi%20Robot-purple?style=for-the-badge)](#connect-your-raspberry-pi-robot)
-
-</div>
+> [![Features](https://img.shields.io/badge/-Features-blue?style=for-the-badge)](#features)
+> [![Pi Robot](https://img.shields.io/badge/-Pi%20Robot-purple?style=for-the-badge)](#connect-your-raspberry-pi-robot)
 
 # [Spawn](https://sp4wn.com)
 
