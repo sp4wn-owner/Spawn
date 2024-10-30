@@ -109,6 +109,7 @@ sudo nano /etc/systemd/system/piclient.service
 ```
 
 ### Add the following text into this file and save
+```bash
 [Unit]
 Description=Start piclient.js script
 After=network.target
@@ -123,6 +124,7 @@ StandardError=append:/home/pi/bot/piclient.log
 
 [Install]
 WantedBy=multi-user.target
+```
 
 ### Reload the systemd daemon and enable the service
 ```bash
