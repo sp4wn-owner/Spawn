@@ -101,7 +101,7 @@ npm install node ws sharp wrtc @sp4wn/pipins
 sudo chmod a+rw /dev/video0
 ```
 
-### Transfer script to bot directory from your pc then run it
+### Transfer script from our Raspberry Pi directory to your bot directory then run it
 ```bash
 sudo node piclient.js
 ```
