@@ -30,41 +30,80 @@ A platform where you can share access to your telepresence robot without worryin
 sudo apt update
 sudo apt full-upgrade
 sudo raspi-config
+```
 
 ### then update
-
+```bash
 sudo rpi-update
+```
 
+### Open config.txt and setup camera/pwm channels
+```bash
 sudo nano /boot/firmware/config.txt
+```
 
 ### default is 1, but you'll need to change this to 0
+```bash
 camera_auto_detect=0
+```
 
 ### add the following three lines at the bottom of this file
+```bash
 start_x=1
 gpu_mem=128
 dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
+```
 
 ### Reboot your Pi
+```bash
 sudo reboot
+```
 
 ### Install Node.js and FFmpeg
+```bash
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+```
+
+### Install ffmpeg if you'd like to stream your robot to Twitch
+```bash
 sudo apt-get install ffmpeg
+```
 
-### Install Node.js if you plan to stream to twitch
+### Install Node.js
+```bash
 sudo apt-get install -y nodejs
-sudo npm install -g node-pre-gyp --force
+```
 
+### WebRTC requires node-pre-gyp
+```bash
+sudo npm install -g node-pre-gyp --force
+```
+
+### Make bot directory for your script
+```bash
 mkdir bot
 cd bot
-npm install node ws sharp wrtc @sp4wn/pipins
+```
 
+### Install node modules in bot directory
+```bash
+npm install node ws sharp wrtc @sp4wn/pipins
+```
+
+### Enable camera access
+```bash
 sudo chmod a+rw /dev/video0
-sudo node piclient.js # run your script after transferring the file over using FileZilla
+```
+
+### Transfer script to bot directory from your pc then run it
+```bash
+sudo node piclient.js
+```
 
 ### Starting script at boot and restarting after cleanup
+```bash
 sudo nano /etc/systemd/system/piclient.service
+```
 
 ### Add the following text into this file and save
 [Unit]
@@ -83,17 +122,27 @@ StandardError=append:/home/pi/bot/piclient.log
 WantedBy=multi-user.target
 
 ### Reload the systemd daemon and enable the service
+```bash
 sudo systemctl daemon-reload
+```
+```bash
 sudo systemctl enable piclient.service
+```
 
 ### Check the service status
+```bash
 sudo systemctl status piclient.service
+```
 
-### Stop the piclient service
+### Stop the piclient service if you'd like
+```bash
 sudo systemctl stop piclient.service
+```
 
 ### Inspect logs from piclient
+```bash
 journalctl -u piclient.service
+```
 
 
 
