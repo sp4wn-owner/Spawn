@@ -1,5 +1,11 @@
+# Navigation
+
+<div style="text-align: center;">
+
 [![Features](https://img.shields.io/badge/-Features-blue?style=for-the-badge)](#features)
-[![Pi Robot](https://img.shields.io/badge/-Pi%20Robot-purple?style=for-the-badge)](#Pi-Robot)
+[![Pi Robot](https://img.shields.io/badge/-Pi%20Robot-purple?style=for-the-badge)](#connect-your-raspberry-pi-robot)
+
+</div>
 
 # [Spawn](https://sp4wn.com)
 
@@ -29,6 +35,8 @@ A platform where you can share access to your telepresence robot without worryin
 ### To SSH into your Pi you'll need PuTTY and FileZilla or similar programs
 
 ### To set up SSD card you'll need to install the Raspberry Pi Imager
+
+### From a clean install of Debian update your Pi
 ```bash
 sudo apt update
 sudo apt full-upgrade
