@@ -23,34 +23,36 @@ A platform where you can share access to your telepresence robot without worryin
 
 ## Connect your Raspberry Pi robot:
 
-# To SSH into your Pi you'll need PuTTY and FileZilla or similar programs
+### To SSH into your Pi you'll need PuTTY and FileZilla or similar programs
 
-# To set up SSD card you'll need to install the Raspberry Pi Imager
+### To set up SSD card you'll need to install the Raspberry Pi Imager
 sudo apt update
 sudo apt full-upgrade
 sudo raspi-config
 
-# then update
+### then update
+bash
 sudo rpi-update
 
 sudo nano /boot/firmware/config.txt
 
-# default is 1, but you'll need to change this to 0
+### default is 1, but you'll need to change this to 0
 camera_auto_detect=0
 
-# add the following three lines at the bottom of this file
+### add the following three lines at the bottom of this file
+bash
 start_x=1
 gpu_mem=128
 dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
 
-# Reboot your Pi
+### Reboot your Pi
 sudo reboot
 
-# Install Node.js and FFmpeg
+### Install Node.js and FFmpeg
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 sudo apt-get install ffmpeg
 
-# Install Node.js if you plan to stream to twitch
+### Install Node.js if you plan to stream to twitch
 sudo apt-get install -y nodejs
 sudo npm install -g node-pre-gyp --force
 
@@ -61,10 +63,10 @@ npm install node ws sharp wrtc @sp4wn/pipins
 sudo chmod a+rw /dev/video0
 sudo node piclient.js # run your script after transferring the file over using FileZilla
 
-# Starting script at boot and restarting after cleanup
+### Starting script at boot and restarting after cleanup
 sudo nano /etc/systemd/system/piclient.service
 
-# Add the following text into this file and save
+### Add the following text into this file and save
 [Unit]
 Description=Start piclient.js script
 After=network.target
@@ -80,17 +82,17 @@ StandardError=append:/home/pi/bot/piclient.log
 [Install]
 WantedBy=multi-user.target
 
-# Reload the systemd daemon and enable the service
+### Reload the systemd daemon and enable the service
 sudo systemctl daemon-reload
 sudo systemctl enable piclient.service
 
-# Check the service status
+### Check the service status
 sudo systemctl status piclient.service
 
-# Stop the piclient service
+### Stop the piclient service
 sudo systemctl stop piclient.service
 
-# Inspect logs from piclient
+### Inspect logs from piclient
 journalctl -u piclient.service
 
 
