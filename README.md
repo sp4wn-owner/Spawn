@@ -1,3 +1,6 @@
+[![Features](https://img.shields.io/badge/-Features-blue)](#features)
+[![Pi Robot](https://img.shields.io/badge/-Connect%20your%20Raspberry%20Pi%20Robot-green)](#connect-your-raspberry-pi-robot)
+
 # [Spawn](https://sp4wn.com)
 
 A platform where you can share access to your telepresence robot without worrying about networking/communication protocols. Just build your bot, flash our code onto your microcontroller, and you're ready to go! 
