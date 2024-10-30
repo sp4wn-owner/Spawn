@@ -29,10 +29,13 @@ A platform where you can share access to your telepresence robot without worryin
 ```bash
 sudo apt update
 sudo apt full-upgrade
+```
+### Update raspi-config
+```bash
 sudo raspi-config
 ```
 
-### then update
+### Fully update Pi
 ```bash
 sudo rpi-update
 ```
