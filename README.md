@@ -45,12 +45,12 @@ sudo rpi-update
 sudo nano /boot/firmware/config.txt
 ```
 
-### default is 1, but you'll need to change this to 0
+### Since we're using v4l2 you'll need to change this to 0
 ```bash
 camera_auto_detect=0
 ```
 
-### add the following three lines at the bottom of this file
+### Add the following three lines at the bottom of the config.txt file
 ```bash
 start_x=1
 gpu_mem=128
