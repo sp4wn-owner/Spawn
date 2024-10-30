@@ -1,5 +1,5 @@
 [![Features](https://img.shields.io/badge/-Features-blue)](#features)
-[![Pi Robot](https://img.shields.io/badge/-Connect%20your%20Raspberry%20Pi%20Robot-green)](#connect-your-raspberry-pi-robot)
+[![Pi Robot](https://img.shields.io/badge/-Connect%20your%20Raspberry%20Pi%20Robot-green)](#Pi-Robot)
 
 # [Spawn](https://sp4wn.com)
 
@@ -24,7 +24,7 @@ A platform where you can share access to your telepresence robot without worryin
 - Modifiable code to handle input controls (gamepads/controllers are supported)  
     &nbsp;&nbsp;&nbsp;&nbsp;- i.e. Peer A shares access to their robot. Peer B controls the robot with a controller. Peer A's robot can interpret the "A" button press however they'd like (move servo to position, execute function, etc.)
 
-## Connect your Raspberry Pi robot:
+## Pi Robot:
 
 ### To SSH into your Pi you'll need PuTTY and FileZilla or similar programs
 
