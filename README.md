@@ -7,8 +7,7 @@ A platform where you can share access to your telepresence robot without worryin
 
 **Please note that WebRTC may not be functioning properly on iOS.**
 
-- Currently supporting the following robot types: phone + ESP32 || Raspberry Pi
-
+- Currently supporting the following robot types: Raspberry Pi || Phone + ESP32.
 
 ## Features:
 
@@ -26,11 +25,21 @@ A platform where you can share access to your telepresence robot without worryin
 
 ## Pi Robot:
 
-### To SSH into your Pi you'll need PuTTY and FileZilla or similar programs
+### To SSH into your Pi you'll need PuTTY and FileZilla or similar programs [PuTTY](https://www.putty.org/) [FileZilla](https://filezilla-project.org/download.php?platform=win64)
 
-### To set up SSD card you'll need to install the Raspberry Pi Imager
+### To set up the SSD card you'll need to install the Raspberry Pi Imager [link](https://www.raspberrypi.com/software/)
 
-### From a clean install of Debian, update your Pi
+### Hardware
+- Raspberry Pi (I'm using the Zero 2W, but other models should work as well)
+- Robot chassis (You can find a cheap robot chassis on Aliexpress/Amazon/eBay or 3D print your own)
+- RPI camera
+- SD card
+- L293D or another motor driver
+- Breadboard
+- Battery or power supply with respective connectors (I'm using a USB breakout to power the motors from the battery)
+- Breadboard jumper wires 
+
+### From a clean install of Debian (I'm using the headless version), update your Pi
 ```bash
 sudo apt update
 sudo apt full-upgrade
