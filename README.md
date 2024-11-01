@@ -38,6 +38,7 @@ A platform where you can share access to your telepresence robot without worryin
 - Breadboard
 - Battery or power supply with respective connectors (I'm using a USB breakout to power the motors from the battery)
 - Breadboard jumper wires 
+- Soldering iron (If you'd like to fuse the wires to the motor connectors so they don't disconnect)
 
 ### From a clean install of Debian (I'm using the headless version), update your Pi
 ```bash
