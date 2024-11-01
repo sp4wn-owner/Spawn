@@ -16,10 +16,10 @@ const twitchKey = ""; //Copy your key from Twitch stream manager
 let isStreamToTwitch = false; //Change to true if you'd like to stream to Twitch
 ///////////////////////////////////
 const gpioPins = [27, 22, 23, 24];
-const pwmChannels = [0, 1]; // Corresponds to the PWM channel (0 for pwm0)
+const pwmChannels = [0, 1]; //These channels are configured in config.txt. RPI Zero 2W has two hardware PWM channels (0,1)
 const period = 20000000; // 20 ms period (50 Hz)
 const dutyCycle = 0; // 1 ms duty cycle (5%)
-let servoPanPin = 1; //These channels are configured in config.txt. RPI Zero 2W has two hardware PWM channels (0,1)
+let servoPanPin = 1; 
 let servoTiltPin = 0; 
 let tiltPosition = 90; //Set starting positions
 let panPosition = 90;
@@ -30,6 +30,7 @@ const MAX_VALUE = 180;
 
 let isStreamToSpawn = false;
 let connectionTimeout;
+let profilePicture;
 let location;
 let description;
 let tokenrate;
@@ -200,10 +201,13 @@ function send(message) {
     signalingSocket.send(JSON.stringify(message));
  };
  
- function handleLogin(success, tr, loc, des, config) {
+ function handleLogin(success, pic, tr, loc, des, config) {
     if (success)  {
         console.log("Successfully logged in");
         configuration = config;
+        if(pic) {
+            profilePicture = pic;
+        }
         if(tr) {
             tokenrate = tr;
         }
@@ -549,35 +553,18 @@ async function watchStream(name) {
     });
  }
 
-async function captureImage(customWidth = 640, customHeight = 480) {
-    
-    const imagePath = 'robot.jpg'; 
-
-    if (!fs.existsSync(imagePath)) {
-        console.error("Image file not found:", imagePath);
-        return;
-    }
-
+async function captureImage() {
     try {
-        const imageBuffer = fs.readFileSync(imagePath);
-
-        const processedImageBuffer = await sharp(imageBuffer)
-            .resize(customWidth, customHeight) 
-            .toFormat('png') 
-            .toBuffer(); 
-
-        const imageDataUrl = `data:image/png;base64,${processedImageBuffer.toString('base64')}`;
-
         send({
             type: "storeimg",
-            image: imageDataUrl,
+            image: profilePicture,
             username: username,
             tokenrate: tokenrate,
             location: location,
             description: description,
             botdevicetype: botdevicetype
         });
-        console.log("Sent image to server");
+        console.log("Sent image to server");        
     } catch (error) {
         console.log("Failed to process and send image to server", error);
     }
