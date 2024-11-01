@@ -54,7 +54,7 @@ sudo raspi-config
 sudo rpi-update
 ```
 
-### Open config.txt and setup camera/pwm channels
+### Open config.txt and set up camera/pwm channels
 ```bash
 sudo nano /boot/firmware/config.txt
 ```
@@ -76,7 +76,7 @@ dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
 sudo reboot
 ```
 
-### Install Node.js and FFmpeg
+### Curl Node
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 ```
@@ -112,7 +112,8 @@ npm install node ws sharp wrtc @sp4wn/pipins
 sudo chmod a+rw /dev/video0
 ```
 
-### Transfer script from our Raspberry Pi directory to your bot directory then run it
+### Transfer script from our Raspberry Pi directory to your bot directory
+- Before running the script using the below command, update the file and add your username/password plus any additional changes to control commands from the input channel.
 ```bash
 sudo node piclient.js
 ```
