@@ -25,9 +25,9 @@ A platform where you can share access to your telepresence robot without worryin
 
 ## Pi Robot:
 
-### To SSH into your Pi you'll need PuTTY and FileZilla or similar programs [PuTTY](https://www.putty.org/) [FileZilla](https://filezilla-project.org/download.php?platform=win64)
+### To SSH into your Pi you'll need [PuTTY](https://www.putty.org/) and [FileZilla](https://filezilla-project.org/download.php?platform=win64) or similar programs  
 
-### To set up the SSD card you'll need to install the Raspberry Pi Imager [link](https://www.raspberrypi.com/software/)
+### To set up the SSD card you'll need to install the [Raspberry Pi Imager](https://www.raspberrypi.com/software/)
 
 ### Hardware
 - Raspberry Pi (I'm using the Zero 2W, but other models should work as well)
