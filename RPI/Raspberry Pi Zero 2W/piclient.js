@@ -1,7 +1,6 @@
 //////This is the main client script. Check out the other examples for how to use servos/pwm when receiving input commands
 const WebSocket = require('ws');
-const sharp = require('sharp');
-const fs = require('fs');
+const bcrypt = require('bcrypt');
 const { spawn } = require('child_process');
 const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
 const url = 'https://sp4wn-signaling-server.onrender.com';
@@ -28,6 +27,8 @@ const MAX_VALUE = 180;
 ///////////////////////////////////
 
 
+let isPrivate;
+let botpw;
 let isStreamToSpawn = false;
 let connectionTimeout;
 let profilePicture;
@@ -115,7 +116,7 @@ async function connectToSignalingServer() {
             switch (message.type) {
 
                 case "authenticated":
-                    handleLogin(message.success, message.tokenrate, message.location, message.description, message.configuration);
+                    handleLogin(message.success, message.tokenrate, message.location, message.description, message.isPrivate, message.pw, message.configuration);
                     resolve();
                     break;
 
@@ -201,7 +202,7 @@ function send(message) {
     signalingSocket.send(JSON.stringify(message));
  };
  
- function handleLogin(success, pic, tr, loc, des, config) {
+ function handleLogin(success, pic, tr, loc, des, priv, pw, config) {
     if (success)  {
         console.log("Successfully logged in");
         configuration = config;
@@ -216,6 +217,12 @@ function send(message) {
         }
         if(des) {
             description = des;
+        }
+        if(priv) {
+            isPrivate = priv;
+        }
+        if(pw) {
+            botpw = pw;
         }
         gpioPins.forEach(pin => {
             pipins.exportPin(pin);
@@ -511,7 +518,24 @@ function stopImageCapture() {
    console.log("All image captures terminated.");
 }
 
-async function watchStream(name) {
+async function watchStream(name, sentPW) {
+    if(isPrivate) {
+        if(sentPW) {
+            const authPW = await bcrypt.compare(sentPW, botpw);
+            if(authPW) {
+                iceAndOffer(name);
+            } else {
+                console.log("password not authenticated");
+            }
+        } else {
+            console.log("no bot pw detect");
+            return;
+        }
+    } else {
+        iceAndOffer(name);
+    }
+}
+async function iceAndOffer(name) {
     connectedUser = name;
     stopImageCapture();
     isStreamToSpawn = true;
@@ -532,7 +556,6 @@ async function watchStream(name) {
         console.log("Peer connection is not initialized.");
     }
 }
-
  function createOffer() {
     return new Promise((resolve, reject) => {
         peerConnection.createOffer()
@@ -562,7 +585,8 @@ async function captureImage() {
             tokenrate: tokenrate,
             location: location,
             description: description,
-            botdevicetype: botdevicetype
+            botdevicetype: botdevicetype,
+            private: isPrivate
         });
         console.log("Sent image to server");        
     } catch (error) {

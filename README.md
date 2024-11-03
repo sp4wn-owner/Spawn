@@ -105,7 +105,7 @@ cd bot
 
 ### Install node modules in bot directory
 ```bash
-npm install node ws sharp wrtc @sp4wn/pipins
+npm install node ws bcrypt wrtc @sp4wn/pipins
 ```
 
 ### Enable camera access
