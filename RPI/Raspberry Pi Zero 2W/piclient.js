@@ -518,10 +518,11 @@ function stopImageCapture() {
    console.log("All image captures terminated.");
 }
 
-async function watchStream(name, sentPW) {
+async function watchStream(name, pw) {
     if(isPrivate) {
-        if(sentPW) {
-            const authPW = await bcrypt.compare(sentPW, botpw);
+        if(pw) {
+            //const authPW = await bcrypt.compare(pw, botpw);
+            const authPW = (pw === botpw);
             if(authPW) {
                 iceAndOffer(name);
             } else {
