@@ -89,9 +89,9 @@ async function startWebRTC() {
                 break;
             case 'failed':
             case 'disconnected':
-            case 'closed':
+                console.log("peer disconnected");   
                 cleanup();
-                console.log("peer disconnected");                              
+            case 'closed':
             break;
         }
     };      
@@ -115,7 +115,7 @@ async function connectToSignalingServer() {
             switch (message.type) {
 
                 case "authenticated":
-                    handleLogin(message.success, message.tokenrate, message.location, message.description, message.isPrivate, message.pw, message.configuration);
+                    handleLogin(message.success, message.pic, message.tokenrate, message.location, message.description, message.isPrivate, message.pw, message.configuration);
                     resolve();
                     break;
 
