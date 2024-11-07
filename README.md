@@ -45,15 +45,6 @@ A platform where you can share access to your telepresence robot without worryin
 sudo apt update
 sudo apt full-upgrade
 ```
-### Update raspi-config
-```bash
-sudo raspi-config
-```
-
-### Fully update Pi
-```bash
-sudo rpi-update
-```
 
 ### Open config.txt and set up camera/pwm channels
 ```bash
@@ -105,7 +96,7 @@ cd bot
 
 ### Install node modules in bot directory
 ```bash
-npm install node ws bcrypt wrtc @sp4wn/pipins
+npm install node ws wrtc @sp4wn/pipins
 ```
 
 ### Enable camera access

@@ -1,6 +1,5 @@
 //////This is the main client script. Check out the other examples for how to use servos/pwm when receiving input commands
 const WebSocket = require('ws');
-const bcrypt = require('bcrypt');
 const { spawn } = require('child_process');
 const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
 const url = 'https://sp4wn-signaling-server.onrender.com';
@@ -521,7 +520,6 @@ function stopImageCapture() {
 async function watchStream(name, pw) {
     if(isPrivate) {
         if(pw) {
-            //const authPW = await bcrypt.compare(pw, botpw);
             const authPW = (pw === botpw);
             if(authPW) {
                 iceAndOffer(name);
