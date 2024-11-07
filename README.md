@@ -104,8 +104,18 @@ npm install node ws wrtc @sp4wn/pipins
 sudo chmod a+rw /dev/video0
 ```
 
-### Transfer script from our Raspberry Pi directory to your bot directory
-- Before running the script using the below command, update the file and add your username/password plus any additional changes to control commands from the input channel.
+### Get the piclient script
+```bash
+wget https://raw.githubusercontent.com/sp4wn-owner/microcontrollers/main/RPI/Raspberry%20Pi%20Zero%202W/piclient.js
+```
+
+### Update the file and add your username/password plus any additional changes to control commands from the input channel.
+```bash
+nano piclient.js
+```
+
+### Run the script
+- This script will automatically connect to https://sp4wn.com. Because all connections are peer-to-peer you will be required to create a different account to connect to your robot. Only one session per account is allowed at a time.
 ```bash
 sudo node piclient.js
 ```

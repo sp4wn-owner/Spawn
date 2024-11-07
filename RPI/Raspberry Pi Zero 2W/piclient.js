@@ -11,7 +11,7 @@ const pipins = require('@sp4wn/pipins');
 const username = "pi_robot_2wd"; //Username should be all lowercase
 const password = "";
 const twitchKey = ""; //Copy your key from Twitch stream manager
-let isStreamToTwitch = false; //Change to true if you'd like to stream to Twitch
+let isStreamToTwitch = false; //Change to true if you'd like to stream to Twitch. When someone connects to your robot it will stop streaming to Twitch.
 ///////////////////////////////////
 const gpioPins = [27, 22, 23, 24];
 const pwmChannels = [0, 1]; //These channels are configured in config.txt. RPI Zero 2W has two hardware PWM channels (0,1)
