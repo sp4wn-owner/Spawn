@@ -201,7 +201,7 @@ function send(message) {
     signalingSocket.send(JSON.stringify(message));
  };
  
- function handleLogin(success, pic, tr, loc, des, priv, pw, config) {
+function handleLogin(success, pic, tr, loc, des, priv, pw, config) {
     if (success)  {
         console.log("Successfully logged in");
         configuration = config;
@@ -534,6 +534,7 @@ async function watchStream(name, pw) {
         iceAndOffer(name);
     }
 }
+
 async function iceAndOffer(name) {
     connectedUser = name;
     stopImageCapture();
@@ -555,7 +556,8 @@ async function iceAndOffer(name) {
         console.log("Peer connection is not initialized.");
     }
 }
- function createOffer() {
+
+function createOffer() {
     return new Promise((resolve, reject) => {
         peerConnection.createOffer()
             .then(offer => {

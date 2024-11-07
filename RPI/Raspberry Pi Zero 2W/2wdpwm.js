@@ -108,7 +108,7 @@ async function connectToSignalingServer() {
             switch (message.type) {
 
                 case "authenticated":
-                    handleLogin(message.success, message.tokenrate, message.location, message.description, message.configuration);
+                    handleLogin(message.success, message.pic, message.tokenrate, message.location, message.description, message.isPrivate, message.pw, message.configuration);
                     resolve();
                     break;
 
@@ -194,10 +194,13 @@ function send(message) {
     signalingSocket.send(JSON.stringify(message));
  };
  
- function handleLogin(success, tr, loc, des, config) {
+ function handleLogin(success, pic, tr, loc, des, priv, pw, config) {
     if (success)  {
         console.log("Successfully logged in");
         configuration = config;
+        if(pic) {
+            profilePicture = pic;
+        }
         if(tr) {
             tokenrate = tr;
         }
@@ -206,6 +209,12 @@ function send(message) {
         }
         if(des) {
             description = des;
+        }
+        if(priv) {
+            isPrivate = priv;
+        }
+        if(pw) {
+            botpw = pw;
         }
         gpioPins.forEach(pin => {
             pipins.exportPin(pin);
@@ -467,7 +476,25 @@ function stopImageCapture() {
    console.log("All image captures terminated.");
 }
 
-async function watchStream(name) {
+async function watchStream(name, pw) {
+    if(isPrivate) {
+        if(pw) {
+            const authPW = (pw === botpw);
+            if(authPW) {
+                iceAndOffer(name);
+            } else {
+                console.log("password not authenticated");
+            }
+        } else {
+            console.log("no bot pw detect");
+            return;
+        }
+    } else {
+        iceAndOffer(name);
+    }
+}
+
+async function iceAndOffer(name) {
     connectedUser = name;
     stopImageCapture();
     isStreamToSpawn = true;
@@ -509,35 +536,19 @@ async function watchStream(name) {
     });
  }
 
-async function captureImage(customWidth = 640, customHeight = 480) {
-    
-    const imagePath = 'robot.jpg'; 
-
-    if (!fs.existsSync(imagePath)) {
-        console.error("Image file not found:", imagePath);
-        return;
-    }
-
+ async function captureImage() {
     try {
-        const imageBuffer = fs.readFileSync(imagePath);
-
-        const processedImageBuffer = await sharp(imageBuffer)
-            .resize(customWidth, customHeight) 
-            .toFormat('png') 
-            .toBuffer(); 
-
-        const imageDataUrl = `data:image/png;base64,${processedImageBuffer.toString('base64')}`;
-
         send({
             type: "storeimg",
-            image: imageDataUrl,
+            image: profilePicture,
             username: username,
             tokenrate: tokenrate,
             location: location,
             description: description,
-            botdevicetype: botdevicetype
+            botdevicetype: botdevicetype,
+            private: isPrivate
         });
-        console.log("Sent image to server");
+        console.log("Sent image to server");        
     } catch (error) {
         console.log("Failed to process and send image to server", error);
     }
