@@ -110,13 +110,13 @@ wget https://raw.githubusercontent.com/sp4wn-owner/microcontrollers/main/RPI/Ras
 ```
 
 ### Update the file and add your username/password plus any additional changes to control commands from the input channel.
-- CTRL+X then Y then Enter to save
 ```bash
 nano piclient.js
 ```
+CTRL+X then Y then Enter to save
 
 ### Run the script
-- This script will automatically connect to https://sp4wn.com. Because all connections are peer-to-peer you will be required to create a different account to connect to your robot. Only one session per account is allowed at a time.
+This script will automatically connect to https://sp4wn.com. Because all connections are peer-to-peer you will be required to create a different account to connect to your robot. Only one session per account is allowed at a time.
 ```bash
 sudo node piclient.js
 ```
