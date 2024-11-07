@@ -110,6 +110,7 @@ wget https://raw.githubusercontent.com/sp4wn-owner/microcontrollers/main/RPI/Ras
 ```
 
 ### Update the file and add your username/password plus any additional changes to control commands from the input channel.
+- CTRL+X then Y then Enter to save
 ```bash
 nano piclient.js
 ```
