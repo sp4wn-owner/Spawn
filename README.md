@@ -1,6 +1,6 @@
 [![Features](https://img.shields.io/badge/-Features-blue?style=for-the-badge)](#Features)
 [![Pi Robot](https://img.shields.io/badge/-Pi%20Robot-purple?style=for-the-badge)](#Pi-Robot)
-[![Phone + ESP32 Robot](https://img.shields.io/badge/-Phone%20Robot-purple?style=for-the-badge)](#Phone-Robot)
+[![Phone Robot](https://img.shields.io/badge/-Phone%20Robot-purple?style=for-the-badge)](#Phone-Robot)
 
 # [Spawn](https://sp4wn.com)
 
@@ -168,9 +168,10 @@ sudo systemctl stop piclient.service
 journalctl -u piclient.service
 ```
 
-## Phone + ESP32 Robot:
+## Phone Robot:
 
-### Hardware
+### Hardware (Phone + ESP32)
+- Mobile phone
 - ESP32 WROOM 32D microcontroller
 - Robot chassis (You can find a cheap robot chassis on Aliexpress/Amazon/eBay or 3D print your own)
 - L293D or another motor driver
