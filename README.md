@@ -1,6 +1,6 @@
 [![Features](https://img.shields.io/badge/-Features-blue?style=for-the-badge)](#Features)
 [![Pi Robot](https://img.shields.io/badge/-Pi%20Robot-purple?style=for-the-badge)](#Pi-Robot)
-[![Phone Robot](https://img.shields.io/badge/-Phone%20Robot-purple?style=for-the-badge)](#Phone-Robot)
+[![Phone Robot](https://img.shields.io/badge/-Phone%20Robot-green?style=for-the-badge)](#Phone-Robot)
 
 # [Spawn](https://sp4wn.com)
 
