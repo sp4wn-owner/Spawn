@@ -1,11 +1,12 @@
 [![Features](https://img.shields.io/badge/-Features-blue?style=for-the-badge)](#Features)
 [![Pi Robot](https://img.shields.io/badge/-Pi%20Robot-purple?style=for-the-badge)](#Pi-Robot)
+[![Phone + ESP32 Robot](https://img.shields.io/badge/-Phone%20Robot-purple?style=for-the-badge)](#Phone-Robot)
 
 # [Spawn](https://sp4wn.com)
 
 A platform where you can share access to your telepresence robot without worrying about networking/communication protocols. Just build your bot, copy our code, modify controls as you please, and you're ready to go! 
 
-**Please note that WebRTC may not be functioning properly on iOS.**
+**Please note that WebRTC may not be functioning properly yet on iOS.**
 
 - Currently supporting the following robot types: Raspberry Pi || Phone + ESP32.
 
@@ -167,9 +168,31 @@ sudo systemctl stop piclient.service
 journalctl -u piclient.service
 ```
 
+## Phone + ESP32 Robot:
 
+### Hardware
+- ESP32 WROOM 32D microcontroller
+- Robot chassis (You can find a cheap robot chassis on Aliexpress/Amazon/eBay or 3D print your own)
+- L293D or another motor driver
+- Breadboard
+- Phone mount (1/4-20 x 3/4" Truss Head Machine Screws + 1/4-20 Inch Wingnuts) [ebay](https://www.ebay.com/itm/335118194262)
+- Battery or power supply with respective connectors (I'm using a USB breakout to power the motors from the battery)
+- Breadboard jumper wires 
+- Soldering iron (If you'd like to fuse the wires to the motor connectors so they don't disconnect)
 
+### Step 1
+- Flash ESP32 using the Arduino IDE with respective code (ESP32_BLE_Dev_Module) from our [github](https://github.com/sp4wn-owner/microcontrollers/blob/main/Body/ESP32_BLE_Dev_Module/ESP32_BLE_Dev_Module.ino)
+- If this is your first time using the ESP32 with the Arduino IDE, you'll need to add https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json to additional boards manager (file > preferences)
+- To flash this board you may need to update your USB driver (see file). Then select board (Tools > Board > esp32 > ESP Dev Module).
 
+### Step 2
+- Connect all wires and secure phone mount
+- On the Spawn website under profile, click "Go Live" then Click "Connect". Your robot should pop up on your list of Bluetooth devices. Once connected, test using the controls.
+
+### Other
+- The esp32 can be powered through the micro USB or through the 5v pin (voltage above 3.3 will be stepped down through this pin since the board operates at 3.3v). If the motors are connected to the same power source they may cause the board to reset if not properly regulated.
+- Edit the code and make your robot do whatever you want when it receives certain messages.
+- If Bluetooth is not enabled you will need to go to chrome://flags to enable it
 
 
 
