@@ -26,7 +26,7 @@ const MAX_VALUE = 180;
 ///////////////////////////////////
 
 
-let isPrivate;
+let isPrivate = false;
 let botpw;
 let isStreamToSpawn = false;
 let connectionTimeout;
@@ -115,7 +115,7 @@ async function connectToSignalingServer() {
             switch (message.type) {
 
                 case "authenticated":
-                    handleLogin(message.success, message.pic, message.tokenrate, message.location, message.description, message.isPrivate, message.pw, message.configuration);
+                    handleLogin(message.success, message.pic, message.tokenrate, message.location, message.description, message.priv, message.pw, message.configuration);
                     resolve();
                     break;
 
@@ -207,21 +207,34 @@ function handleLogin(success, pic, tr, loc, des, priv, pw, config) {
         configuration = config;
         if(pic) {
             profilePicture = pic;
+        } else {
+            console.log("No picture");
         }
         if(tr) {
             tokenrate = tr;
+        } else {
+            console.log("No token rate");
+            tokenrate = 0;
         }
         if(loc) {
             location = loc;
+        } else {
+            console.log("No location");
         }
         if(des) {
             description = des;
+        } else {
+            console.log("No description");
         }
         if(priv) {
             isPrivate = priv;
+        } else {
+            console.log("No private status");
         }
         if(pw) {
             botpw = pw;
+        } else {
+            console.log("No secret code");
         }
         gpioPins.forEach(pin => {
             pipins.exportPin(pin);
