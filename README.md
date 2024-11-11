@@ -6,8 +6,6 @@
 
 A platform where you can share access to your telepresence robot without worrying about networking/communication protocols. Just build your bot, copy our code, modify controls as you please, and you're ready to go! 
 
-**Please note that WebRTC may not be functioning properly yet on iOS.**
-
 - Currently supporting the following robot types: Raspberry Pi || Phone + ESP32.
 
 ## Features:

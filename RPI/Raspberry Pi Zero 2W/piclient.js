@@ -78,8 +78,6 @@ async function startWebRTC() {
                 break;
             case 'connected':
                 console.log('ICE Connection has been established.');
-                
-                
                 break;
             case 'completed':
                 console.log('ICE Connection is completed.');
@@ -88,6 +86,8 @@ async function startWebRTC() {
                 }
                 break;
             case 'failed':
+                console.log("peer connection failed");   
+                cleanup();
             case 'disconnected':
                 console.log("peer disconnected");   
                 cleanup();
