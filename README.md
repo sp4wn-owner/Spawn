@@ -42,8 +42,8 @@ A platform where you can share access to your telepresence robot without worryin
 
 ### From a clean install of Debian (I'm using the headless version), update your Pi
 ```bash
-sudo apt update
-sudo apt full-upgrade
+sudo apt update -y
+sudo apt full-upgrade -y
 ```
 
 ### Open config.txt and set up camera/pwm channels
@@ -62,6 +62,7 @@ start_x=1
 gpu_mem=128
 dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
 ```
+CTRL+X then Y then Enter to save
 
 ### Reboot your Pi
 ```bash
