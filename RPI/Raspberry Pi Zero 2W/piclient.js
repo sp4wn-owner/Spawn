@@ -531,22 +531,46 @@ function stopImageCapture() {
 }
 
 async function watchStream(name, pw) {
-    if(isPrivate) {
-        if(pw) {
-            const authPW = (pw === botpw);
-            if(authPW) {
-                iceAndOffer(name);
-            } else {
-                console.log("password not authenticated");
+    if (isPrivate) {
+        if (pw) {
+            try {
+                const isValid = await verifyPassword();
+                if (isValid) {
+                    iceAndOffer(name);
+                } else {
+                    console.log("Password not authenticated");
+                }
+            } catch (error) {
+                console.log("Error verifying password:", error);
             }
         } else {
-            console.log("no bot pw detected");
+            console.log("No bot password detected");
             return;
         }
     } else {
         iceAndOffer(name);
     }
 }
+
+
+function verifyPassword() {
+    return new Promise((resolve, reject) => {
+        send({
+            type: "checkPassword",
+            username: username,
+            password: pw
+        }).then(response => {
+            if (response.success) {
+                resolve(true);
+            } else {
+                reject(new Error("Password verification failed"));
+            }
+        }).catch(error => {
+            reject(error);
+        });
+    });
+}
+
 
 async function iceAndOffer(name) {
     connectedUser = name;
