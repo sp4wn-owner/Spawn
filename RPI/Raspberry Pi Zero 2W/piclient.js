@@ -553,8 +553,6 @@ function sendPW(message) {
     });
 }
   
-
-  
 async function watchStream(name, pw) {
     if (isPrivate) {
         if (pw) {
