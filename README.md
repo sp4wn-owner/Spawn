@@ -42,8 +42,7 @@ A platform where you can share access to your telepresence robot without worryin
 
 ### From a clean install of Debian (I'm using the headless version), update your Pi
 ```bash
-sudo apt update -y
-sudo apt full-upgrade -y
+sudo apt update -y && sudo apt full-upgrade -y
 ```
 
 ### Open config.txt and set up camera/pwm channels
@@ -86,7 +85,7 @@ sudo apt-get install -y nodejs
 
 ### WebRTC requires node-pre-gyp
 ```bash
-sudo npm install -g node-pre-gyp --force
+sudo npm install -g @mapbox/node-pre-gyp
 ```
 
 ### Make bot directory for your script
