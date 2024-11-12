@@ -30,8 +30,9 @@ A platform where you can share access to your telepresence robot without worryin
 
 ### Hardware
 - Raspberry Pi (I'm using the Zero 2W, but other models should work as well)
-- Robot chassis (You can find a cheap robot chassis on Aliexpress/Amazon/eBay or 3D print your own)
+- Robot chassis (You can find a cheap robot chassis and other parts on Aliexpress/Amazon/eBay or 3D print your own)
 - RPI camera
+- Camera mount
 - SD card
 - L293D or another motor driver
 - Breadboard
@@ -186,7 +187,7 @@ journalctl -u piclient.service
 
 ### Step 2
 - Connect all wires and secure phone mount
-- On the Spawn website under profile, click "Go Live" then Click "Connect". Your robot should pop up on your list of Bluetooth devices. Once connected, test using the controls.
+- On the Spawn website under profile, click "Go Live" then click "Connect". Your robot should pop up on your list of Bluetooth devices. Once connected, test using the controls.
 
 ### Other
 - The esp32 can be powered through the micro USB or through the 5v pin (voltage above 3.3 will be stepped down through this pin since the board operates at 3.3v). If the motors are connected to the same power source they may cause the board to reset if not properly regulated.
