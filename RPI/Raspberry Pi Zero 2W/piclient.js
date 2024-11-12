@@ -157,7 +157,7 @@ async function connectToSignalingServer() {
                     break;
 
                 case "watch":
-                    watchStream(message.name);
+                    watchStream(message.name, message.pw);
                     break;
             }
         };
@@ -540,7 +540,7 @@ async function watchStream(name, pw) {
                 console.log("password not authenticated");
             }
         } else {
-            console.log("no bot pw detect");
+            console.log("no bot pw detected");
             return;
         }
     } else {
