@@ -112,6 +112,7 @@ async function connectToSignalingServer() {
 
         signalingSocket.onmessage = async (event) => {
             const message = JSON.parse(event.data);
+            messageEmitter.emit(message.type, message);
             switch (message.type) {
 
                 case "authenticated":
@@ -530,11 +531,35 @@ function stopImageCapture() {
    console.log("All image captures terminated.");
 }
 
+const EventEmitter = require('events');
+const messageEmitter = new EventEmitter();
+
+function sendPW(message) {
+    return new Promise((resolve, reject) => {
+      signalingSocket.send(JSON.stringify(message), (error) => {
+        if (error) {
+          reject(error);
+        }
+      });
+  
+      // Listen for specific response type
+      messageEmitter.once('authbotpw', (response) => {
+        try {
+          resolve(response);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+}
+  
+
+  
 async function watchStream(name, pw) {
     if (isPrivate) {
         if (pw) {
             try {
-                const isValid = await verifyPassword();
+                const isValid = await verifyPassword(pw);
                 if (isValid) {
                     iceAndOffer(name);
                 } else {
@@ -552,10 +577,9 @@ async function watchStream(name, pw) {
     }
 }
 
-
-function verifyPassword() {
+function verifyPassword(pw) {
     return new Promise((resolve, reject) => {
-        send({
+        sendPW({
             type: "checkPassword",
             username: username,
             password: pw
