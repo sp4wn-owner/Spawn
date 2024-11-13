@@ -16,7 +16,7 @@ A platform where you can share access to your telepresence robot without worryin
 - Near real-time sub-second latency  
     &nbsp;&nbsp;&nbsp;&nbsp;- Teleoperate robots with minimal delay. 
 
-- Public/private access
+- Public/private access  
     &nbsp;&nbsp;&nbsp;&nbsp;- Share your robot with the world or make it private so that only those with your secret code can access it. 
 
 - Charge for access to your robot (tokens/min)  
