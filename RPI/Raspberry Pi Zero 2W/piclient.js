@@ -27,7 +27,6 @@ const MAX_VALUE = 180;
 
 
 let isPrivate = false;
-let botpw;
 let isStreamToSpawn = false;
 let connectionTimeout;
 let profilePicture;
@@ -51,7 +50,6 @@ async function startWebRTC() {
     try {
         await createDataChannel('video');
         await createDataChannel('input');
-        console.log("Video and input channels created");
     } catch (error) {
         console.log("unable to create data channels");
     }
@@ -189,10 +187,7 @@ async function initializeSignalingAndStartCapture() {
     }
 
     if (signalingSocket.readyState === WebSocket.OPEN) {
-        console.log("Connected to signaling server");
-        captureImage();
-        startImageCapture(15000);
-        addlive(); 
+        console.log("Connected to signaling server");        
     } else {
         console.error("Failed to connect to signaling server.");
     }
@@ -232,11 +227,7 @@ function handleLogin(success, pic, tr, loc, des, priv, pw, config) {
         } else {
             console.log("No private status");
         }
-        if(pw) {
-            botpw = pw;
-        } else {
-            console.log("No secret code");
-        }
+
         gpioPins.forEach(pin => {
             pipins.exportPin(pin);
             pipins.setPinDirection(pin, 'out');
@@ -253,13 +244,18 @@ function handleLogin(success, pic, tr, loc, des, priv, pw, config) {
         if(isStreamToTwitch) {
             startStream();
         }
+        captureImage();
+        startImageCapture(15000);
+        addlive(); 
     }
+
     if (!success) {
-        console.log("user already logged in or there was an error");
+        console.log("User already logged in or there was an error.");
+        stopImageCapture();
     }
  }
 
- async function createDataChannel(type) {
+async function createDataChannel(type) {
     let dataChannel;
 
     try {
@@ -277,21 +273,6 @@ function handleLogin(success, pic, tr, loc, des, priv, pw, config) {
         inputChannel = dataChannel;
         handleInputChannel(inputChannel);
     }
-}
-
-function handleVideoChannel(videoChannel) {
-    videoChannel.onopen = () => {
-        console.log("Video channel connected to peer");        
-    };
-
-    videoChannel.onclose = () => {
-        console.log("Video channel has been closed");
-        cleanup();
-    };
-
-    videoChannel.onerror = (error) => {
-        console.error("Video channel error:", error);
-    };
 }
 
 function handleInputChannel(inputChannel) {
@@ -430,6 +411,21 @@ function handleInputChannel(inputChannel) {
 
     inputChannel.onerror = (error) => {
         console.error("Input channel error:", error);
+    };
+}
+
+function handleVideoChannel(videoChannel) {
+    videoChannel.onopen = () => {
+        console.log("Video channel connected to peer");        
+    };
+
+    videoChannel.onclose = () => {
+        console.log("Video channel has been closed");
+        cleanup();
+    };
+
+    videoChannel.onerror = (error) => {
+        console.error("Video channel error:", error);
     };
 }
 
