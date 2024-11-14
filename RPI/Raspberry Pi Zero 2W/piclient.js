@@ -104,7 +104,8 @@ async function connectToSignalingServer() {
             send({
                 type: "robot",
                 username: username,
-                password: password
+                password: password,
+                device: botdevicetype
             });
         };
 
@@ -246,7 +247,6 @@ function handleLogin(success, pic, tr, loc, des, priv, pw, config) {
         }
         captureImage();
         startImageCapture(15000);
-        addlive(); 
     }
 
     if (!success) {
@@ -494,12 +494,6 @@ function startStream() {
     startCameraStream(); 
 }
 
-function addlive() {
-    send({
-        type: "addlive",
-        username: username
-     });
-}
 function deletelive() {
     send({
         type: "updatelive",
