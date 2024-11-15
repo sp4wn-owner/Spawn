@@ -4,26 +4,26 @@
 
 # [Spawn](https://sp4wn.com)
 
-A platform where you can share access to your telepresence robot without worrying about networking/communication protocols. Just build your bot, copy our code, modify controls as you please, and you're ready to go! 
+A platform where you can share access to your telepresence robot without worrying about networking/communication. Just build your bot, modify controls as you please, and you're ready to go! 
 
 - Currently supporting the following robot types: Raspberry Pi || Phone + ESP32.
 
 ## Features:
 
 - Quick and easy setup (no coding required)  
-    &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running.
+    &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running in minutes.
 
-- Near real-time sub-second latency  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Teleoperate robots with minimal delay. 
+- Near real-time control  
+    &nbsp;&nbsp;&nbsp;&nbsp;- The platform allows for near real-time control over the internet, enabling you to maneuver your robot with precision (sub-second latency). 
 
 - Public/private access  
     &nbsp;&nbsp;&nbsp;&nbsp;- Share your robot with the world or make it private so that only those with your secret code can access it. 
 
-- Charge for access to your robot (tokens/min)  
-    &nbsp;&nbsp;&nbsp;&nbsp;- i.e. Peer A sets the number of tokens per minute for their robot. Peer B is charged the rate/min every minute until they disconnect. Turn telepresence robots into income-generating assets.
+- Monetize your Telepresence Robot  
+    &nbsp;&nbsp;&nbsp;&nbsp;- Example: Peer A decides the token rate per minute for accessing their telepresence robot. Peer B is then charged this rate every minute they are connected, until they disconnect. Transform your telepresence robots into revenue-generating assets.
 
-- Modifiable code to handle input controls (gamepads/controllers are supported)  
-    &nbsp;&nbsp;&nbsp;&nbsp;- i.e. Peer A shares access to their robot. Peer B controls the robot with a controller. Peer A's robot can interpret the "A" button press however they'd like (move servo to position, execute function, etc.)
+- Customizable code to handle input controls (gamepads/controllers are supported)  
+    &nbsp;&nbsp;&nbsp;&nbsp;- Example: Peer A grants control of their robot to Peer B. Using a controller, Peer B manipulates the robot. Peer A's robot can interpret the "A" button press in any desired manner, such as moving a servo to a specific position, executing a function, sending command to another device, etc.
 
 ## Pi Robot:
 
