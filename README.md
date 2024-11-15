@@ -4,7 +4,7 @@
 
 # [Spawn](https://sp4wn.com)
 
-A platform where you can share access to your telepresence robot without worrying about networking/communication. Just build your bot, modify controls as you please, and you're ready to go! 
+Spawn enables rapid deployment of custom telepresence robots/devices without the hassle of managing networking or communication. Simply build your custom robot, utilize our provided script to connect it to Spawn, and you’re good to go. You have full control over how to handle the received input commands. 
 
 - Currently supporting the following robot types: Raspberry Pi || Phone + ESP32.
 
@@ -21,9 +21,6 @@ A platform where you can share access to your telepresence robot without worryin
 
 - Monetize your Telepresence Robot  
     &nbsp;&nbsp;&nbsp;&nbsp;- Example: Peer A decides the token rate per minute for accessing their telepresence robot. Peer B is then charged this rate every minute they are connected, until they disconnect. Transform your telepresence robots into revenue-generating assets.
-
-- Customizable code to handle input controls (gamepads/controllers are supported)  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Example: Peer A grants control of their robot to Peer B. Using a controller, Peer B manipulates the robot. Peer A's robot can interpret the "A" button press in any desired manner, such as moving a servo to a specific position, executing a function, sending command to another device, etc.
 
 ## Pi Robot:
 
