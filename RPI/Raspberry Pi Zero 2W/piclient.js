@@ -115,7 +115,7 @@ async function connectToSignalingServer() {
             switch (message.type) {
 
                 case "authenticated":
-                    handleLogin(message.success, message.pic, message.tokenrate, message.location, message.description, message.priv, message.pw, message.configuration);
+                    handleLogin(message.success, message.pic, message.tokenrate, message.location, message.description, message.priv, message.configuration);
                     resolve();
                     break;
 
@@ -198,7 +198,7 @@ function send(message) {
     signalingSocket.send(JSON.stringify(message));
  };
  
-function handleLogin(success, pic, tr, loc, des, priv, pw, config) {
+function handleLogin(success, pic, tr, loc, des, priv, config) {
     if (success)  {
         console.log("Successfully logged in");
         configuration = config;
