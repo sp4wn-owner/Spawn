@@ -532,7 +532,6 @@ function sendPW(message) {
         }
       });
   
-      // Listen for specific response type
       messageEmitter.once('authbotpw', (response) => {
         try {
           resolve(response);

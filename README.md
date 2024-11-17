@@ -40,7 +40,7 @@ Spawn enables rapid deployment of custom telepresence robots/devices without the
 - Breadboard jumper wires 
 - Soldering iron (If you'd like to fuse the wires to the motor connectors so they don't disconnect)
 
-### From a clean install of Debian (I'm using the headless version), update your Pi
+### From a clean install of Raspberry Pi OS (I'm using the headless lite version), update your Pi
 ```bash
 sudo apt update -y && sudo apt full-upgrade -y
 ```
