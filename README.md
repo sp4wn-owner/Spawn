@@ -104,14 +104,24 @@ npm install node ws wrtc @sp4wn/pipins
 sudo chmod a+rw /dev/video0
 ```
 
-### Get the piclient script
+### Get the piclient.js script
 ```bash
 wget https://raw.githubusercontent.com/sp4wn-owner/microcontrollers/main/RPI/Raspberry%20Pi%20Zero%202W/piclient.js
 ```
+### Get the inputHandler.js script
+```bash
+wget https://raw.githubusercontent.com/sp4wn-owner/microcontrollers/main/RPI/Raspberry%20Pi%20Zero%202W/inputHandler.js
+```
 
-### Update the file and add your username/password plus any additional changes to control commands from the input channel.
+### Update the piclient.js file with your username/password plus any additional changes to control commands from the input channel.
 ```bash
 nano piclient.js
+```
+CTRL+X then Y then Enter to save
+
+### Update the inputHandler.js file with your custom control commands.
+```bash
+nano inputHandler.js
 ```
 CTRL+X then Y then Enter to save
 
