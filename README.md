@@ -113,7 +113,7 @@ wget https://raw.githubusercontent.com/sp4wn-owner/microcontrollers/main/RPI/Ras
 wget https://raw.githubusercontent.com/sp4wn-owner/microcontrollers/main/RPI/Raspberry%20Pi%20Zero%202W/inputHandler.js
 ```
 
-### Update the piclient.js file with your username/password plus any additional changes to control commands from the input channel.
+### Update the piclient.js file with your username/password.
 ```bash
 nano piclient.js
 ```
