@@ -8,6 +8,10 @@ const MIN_VALUE = 0;
 const MAX_VALUE = 180;
 
 process.on('message', (command) => {
+    //You could also send this data to an Arduino or other microcontroller and handle commands there.
+    //I'm currently converting gamepad joysticks to directional commands ("forward, left, etc") for simplicity and to prevent potential bottlenecking.
+    //I plan on adding an option to recieve raw outputs in real-time for more precise control after some testing
+
     let response = "unknown command";
     switch(command) {
         case "forward":
