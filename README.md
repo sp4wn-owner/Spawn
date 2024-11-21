@@ -4,13 +4,13 @@
 
 # [Spawn](https://sp4wn.com)
 
-Spawn enables rapid deployment of custom telepresence robots/devices without the hassle of managing networking or communication. Simply build your custom robot, utilize our provided script to connect it to Spawn, and you’re good to go. You have full control over how to handle the received input commands. 
+Spawn enables rapid deployment of custom telepresence robots/devices without the hassle of managing networking or communication. You have full control over how to handle the received input commands. Controllers/gamepads are currently supported. In the future, we may add compatibility for VR controllers and other devices.
 
-- Currently supporting the following robot types: Raspberry Pi || Phone + ESP32.
+- Currently supporting the following robot types: Raspberry Pi || Phone + ESP32. 
 
 ## Features:
 
-- Quick and easy setup (no coding required)  
+- Quick and easy setup (no coding initially required)  
     &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running in minutes.
 
 - Near real-time control  
@@ -19,7 +19,7 @@ Spawn enables rapid deployment of custom telepresence robots/devices without the
 - Public/private access  
     &nbsp;&nbsp;&nbsp;&nbsp;- Share your robot with the world or make it private so that only those with your secret code can access it. 
 
-- Monetize your Telepresence Robot  
+- Monetize your telepresence robot  
     &nbsp;&nbsp;&nbsp;&nbsp;- Example: Peer A decides the token rate per minute for accessing their telepresence robot. Peer B is then charged this rate every minute they are connected, until they disconnect. Transform your telepresence robots into revenue-generating assets.
 
 ## Pi Robot:
@@ -34,7 +34,7 @@ Spawn enables rapid deployment of custom telepresence robots/devices without the
 - RPI camera
 - Camera mount
 - SD card
-- L293D or another motor driver
+- L293D (2wd)/L293N (4wd) or another motor driver
 - Breadboard
 - Battery or power supply with respective connectors (I'm using a USB breakout to power the motors from the battery)
 - Breadboard jumper wires 
