@@ -106,11 +106,11 @@ sudo chmod a+rw /dev/video0
 
 ### Get the piclient.js script
 ```bash
-wget https://raw.githubusercontent.com/sp4wn-owner/microcontrollers/main/RPI/Raspberry%20Pi%20Zero%202W/piclient.js
+wget https://raw.githubusercontent.com/sp4wn-owner/spawn/main/RPI/Raspberry%20Pi%20Zero%202W/piclient.js
 ```
 ### Get the inputHandler.js script
 ```bash
-wget https://raw.githubusercontent.com/sp4wn-owner/microcontrollers/main/RPI/Raspberry%20Pi%20Zero%202W/inputHandler.js
+wget https://raw.githubusercontent.com/sp4wn-owner/spawn/main/RPI/Raspberry%20Pi%20Zero%202W/inputHandler.js
 ```
 
 ### Update the piclient.js file with your username/password.
@@ -191,7 +191,7 @@ journalctl -u piclient.service
 - Soldering iron (If you'd like to fuse the wires to the motor connectors so they don't disconnect)
 
 ### Step 1
-- Flash ESP32 using the Arduino IDE with respective code (ESP32_BLE_Dev_Module) from our [github](https://github.com/sp4wn-owner/microcontrollers/blob/main/Body/ESP32_BLE_Dev_Module/ESP32_BLE_Dev_Module.ino)
+- Flash ESP32 using the Arduino IDE with respective code (ESP32_BLE_Dev_Module) from our [github](https://github.com/sp4wn-owner/spawn/blob/main/Body/ESP32_BLE_Dev_Module/ESP32_BLE_Dev_Module.ino)
 - If this is your first time using the ESP32 with the Arduino IDE, you'll need to add https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json to additional boards manager (file > preferences)
 - To flash this board you may need to update your USB driver (see file). Then select board (Tools > Board > esp32 > ESP Dev Module).
 
