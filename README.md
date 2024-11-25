@@ -13,8 +13,8 @@ Spawn enables rapid deployment of custom telepresence robots/devices without the
 - Quick and easy setup (no coding initially required)  
     &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running in minutes.
 
-- Near real-time control  
-    &nbsp;&nbsp;&nbsp;&nbsp;- The platform allows for near real-time control over the internet, enabling you to maneuver your robot with precision (sub-second latency). 
+- Real-time control  
+    &nbsp;&nbsp;&nbsp;&nbsp;- We use the fastest technology available allowing for near real-time control over the internet. 
 
 - Public/private access  
     &nbsp;&nbsp;&nbsp;&nbsp;- Share your robot with the world or make it private so that only those with your secret code can access it. 
