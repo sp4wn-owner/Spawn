@@ -24,7 +24,7 @@ Spawn acts as a middleware solution between robots and end users, facilitating t
 
 ## Pi Robot:
 
-### Before setting up your Pi robot, create an account on [Spawn] (https://sp4wn.com) [https://sp4wn.com] (https://sp4wn.com)
+### Before setting up your Pi robot, create an account on [Spawn](https://sp4wn.com) [https://sp4wn.com](https://sp4wn.com)
 - Accounts are anonymous, but are still required to properly route traffic. Once the token system is live, we'll require 2FA and basic personal information to purchase/withdraw tokens.
 - Since this is a p2p application, streams are only sent through the p2p connection thus keeping sessions private and resulting in the lowest latency possible.
 
