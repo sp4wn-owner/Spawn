@@ -174,9 +174,9 @@ async function initializeSignalingAndStartCapture() {
     if (!signalingSocket || signalingSocket.readyState !== WebSocket.OPEN) {
         console.log("Connecting to signaling server...");
         connectionTimeout = setTimeout(() => {
-            console.log('Connection timed out after 10 seconds');
+            console.log('Connection timed out after 15 seconds');
             cleanup();
-          }, 5000);
+          }, 15000);
     
         await connectToSignalingServer(); 
     }
