@@ -4,14 +4,14 @@
 
 # [Spawn](https://sp4wn.com)
 
-Spawn enables rapid deployment of custom telepresence robots/devices without the hassle of managing networking or communication. You have full control over how to handle the received input commands. Controllers/gamepads are currently supported. In the future, we may add compatibility for VR controllers and other devices.
+Spawn acts as a middleware solution between robots and end users, facilitating the rapid deployment of custom telepresence robots/devices without the complexities of networking or communication management. 
 
 - Currently supporting the following robot types: Raspberry Pi || Phone + ESP32. 
 
 ## Features:
 
 - Quick and easy setup (no coding initially required)  
-    &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running in minutes.
+    &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running in minutes. You have full control over how to handle the received input commands. Controllers/gamepads are currently supported. In the future, we may add compatibility for VR controllers and other devices.
 
 - Real-time control  
     &nbsp;&nbsp;&nbsp;&nbsp;- We use the fastest technology available allowing for near real-time control over the internet. 
