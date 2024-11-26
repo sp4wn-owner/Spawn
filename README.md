@@ -73,11 +73,6 @@ sudo reboot
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 ```
 
-### Install ffmpeg if you'd like to stream your robot to Twitch
-```bash
-sudo apt-get install ffmpeg
-```
-
 ### Install Node.js
 ```bash
 sudo apt-get install -y nodejs
@@ -175,6 +170,11 @@ sudo systemctl stop piclient.service
 ### Inspect logs from piclient
 ```bash
 journalctl -u piclient.service
+```
+
+### Install ffmpeg if you'd like to stream your robot to Twitch
+```bash
+sudo apt-get install ffmpeg
 ```
 
 ## Phone Robot:
