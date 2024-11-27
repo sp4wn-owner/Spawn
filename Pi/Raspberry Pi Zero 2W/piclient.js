@@ -20,7 +20,7 @@ const dutyCycle = 0; // 1 ms duty cycle (5%)
 ///////////////////////////////////
 
 
-let isPrivate = false; //This is updated by the Spawn platform which is very secure, but if you wanted to handle the password authentication yourself just change this value to true and comment out the line in the handleLogin() function that updates this value. Then change the verifyPassword() function send the password to your own custom script and return true if it matches.
+let isPrivate = false; //This is updated by the Spawn platform which is very secure, but if you wanted to handle the password authentication yourself just change this value to true and comment out the line in the handleLogin() function that updates this value. Then change the verifyPassword() function and send the password to your own custom script and return true if it matches.
 let isStreamToSpawn = false;
 let connectionTimeout;
 let profilePicture;
