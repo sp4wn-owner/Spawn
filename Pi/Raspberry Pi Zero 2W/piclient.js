@@ -8,7 +8,7 @@ const pipins = require('@sp4wn/pipins');
 
 //ENTER USERNAME AND PASSWORD HERE 
 ////////////////////////////////////
-const username = "pi_robot_2wd"; //Username should be all lowercase
+const username = "demo_bot"; //Username should be all lowercase
 const password = "";
 const twitchKey = ""; //Copy your key from Twitch stream manager
 let isStreamToTwitch = false; //Change to true if you'd like to stream to Twitch. When someone connects to your robot it will stop streaming to Twitch.
@@ -193,6 +193,10 @@ function send(message) {
  };
  
 function handleLogin(success, pic, tr, loc, des, priv, config) {
+    if (!success) {
+        console.log("User already logged in or password/username didn't match.");
+        return;
+    }
     if (success)  {
         console.log("Successfully logged in");
         configuration = config;
@@ -242,11 +246,6 @@ function handleLogin(success, pic, tr, loc, des, priv, config) {
         captureImage();
         startImageCapture(15000);
     }
-
-    if (!success) {
-        console.log("User already logged in or there was an error.");
-        stopImageCapture();
-    }
  }
 
 async function createDataChannel(type) {
@@ -280,8 +279,9 @@ function handleInputChannel(inputChannel) {
     };
 
     inputChannel.onmessage = (event) => {
-        console.log('Received input data:', event.data);
-        inputProcess.send(event.data);
+        let cmd = JSON.parse(event.data);
+        console.log(cmd);
+        inputProcess.send(cmd);
     };
 
     inputProcess.on('message', (response) => {
