@@ -4,7 +4,7 @@
 
 # [Spawn](https://sp4wn.com)
 
-Spawn acts as a middleware solution between robots and end users, facilitating the rapid deployment of custom telepresence robots/devices without the complexities of networking or communication management. 
+Spawn is a free peer-to-peer telepresence robotics platform that serves as a middleware solution between robots and end users. Its quick setup time facilitates the rapid deployment of custom telepresence robots and devices without the complexities of networking or communication management.
 
 ### Before setting up your robot, create an account on [Spawn](https://sp4wn.com) || [https://sp4wn.com](https://sp4wn.com)
 - Accounts are anonymous, but are still required to properly route traffic. Once the token system is live, we'll require 2FA and basic personal information to purchase/withdraw tokens.
@@ -22,7 +22,7 @@ Spawn acts as a middleware solution between robots and end users, facilitating t
     &nbsp;&nbsp;&nbsp;&nbsp;- Share your robot with the world or make it private so that only those with your secret code can access it. 
 
 - Monetize your telepresence robot  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Example: Peer A decides the token rate per minute for accessing their telepresence robot. Peer B is then charged this rate every minute they are connected, until they disconnect. Transform your telepresence robots into revenue-generating assets.
+    &nbsp;&nbsp;&nbsp;&nbsp;- Transform your telepresence robots into revenue-generating assets. We take 20% of token redemptions to maintain and grow the platform. Example: Peer A decides the token rate per minute for accessing their telepresence robot. Peer B is then charged this rate every minute they are connected (80% to Peer A and 20% to Spawn), until they disconnect. 
 
 ## Pi Robot:
 
