@@ -9,7 +9,7 @@ Spawn is a free peer-to-peer telepresence robotics platform that serves as a mid
 ### Before setting up your robot, create an account on [Spawn](https://sp4wn.com) || [https://sp4wn.com](https://sp4wn.com)
 - Accounts are anonymous, but are still required to properly route traffic. Since this is a p2p application, streams are securely sent through the p2p connection thus keeping sessions private and resulting in the lowest latency possible. However, in the event that a p2p connection could not be properly established, traffic will be routed through a global network of TURN servers leading to a slight increase in latency.
 
-## Features:
+## Key Features:
 
 - Quick and easy setup (no coding initially required)  
     &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running in minutes. You have full control over how to handle the received input commands. Controllers/gamepads are currently supported. In the future, we may add compatibility for VR controllers and other devices.
@@ -20,8 +20,8 @@ Spawn is a free peer-to-peer telepresence robotics platform that serves as a mid
 - Public/private access  
     &nbsp;&nbsp;&nbsp;&nbsp;- Share your robot with the world or make it private so that only those with your secret code can access it. 
 
-- Secure  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Optionally handle your own security locally thus eliminating any potential access to your device(s) in the event of a security breach on Spawn. Passwords/codes are securely hashed and all data is encrypted. No personal information is requested nor retained.
+- Security  
+    &nbsp;&nbsp;&nbsp;&nbsp;- Optionally handle your own security locally thus eliminating any potential access to your device(s) in the event of a security breach on Spawn or your own network. Passwords/codes are securely hashed and all data is encrypted. No personal information is requested nor retained.
 
 - Monetize your telepresence robot  
     &nbsp;&nbsp;&nbsp;&nbsp;- Transform your telepresence robots into revenue-generating assets. We take 20% of token redemptions to maintain and grow the platform. Example: Peer A decides the token rate per minute for accessing their telepresence robot. Peer B is then charged this rate every minute they are connected (80% to Peer A and 20% to Spawn), until they disconnect. 
