@@ -52,11 +52,11 @@ process.on('message', (cmd) => {
     try {
         const { joystickSelector, joystickX, joystickY, buttons } = cmd;
 
-        if (joystickSelector == "joystick1") {
+        if (joystickSelector == "joystick1" || joystickSelector == "joystick3") {
             handleJoystickCommands(joystickX, joystickY);
         }
 
-        if (joystickSelector == "joystick2") {
+        if (joystickSelector == "joystick2" || joystickSelector == "joystick4") {
             handleServoCommands(joystickX, joystickY);
         }
 
