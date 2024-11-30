@@ -5,13 +5,24 @@ const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('w
 const url = 'https://sp4wn-signaling-server.onrender.com';
 const pipins = require('@sp4wn/pipins');
 
-
-//ENTER USERNAME AND PASSWORD HERE 
-////////////////////////////////////
+//ENTER USERNAME AND PASSWORD HERE/// 
 const username = "demo_bot"; //Username should be all lowercase
 const password = "";
+////////////////////////////////////
+
+//SECURITY PARAMETERS////////////////
+let allowAllUsers = true; // Flag to toggle access control 
+const allowedUsers = ['user1', 'user2']; //Update this if you'd like to restrict access to specific usernames
+////////
+let allowPrivateToggle = true; //Keep this to true to be able to update 'isPrivate' from the Spawn platform || false disables automatic updates of 'isPrivate' #default is true
+let isPrivate = false; //true to disable automatic update || false to automatically update this boolean by the Spawn platform on login #default is false (no secret code required to access)
+let handleSecretCodeAuth = false; //true to handle secret code authentication on this device || false to handle on our server (allows you to update the secret code with app) #default is false
+const secretCode = ""; //Update this to set your secret code for handling authentication locally (won't be able to update with Spawn if 'handleSecretCodeAuth' is set to true)
+////////////////////////////////////
+
+//STREAMING SERVICES
 const twitchKey = ""; //Copy your key from Twitch stream manager
-let isStreamToTwitch = false; //Change to true if you'd like to stream to Twitch. When someone connects to your robot it will stop streaming to Twitch.
+let isStreamToTwitch = false; //Change to true if you'd like to stream to Twitch. When someone connects to your robot it will stop streaming to Twitch until disconnect.
 ///////////////////////////////////
 const gpioPins = [27, 22, 23, 24];
 const pwmChannels = [0, 1]; //These channels are configured in config.txt. RPI Zero 2W has two hardware PWM channels (0,1)
@@ -19,8 +30,7 @@ const period = 20000000; // 20 ms period (50 Hz)
 const dutyCycle = 0; // 1 ms duty cycle (5%)
 ///////////////////////////////////
 
-
-let isPrivate = false; //This is updated by the Spawn platform which is very secure, but if you wanted to handle the password authentication yourself just change this value to true and comment out the line in the handleLogin() function that updates this value. Then change the verifyPassword() function and send the password to your own custom script and return true if it matches.
+///Don't update the following variables unless you know what you're doing
 let isStreamToSpawn = false;
 let connectionTimeout;
 let profilePicture;
@@ -221,9 +231,10 @@ function handleLogin(success, pic, tr, loc, des, priv, config) {
         } else {
             console.log("No description");
         }
-        if(priv) {
+        if(allowPrivateToggle && priv) {
             isPrivate = priv;
-        } else {
+        }
+        else {
             console.log("No private status");
         }
 
@@ -426,8 +437,11 @@ function sendPW(message) {
       });
     });
 }
-  
+
 async function watchStream(name, pw) {
+    if (!allowAllUsers && !allowedUsers.includes(name)) {
+        return;
+    }
     if (isPrivate) {
         if (pw) {
             try {
@@ -451,22 +465,46 @@ async function watchStream(name, pw) {
 
 function verifyPassword(pw) {
     return new Promise((resolve, reject) => {
-        sendPW({
-            type: "checkPassword",
-            username: username,
-            password: pw
-        }).then(response => {
-            if (response.success) {
-                resolve(true);
-            } else {
-                reject(new Error("Password verification failed"));
-            }
-        }).catch(error => {
-            reject(error);
-        });
+        if(handleSecretCodeAuth) {
+            authenticateCode(pw).then(response => {
+                if(response.success) {
+                    resolve(true);
+                } else {
+                    reject(new Error("Secret code verification failed"));
+                }
+            }).catch(error => {
+                reject(error);
+            });
+        } else {
+            sendPW({
+                type: "checkPassword",
+                username: username,
+                password: pw
+            }).then(response => {
+                if (response.success) {
+                    resolve(true);
+                } else {
+                    reject(new Error("Password verification failed"));
+                }
+            }).catch(error => {
+                reject(error);
+            });
+        }
     });
 }
 
+async function authenticateCode(pw) {
+    try {
+        if (pw === secretCode) {
+            return { success: true };
+        } else {
+            return { success: false };
+        }
+    } catch (error) {
+        console.log("Failed to authenticate password:", error);
+        return { success: false };
+    }
+}
 
 async function iceAndOffer(name) {
     connectedUser = name;
