@@ -21,7 +21,7 @@ Spawn is a free peer-to-peer telepresence robotics platform that serves as a mid
     &nbsp;&nbsp;&nbsp;&nbsp;- Share your robot with the world or make it private so that only those with your secret code can access it. 
 
 - Secure  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Handle your own security locally thus eliminating any potential access to your device(s) in the event of a security breach on Spawn. 
+    &nbsp;&nbsp;&nbsp;&nbsp;- Optionally handle your own security locally thus eliminating any potential access to your device(s) in the event of a security breach on Spawn. Passwords/codes are securely hashed and all data is encrypted. No personal information is requested nor retained.
 
 - Monetize your telepresence robot  
     &nbsp;&nbsp;&nbsp;&nbsp;- Transform your telepresence robots into revenue-generating assets. We take 20% of token redemptions to maintain and grow the platform. Example: Peer A decides the token rate per minute for accessing their telepresence robot. Peer B is then charged this rate every minute they are connected (80% to Peer A and 20% to Spawn), until they disconnect. 
