@@ -14,10 +14,10 @@ const password = "";
 let allowAllUsers = true; // Flag to toggle access control 
 const allowedUsers = ['user1', 'user2']; //Update this if you'd like to restrict access to specific usernames
 ////////
-let allowPrivateToggle = true; //Keep this to true to be able to update 'isPrivate' from the Spawn platform || false disables automatic updates of 'isPrivate' #default is true
-let isPrivate = false; //true to disable automatic update || false to automatically update this boolean by the Spawn platform on login #default is false (no secret code required to access)
-let handleSecretCodeAuth = false; //true to handle secret code authentication on this device || false to handle on our server (allows you to update the secret code with app) #default is false
-const secretCode = ""; //Update this to set your secret code for handling authentication locally (won't be able to update with Spawn if 'handleSecretCodeAuth' is set to true)
+let allowPrivateToggle = true; //true to automatically update 'isPrivate' from the Spawn platform || false disables automatic updates of 'isPrivate' #default is true
+let isPrivate = false; //true to secure with secret code || false to allow access without secret code #default is false
+let handleSecretCodeAuth = false; //true to handle secret code authentication on this device || false to handle on our server #default is false
+const secretCode = ""; //Update this to set your secret code for handling authentication locally (won't be able to update the secret code on Spawn if 'handleSecretCodeAuth' is set to true)
 ////////////////////////////////////
 
 //STREAMING SERVICES
