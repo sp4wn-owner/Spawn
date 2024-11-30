@@ -8,6 +8,7 @@
 #include <BLEServer.h>
 #include <BLE2902.h>
 #include <ESP32Servo.h>
+#include <ArduinoJson.h>
 
 // Define the UUIDs for the service and characteristic
 #define SERVICE_UUID        "12345678-1234-1234-1234-123456789012"
@@ -57,176 +58,230 @@ class MyServerCallbacks: public BLEServerCallbacks {
   }
 };
 
+
+
+
 class MyCallbacks: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
-    value = pCharacteristic->getValue().c_str();
-    if (value.length() > 0) {      
-      String response;
-      response = "unknown command";
-      //left joystick up
-      if (value == "forward") {
-        digitalWrite(IN1, HIGH);
-        digitalWrite(IN2, LOW);
-        digitalWrite(IN3, HIGH);
-        digitalWrite(IN4, LOW);
-        response = "Moving forward";
-      } 
-      //left joystick left
-      if (value == "left") {
-        digitalWrite(IN1, LOW);
-        digitalWrite(IN2, LOW);
-        digitalWrite(IN3, HIGH);
-        digitalWrite(IN4, LOW);
-        response = "turning left";
+    std::string rawValue = pCharacteristic->getValue();
+    if (rawValue.length() > 0) {
+      DynamicJsonDocument doc(1024);
+      DeserializationError error = deserializeJson(doc, rawValue);
+
+      if (error) {
+        Serial.print(F("deserializeJson() failed: "));
+        Serial.println(error.f_str());
+        return;
       }
-      //left joystick right
-      if (value == "right") {
-        digitalWrite(IN1, HIGH);
-        digitalWrite(IN2, LOW);
-        digitalWrite(IN3, LOW);
-        digitalWrite(IN4, LOW);
-        response = "Turning right";        
-      }
-      //left joystick down
-      if (value == "reverse") {
-        digitalWrite(IN1, LOW);
-        digitalWrite(IN2, HIGH);
-        digitalWrite(IN3, LOW);
-        digitalWrite(IN4, HIGH);
-        response = "Reversing";
-      }
-      //left joystick center
-      if (value == "park") {
-        digitalWrite(IN1, LOW);
-        digitalWrite(IN2, LOW);
-        digitalWrite(IN3, LOW);
-        digitalWrite(IN4, LOW);
-        response = "In park";
-      }
-      //right joystick up
-      if (value == "rju") {
-        tiltPosition += 5; //changes servo position by this number
-        if (tiltPosition > MAX_VALUE) {
-          tiltPosition = 180;
+
+      // Ensure the JSON array has at least 4 elements
+      if (doc.size() >= 4) {
+        value = doc[3].as<const char*>();  // Access the 4th object in the JSON array
+
+        String response = "unknown command";
+        //left joystick up
+        if (value == "forward") {
+          digitalWrite(IN1, HIGH);
+          digitalWrite(IN2, LOW);
+          digitalWrite(IN3, HIGH);
+          digitalWrite(IN4, LOW);
+          response = "Moving forward";
         }
-        if (tiltPosition < MIN_VALUE) {
-          tiltPosition = 0;
-        }
-        myServoTilt.write(tiltPosition);
-        response = "tilt servo position: " + tiltPosition;
+        
+        // Print the response or take other actions as needed
+        Serial.println(response);
+      } else {
+        Serial.println(F("The JSON array does not have enough elements"));
       }
-      //right joystick left
-      if (value == "rjl") {
-        panPosition -= 5; //changes servo position by this number
-        if (panPosition > MAX_VALUE) {
-          panPosition = 180;
-        }
-        if (panPosition < MIN_VALUE) {
-          panPosition = 0;
-        }
-        myServoPan.write(panPosition);
-        response = "pan servo position: " + panPosition;
+    }
+  }
+};
+
+
+
+class MyCallbacks: public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    std::string rawValue = pCharacteristic->getValue();
+    if (rawValue.length() > 0) {
+      DynamicJsonDocument doc(1024);
+      DeserializationError error = deserializeJson(doc, rawValue);
+
+      if (error) {
+        Serial.print(F("deserializeJson() failed: "));
+        Serial.println(error.f_str());
+        return;
       }
-      //right joystick right
-      if (value == "rjr") {
-        panPosition += 5; //changes servo position by this number
-        if (panPosition > MAX_VALUE) {
-          panPosition = 180;
+
+      // Ensure the JSON array has at least 4 elements
+      if (doc.size() >= 4) {      
+        value = doc[3].as<const char*>();
+        String response;
+        response = "unknown command";
+        //left joystick up
+        if (value == "forward") {
+          digitalWrite(IN1, HIGH);
+          digitalWrite(IN2, LOW);
+          digitalWrite(IN3, HIGH);
+          digitalWrite(IN4, LOW);
+          response = "Moving forward";
+        } 
+        //left joystick left
+        if (value == "left") {
+          digitalWrite(IN1, LOW);
+          digitalWrite(IN2, LOW);
+          digitalWrite(IN3, HIGH);
+          digitalWrite(IN4, LOW);
+          response = "turning left";
         }
-        if (panPosition < MIN_VALUE) {
-          panPosition = 0;
+        //left joystick right
+        if (value == "right") {
+          digitalWrite(IN1, HIGH);
+          digitalWrite(IN2, LOW);
+          digitalWrite(IN3, LOW);
+          digitalWrite(IN4, LOW);
+          response = "Turning right";        
         }
-        myServoPan.write(panPosition);
-        response = "pan servo position: " + panPosition;
-      }
-      //right joystick down
-      if (value == "rjd") {
-        tiltPosition -= 5; //changes servo position by this number
-        if (tiltPosition > MAX_VALUE) {
-          tiltPosition = 180;
+        //left joystick down
+        if (value == "reverse") {
+          digitalWrite(IN1, LOW);
+          digitalWrite(IN2, HIGH);
+          digitalWrite(IN3, LOW);
+          digitalWrite(IN4, HIGH);
+          response = "Reversing";
         }
-        if (tiltPosition < MIN_VALUE) {
-          tiltPosition = 0;
+        //left joystick center
+        if (value == "park") {
+          digitalWrite(IN1, LOW);
+          digitalWrite(IN2, LOW);
+          digitalWrite(IN3, LOW);
+          digitalWrite(IN4, LOW);
+          response = "In park";
         }
-        myServoTilt.write(tiltPosition);
-        response = "tilt servo position: " + tiltPosition;
-      }
-      //right joystick center
-      if (value == "rjc") {
-        response = "right stick center";
-      }
-      //A button
-      if (value == "0") {
-        response = "Button pressed: A";
-      }  
-      //B button
-      if (value == "1") {
-        response = "Button pressed: B";       
-      } 
-      //X button
-      if (value == "2") {
-        response = "Button pressed: X";        
-      } 
-      //Y button
-      if (value == "3") {
-        response = "Button pressed: Y";        
-      } 
-      //L1 button
-      if (value == "4") {
-        response = "Button pressed: L1";        
-      } 
-      //R1 button
-      if (value == "5") {        
-        response = "Button pressed: R1";
-        }      
-      //L2 button
-      if (value == "6") {
-        response = "Button pressed: L2";      
-      } 
-      //R2 button
-      if (value == "7") {
-        response = "Button pressed: R2";       
-      } 
-      //Select
-      if (value == "8") {
-        response = "Button pressed: SELECT";       
-      } 
-      //Start
-      if (value == "9") {
-        response = "Button pressed: START";     
-      } 
-      //Left Joystick Pressed
-      if (value == "10") {
-        response = "Button pressed: Left Stick";       
-      } 
-      //Right Joystick Pressed
-      if (value == "11") {
-        response = "Button pressed: Right Stick";     
-      } 
-      //D-pad up
-      if (value == "12") {
-        response = "Button pressed: D-pad UP";      
-      }
-      //D-pad down
-      if (value == "13") {
-        response = "Button pressed: D-pad DOWN";  
-      } 
-      //D-pad left
-      if (value == "14") {
-        response = "Button pressed: D-pad LEFT";     
-      }
-      //D-pad right
-      if (value == "15") {
-        response = "Button pressed: D-pad RIGHT";      
-      }       
-      if (value == "off") {
-        for (int i = 0; i < numPins; i++) {
-          digitalWrite(gpioPins[i], LOW);  // Turn off each GPIO pin
+        //right joystick up
+        if (value == "rju") {
+          tiltPosition += 5; //changes servo position by this number
+          if (tiltPosition > MAX_VALUE) {
+            tiltPosition = 180;
+          }
+          if (tiltPosition < MIN_VALUE) {
+            tiltPosition = 0;
+          }
+          myServoTilt.write(tiltPosition);
+          response = "tilt servo position: " + tiltPosition;
         }
-        response = "Pins off";
+        //right joystick left
+        if (value == "rjl") {
+          panPosition -= 5; //changes servo position by this number
+          if (panPosition > MAX_VALUE) {
+            panPosition = 180;
+          }
+          if (panPosition < MIN_VALUE) {
+            panPosition = 0;
+          }
+          myServoPan.write(panPosition);
+          response = "pan servo position: " + panPosition;
+        }
+        //right joystick right
+        if (value == "rjr") {
+          panPosition += 5; //changes servo position by this number
+          if (panPosition > MAX_VALUE) {
+            panPosition = 180;
+          }
+          if (panPosition < MIN_VALUE) {
+            panPosition = 0;
+          }
+          myServoPan.write(panPosition);
+          response = "pan servo position: " + panPosition;
+        }
+        //right joystick down
+        if (value == "rjd") {
+          tiltPosition -= 5; //changes servo position by this number
+          if (tiltPosition > MAX_VALUE) {
+            tiltPosition = 180;
+          }
+          if (tiltPosition < MIN_VALUE) {
+            tiltPosition = 0;
+          }
+          myServoTilt.write(tiltPosition);
+          response = "tilt servo position: " + tiltPosition;
+        }
+        //right joystick center
+        if (value == "rjc") {
+          response = "right stick center";
+        }
+        //A button
+        if (value == "0") {
+          response = "Button pressed: A";
+        }  
+        //B button
+        if (value == "1") {
+          response = "Button pressed: B";       
+        } 
+        //X button
+        if (value == "2") {
+          response = "Button pressed: X";        
+        } 
+        //Y button
+        if (value == "3") {
+          response = "Button pressed: Y";        
+        } 
+        //L1 button
+        if (value == "4") {
+          response = "Button pressed: L1";        
+        } 
+        //R1 button
+        if (value == "5") {        
+          response = "Button pressed: R1";
+          }      
+        //L2 button
+        if (value == "6") {
+          response = "Button pressed: L2";      
+        } 
+        //R2 button
+        if (value == "7") {
+          response = "Button pressed: R2";       
+        } 
+        //Select
+        if (value == "8") {
+          response = "Button pressed: SELECT";       
+        } 
+        //Start
+        if (value == "9") {
+          response = "Button pressed: START";     
+        } 
+        //Left Joystick Pressed
+        if (value == "10") {
+          response = "Button pressed: Left Stick";       
+        } 
+        //Right Joystick Pressed
+        if (value == "11") {
+          response = "Button pressed: Right Stick";     
+        } 
+        //D-pad up
+        if (value == "12") {
+          response = "Button pressed: D-pad UP";      
+        }
+        //D-pad down
+        if (value == "13") {
+          response = "Button pressed: D-pad DOWN";  
+        } 
+        //D-pad left
+        if (value == "14") {
+          response = "Button pressed: D-pad LEFT";     
+        }
+        //D-pad right
+        if (value == "15") {
+          response = "Button pressed: D-pad RIGHT";      
+        }       
+        if (value == "off") {
+          for (int i = 0; i < numPins; i++) {
+            digitalWrite(gpioPins[i], LOW);  // Turn off each GPIO pin
+          }
+          response = "Pins off";
+        }
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
       }
-      pCharacteristic->setValue(response);
-      pCharacteristic->notify();
     }
   }
 };
