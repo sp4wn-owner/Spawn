@@ -6,7 +6,7 @@
 
 Spawn is a free peer-to-peer telepresence robotics platform that serves as a middleware solution between robots and end users. Its quick setup time facilitates the rapid deployment of custom telepresence robots and devices without the complexities of networking or communication management.
 
-### Before setting up your robot, create an account on [Spawn](https://sp4wn.com) || [https://sp4wn.com](https://sp4wn.com)
+### Before setting up your robot, create an account on [Spawn](https://sp4wn.com)
 - Accounts are anonymous, but are still required to properly route traffic. Since this is a p2p application, streams are securely sent through the p2p connection thus keeping sessions private and resulting in the lowest latency possible. However, in the event that a p2p connection could not be properly established, traffic will be routed through a global network of TURN servers leading to a slight increase in latency.
 
 ## Key Features:
@@ -107,18 +107,24 @@ sudo chmod a+rw /dev/video0
 ```bash
 wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/piclient.js
 ```
+
 ### Get the inputHandler.js script
 ```bash
 wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/inputHandler.js
 ```
 
-### Update the piclient.js file with your username/password.
+### Get the setup.js script
 ```bash
-nano piclient.js
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/setup.js
+```
+
+### Update the setup.js file with your username/password
+```bash
+nano setup.js
 ```
 CTRL+X then Y then Enter to save
 
-### Update the inputHandler.js file with your custom control commands.
+### Update the inputHandler.js file with your custom control commands
 ```bash
 nano inputHandler.js
 ```
