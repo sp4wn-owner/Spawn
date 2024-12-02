@@ -103,19 +103,9 @@ npm install node ws wrtc @sp4wn/pipins
 sudo chmod a+rw /dev/video0
 ```
 
-### Get the piclient.js script
+### Get the piclient, inputHandler, and setup scripts
 ```bash
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/piclient.js
-```
-
-### Get the inputHandler.js script
-```bash
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/inputHandler.js
-```
-
-### Get the setup.js script
-```bash
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/setup.js
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/piclient.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/inputHandler.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/setup.js
 ```
 
 ### Update the setup.js file with your username/password
@@ -124,7 +114,7 @@ nano setup.js
 ```
 CTRL+X then Y then Enter to save
 
-### Update the inputHandler.js file with your custom control commands
+### (Optional) Update the inputHandler.js file with your custom control commands
 ```bash
 nano inputHandler.js
 ```

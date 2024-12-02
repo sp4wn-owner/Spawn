@@ -4,22 +4,24 @@ const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('w
 const url = 'https://sp4wn-signaling-server.onrender.com';
 const pipins = require('@sp4wn/pipins');
 
-const {
-  username,
-  password,
-  allowAllUsers,
-  allowedUsers,
-  allowPrivateToggle,
-  isPrivate,
-  handleSecretCodeAuth,
-  secretCode,
-  twitchKey,
-  isStreamToTwitch,
-  gpioPins,
-  pwmChannels,
-  period,
-  dutyCycle
-} = require('./setup');
+const config = require('./setup');
+
+// Accessing the exported variables
+let username = config.username;
+let password = config.password;
+let allowAllUsers = config.allowAllUsers;
+let allowedUsers = config.allowedUsers;
+let allowPrivateToggle = config.allowPrivateToggle;
+let isPrivate = config.isPrivate;
+let handleSecretCodeAuth = config.handleSecretCodeAuth;
+let secretCode = config.secretCode;
+let twitchKey = config.twitchKey;
+let isStreamToTwitch = config.isStreamToTwitch;
+let gpioPins = config.gpioPins;
+let pwmChannels = config.pwmChannels;
+let period = config.period;
+let dutyCycle = config.dutyCycle;
+
 
 let isStreamToSpawn = false;
 let connectionTimeout;
