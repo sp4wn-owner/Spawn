@@ -1,5 +1,5 @@
 // ENTER USERNAME AND PASSWORD HERE
-const username = "demo_bot"; // Username should be all lowercase
+const username = "pi_robot"; // Username should be all lowercase
 const password = "";
 
 // SECURITY PARAMETERS
@@ -9,10 +9,6 @@ const allowPrivateToggle = true; // true to automatically update 'isPrivate' fro
 let isPrivate = false; // true to secure with secret code || false to allow access without secret code #default is false
 const handleSecretCodeAuth = false; // true to handle secret code authentication on this device || false to handle on our server #default is false
 const secretCode = ""; // Update this to set your secret code for handling authentication locally
-
-// STREAMING SERVICES
-const twitchKey = ""; // Copy your key from Twitch stream manager
-let isStreamToTwitch = false; // Change to true if you'd like to stream to Twitch
 
 // HARDWARE CONFIGURATION
 const gpioPins = [27, 22, 23, 24];
@@ -30,8 +26,6 @@ module.exports = {
   isPrivate,
   handleSecretCodeAuth,
   secretCode,
-  twitchKey,
-  isStreamToTwitch,
   gpioPins,
   pwmChannels,
   period,

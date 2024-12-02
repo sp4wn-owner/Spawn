@@ -7,21 +7,18 @@ const pipins = require('@sp4wn/pipins');
 const config = require('./setup');
 
 // Accessing the exported variables
-let username = config.username;
-let password = config.password;
-let allowAllUsers = config.allowAllUsers;
-let allowedUsers = config.allowedUsers;
-let allowPrivateToggle = config.allowPrivateToggle;
+const username = config.username;
+const password = config.password;
+const allowAllUsers = config.allowAllUsers;
+const allowedUsers = config.allowedUsers;
+const allowPrivateToggle = config.allowPrivateToggle;
 let isPrivate = config.isPrivate;
-let handleSecretCodeAuth = config.handleSecretCodeAuth;
-let secretCode = config.secretCode;
-let twitchKey = config.twitchKey;
-let isStreamToTwitch = config.isStreamToTwitch;
-let gpioPins = config.gpioPins;
-let pwmChannels = config.pwmChannels;
-let period = config.period;
-let dutyCycle = config.dutyCycle;
-
+const handleSecretCodeAuth = config.handleSecretCodeAuth;
+const secretCode = config.secretCode;
+const gpioPins = config.gpioPins;
+const pwmChannels = config.pwmChannels;
+const period = config.period;
+const dutyCycle = config.dutyCycle;
 
 let isStreamToSpawn = false;
 let connectionTimeout;
@@ -37,6 +34,7 @@ let videoChannel;
 let intervalIds = [];
 let connectedUser;
 let configuration;
+let isStartingStream = false;
 
 async function startWebRTC() {
     console.log('Starting WebRTC client...');
@@ -75,9 +73,6 @@ async function startWebRTC() {
                 break;
             case 'completed':
                 console.log('ICE Connection is completed.');
-                if(!isStreamToTwitch) {
-                    startStream();
-                }
                 break;
             case 'failed':
                 console.log("peer connection failed");   
@@ -184,7 +179,7 @@ async function initializeSignalingAndStartCapture() {
     }
 
     if (signalingSocket.readyState === WebSocket.OPEN) {
-        console.log("Connected to signaling server");        
+        //console.log("Connected to signaling server");        
     } else {
         console.error("Failed to connect to signaling server.");
     }
@@ -243,9 +238,6 @@ function handleLogin(success, pic, tr, loc, des, priv, config) {
             pipins.enablePwm(pin);
             console.log(`PWM pin ${pin} enabled`);
         });
-        if(isStreamToTwitch) {
-            startStream();
-        }
         captureImage();
         startImageCapture(15000);
     }
@@ -256,7 +248,7 @@ async function createDataChannel(type) {
 
     try {
         dataChannel = peerConnection.createDataChannel(type);
-        console.log(`Data channel "${type}" created successfully.`);
+        //console.log(`Data channel "${type}" created successfully.`);
     } catch (error) {
         console.error(`Failed to create ${type} data channel:`, error);
         return; 
@@ -322,8 +314,13 @@ let ffmpeg = null;
 const delayBeforeOpening = 0; 
 
 function startStream() {
+    if(isStartingStream) {
+        return;
+    }
 
     function startCameraStream() {
+        console.log("starting camera");
+        isStartingStream = true;
 
         setTimeout(() => {
             v4l2Process = spawn('v4l2-ctl', [
@@ -331,31 +328,9 @@ function startStream() {
                 '--stream-to=-',
                 '--device=/dev/video0',
                 '--set-fmt-video=width=640,height=480,pixelformat=H264',
-            ]);        
-
-            if (isStreamToTwitch) {
-                console.log("Starting Twitch stream");
-                ffmpeg = spawn('ffmpeg', [
-                    '-re',
-                    '-i', 'pipe:0',
-                    '-c:v', 'copy',
-                    '-f', 'flv',
-                    `rtmp://live.twitch.tv/app/${twitchKey}`
-                  ]);
-            }            
+            ]);            
 
             v4l2Process.stdout.on('data', (chunk) => {
-
-                if (isStreamToTwitch && ffmpeg && ffmpeg.stdin.writable) {
-                    if (isStreamToTwitch && ffmpeg && ffmpeg.stdin.writable) {
-                        try {
-                          ffmpeg.stdin.write(chunk);
-                        } catch (error) {
-                          console.error('FFmpeg write error:', error);
-                          ffmpeg.stdin.end();
-                        }
-                    }
-                }
           
                 if (isStreamToSpawn) {
                   if (videoChannel && videoChannel.readyState === "open") {
@@ -398,7 +373,7 @@ function startImageCapture(interval) {
       captureImage(); 
     }, interval);
    intervalIds.push(intervalId);
-   console.log(`Started image capture interval #${intervalIds.length - 1}`);
+   //console.log(`Started image capture interval #${intervalIds.length - 1}`);
 }
 
 function stopImageCapture() {
@@ -406,7 +381,7 @@ function stopImageCapture() {
        clearInterval(intervalIds.pop());
        deletelive();
    }
-   console.log("All image captures terminated.");
+   //console.log("All image captures terminated.");
 }
 
 const EventEmitter = require('events');
@@ -502,7 +477,6 @@ async function iceAndOffer(name) {
     connectedUser = name;
     stopImageCapture();
     isStreamToSpawn = true;
-    isStreamToTwitch = false;
     if (peerConnection) {
         const iceState = peerConnection.iceConnectionState;
         if (iceState === "connected" || iceState === "completed") {
