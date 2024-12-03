@@ -4,7 +4,7 @@ const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('w
 const url = 'https://sp4wn-signaling-server.onrender.com';
 const pipins = require('@sp4wn/pipins');
 
-const config = require('./setup');
+const config = require('./config');
 
 // Accessing the exported variables
 const username = config.username;
