@@ -405,6 +405,24 @@ function sendPW(message) {
     });
 }
 
+function checkUserTokenBalance(message) {
+    return new Promise((resolve, reject) => {
+      signalingSocket.send(JSON.stringify(message), (error) => {
+        if (error) {
+          reject(error);
+        }
+      });
+  
+      messageEmitter.once('balanceChecked', (response) => {
+        try {
+          resolve(response);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+}
+
 async function watchStream(name, pw) {
     if (!allowAllUsers && !allowedUsers.includes(name)) {
         return;
@@ -414,7 +432,16 @@ async function watchStream(name, pw) {
             try {
                 const isValid = await verifyPassword(pw);
                 if (isValid) {
-                    iceAndOffer(name);
+                    if(tokenrate > 0) {
+                        const isBalanceAvailable = await checkTokenBalance(name);
+                        if(isBalanceAvailable) {
+                            iceAndOffer(name);
+                        } else{
+                            console.log("User attempted to connect with valid password, but their balance was too low");
+                        }
+                    } else {
+                        iceAndOffer(name);
+                    }
                 } else {
                     console.log("Password not authenticated");
                 }
@@ -428,6 +455,24 @@ async function watchStream(name, pw) {
     } else {
         iceAndOffer(name);
     }
+}
+
+function checkTokenBalance(name) {
+    return new Promise((resolve, reject) => {
+        checkUserTokenBalance({
+            type: "checkTokenBalance",
+            username: name,
+            tokenrate: tokenrate
+        }).then(response => {
+            if (response.success) {
+                resolve(true);
+            } else {
+                reject(new Error("Balance check failed"));
+            }
+        }).catch(error => {
+            reject(error);
+        });
+    });
 }
 
 function verifyPassword(pw) {
@@ -526,7 +571,7 @@ async function captureImage() {
             botdevicetype: botdevicetype,
             private: isPrivate
         });
-        console.log("Sent image to server");        
+       // console.log("Sent image to server");        
     } catch (error) {
         console.log("Failed to process and send image to server", error);
     }
