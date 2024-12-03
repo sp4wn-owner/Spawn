@@ -73,6 +73,7 @@ async function startWebRTC() {
                 break;
             case 'completed':
                 console.log('ICE Connection is completed.');
+                startStream();
                 break;
             case 'failed':
                 console.log("peer connection failed");   
@@ -310,7 +311,6 @@ function handleVideoChannel(videoChannel) {
 }
 
 let v4l2Process = null;
-let ffmpeg = null;
 const delayBeforeOpening = 0; 
 
 function startStream() {
@@ -361,27 +361,26 @@ function deletelive() {
     send({
         type: "updatelive",
         username: username
-     });
+    });
 }
 
 function startImageCapture(interval) {
     if(intervalIds) {
         stopImageCapture();
     }
-   
-   const intervalId = setInterval(() => {
+    const intervalId = setInterval(() => {
       captureImage(); 
     }, interval);
-   intervalIds.push(intervalId);
-   //console.log(`Started image capture interval #${intervalIds.length - 1}`);
+    intervalIds.push(intervalId);
+    //console.log(`Started image capture interval #${intervalIds.length - 1}`);
 }
 
 function stopImageCapture() {
-   while (intervalIds.length > 0) {
+    while (intervalIds.length > 0) {
        clearInterval(intervalIds.pop());
        deletelive();
-   }
-   //console.log("All image captures terminated.");
+    }
+    //console.log("All image captures terminated.");
 }
 
 const EventEmitter = require('events');
@@ -519,15 +518,15 @@ async function authenticateCode(pw) {
 }
 
 async function iceAndOffer(name) {
-    connectedUser = name;
-    stopImageCapture();
-    isStreamToSpawn = true;
     if (peerConnection) {
         const iceState = peerConnection.iceConnectionState;
         if (iceState === "connected" || iceState === "completed") {
             return;
         } else {
             try {
+                connectedUser = name;
+                stopImageCapture();
+                isStreamToSpawn = true;
                 await createOffer();
                 console.log("Offer created and sent");
             } catch (error) {
@@ -589,7 +588,6 @@ function endScript() {
         pipins.unexportPwm(pin);
         console.log(`PWM channel unexported on exit`);
     });
-    
     process.exit(0);
 }
 
