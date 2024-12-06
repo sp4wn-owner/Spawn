@@ -6,7 +6,6 @@ const pipins = require('@sp4wn/pipins');
 
 const config = require('./config');
 
-// Accessing the exported variables
 const username = config.username;
 const password = config.password;
 const allowAllUsers = config.allowAllUsers;
@@ -91,6 +90,11 @@ async function connectToSignalingServer() {
     return new Promise((resolve, reject) => {
         signalingSocket = new WebSocket(url);
 
+        connectionTimeout = setTimeout(() => {
+            signalingSocket.close();
+            reject(new Error('Connection timed out'));
+        }, 5000);
+
         signalingSocket.onopen = () => {
             clearTimeout(connectionTimeout);
             send({
@@ -104,8 +108,8 @@ async function connectToSignalingServer() {
         signalingSocket.onmessage = async (event) => {
             const message = JSON.parse(event.data);
             messageEmitter.emit(message.type, message);
-            switch (message.type) {
 
+            switch (message.type) {
                 case "authenticated":
                     handleLogin(message.success, message.pic, message.tokenrate, message.location, message.description, message.priv, message.configuration);
                     resolve();
@@ -155,36 +159,43 @@ async function connectToSignalingServer() {
         };
 
         signalingSocket.onclose = () => {
+            clearTimeout(connectionTimeout);
             console.log('Disconnected from signaling server');
-            reject(new Error('WebSocket closed unexpectedly')); 
+            reject(new Error('WebSocket closed unexpectedly'));
             cleanup();
         };
 
         signalingSocket.onerror = (error) => {
+            clearTimeout(connectionTimeout);
             console.error('WebSocket error:', error);
-            reject(error); 
+            reject(error);
             cleanup();
         };
     });
 }
 
 async function initializeSignalingAndStartCapture() {
-    if (!signalingSocket || signalingSocket.readyState !== WebSocket.OPEN) {
-        console.log("Connecting to signaling server...");
-        connectionTimeout = setTimeout(() => {
-            console.log('Connection timed out after 15 seconds');
-            cleanup();
-          }, 15000);
-    
-        await connectToSignalingServer(); 
-    }
+    while (true) {
+        if (!signalingSocket || signalingSocket.readyState !== WebSocket.OPEN) {
+            console.log("Connecting to signaling server...");
 
-    if (signalingSocket.readyState === WebSocket.OPEN) {
-        //console.log("Connected to signaling server");        
-    } else {
-        console.error("Failed to connect to signaling server.");
+            try {
+                await connectToSignalingServer();
+                if (signalingSocket.readyState === WebSocket.OPEN) {
+                    console.log("Connected to signaling server");
+                    return;
+                }
+            } catch (error) {
+                console.error("Failed to connect to signaling server:", error);
+                await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+        } else {
+            console.log("Already connected to signaling server");
+            return;
+        }
     }
 }
+
 
 function send(message) {
     signalingSocket.send(JSON.stringify(message));

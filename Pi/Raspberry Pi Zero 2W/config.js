@@ -1,9 +1,9 @@
 // ENTER USERNAME AND PASSWORD HERE
-const username = "pi_robot"; // Username should be all lowercase
+const username = ""; // Username should be all lowercase
 const password = "";
 
 // SECURITY PARAMETERS
-const allowAllUsers = true; // Flag to toggle access control #default is true
+const allowAllUsers = true; // true to allow all users to connect to your robot || false to only allow users specified in 'allowedUsers' #default is true
 const allowedUsers = ['user1', 'user2']; // Update this if you'd like to restrict access to specific usernames
 const allowPrivateToggle = true; // true to automatically update 'isPrivate' from the Spawn platform || false disables automatic updates of 'isPrivate' #default is true
 let isPrivate = false; // true to secure with secret code || false to allow access without secret code #default is false
