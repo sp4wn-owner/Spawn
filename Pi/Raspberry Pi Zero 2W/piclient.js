@@ -275,6 +275,7 @@ async function createDataChannel(type) {
     }
 }
 
+let handlingCMD = false;
 function handleInputChannel(inputChannel) {
     const inputProcess = spawn('node', ['inputHandler.js'], {
         stdio: ['pipe', 'pipe', 'pipe', 'ipc']
@@ -286,13 +287,17 @@ function handleInputChannel(inputChannel) {
     };
 
     inputChannel.onmessage = (event) => {
-        let cmd = JSON.parse(event.data);
-        console.log(cmd);
-        inputProcess.send(cmd);
+        if(!handlingCMD) {
+            handlingCMD = true;
+            let cmd = JSON.parse(event.data);
+            console.log(cmd);
+            inputProcess.send(cmd);
+        }
     };
 
     inputProcess.on('message', (response) => {
         console.log(`Message from input process: ${response}`);
+        handlingCMD = false;
         inputChannel.send(response);
     });
 
