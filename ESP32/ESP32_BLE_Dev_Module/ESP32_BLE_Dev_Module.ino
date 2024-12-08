@@ -32,8 +32,10 @@ Servo myServoPan;
 Servo myServoTilt;
 int servoPanPin = 25;
 int servoTiltPin = 33; 
-int panPosition;
-int tiltPosition;
+bool handlingCMD = false;
+const int deadZone = 10; // Adjust as needed
+int tiltPosition = 90; // Initial servo position
+int panPosition = 90; // Initial servo position
 
 BLECharacteristic *pCharacteristic;
 bool deviceConnected = false;
@@ -46,7 +48,7 @@ class MyServerCallbacks: public BLEServerCallbacks {
 
   void onDisconnect(BLEServer* pServer) {
     for (int i = 0; i < numPins; i++) {
-        digitalWrite(gpioPins[i], LOW);  // Turn off each GPIO pin
+        digitalWrite(gpioPins[i], LOW);
     }
     deviceConnected = false;
     resetBLE(pServer);
@@ -58,231 +60,199 @@ class MyServerCallbacks: public BLEServerCallbacks {
   }
 };
 
-
-
-
 class MyCallbacks: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
-    std::string rawValue = pCharacteristic->getValue();
-    if (rawValue.length() > 0) {
-      DynamicJsonDocument doc(1024);
-      DeserializationError error = deserializeJson(doc, rawValue);
+    if (!handlingCMD) {
+      std::string rawValue = pCharacteristic->getValue();
+      if (rawValue.length() > 0) {
+        DynamicJsonDocument doc(1024);
+        DeserializationError error = deserializeJson(doc, rawValue);
 
-      if (error) {
-        Serial.print(F("deserializeJson() failed: "));
-        Serial.println(error.f_str());
-        return;
-      }
-
-      // Ensure the JSON array has at least 4 elements
-      if (doc.size() >= 4) {
-        value = doc[3].as<const char*>();  // Access the 4th object in the JSON array
-
-        String response = "unknown command";
-        //left joystick up
-        if (value == "forward") {
-          digitalWrite(IN1, HIGH);
-          digitalWrite(IN2, LOW);
-          digitalWrite(IN3, HIGH);
-          digitalWrite(IN4, LOW);
-          response = "Moving forward";
+        if (error) {
+          Serial.print(F("deserializeJson() failed: "));
+          Serial.println(error.f_str());
+          return;
         }
-        
-        // Print the response or take other actions as needed
-        Serial.println(response);
-      } else {
-        Serial.println(F("The JSON array does not have enough elements"));
+
+        if (doc.containsKey("joystickSelector") && doc.containsKey("joystickX") && doc.containsKey("joystickY") && doc.containsKey("buttons")) {
+          const char* joystickSelector = doc["joystickSelector"];
+          float joystickX = doc["joystickX"];
+          float joystickY = doc["joystickY"];
+          JsonArray buttons = doc["buttons"];
+
+          String response = "unknown command";
+
+          if (strcmp(joystickSelector, "joystick1") == 0 || strcmp(joystickSelector, "joystick3") == 0) {
+            handleJoystickCommands(joystickX, joystickY, response);
+          }
+
+          if (strcmp(joystickSelector, "joystick2") == 0 || strcmp(joystickSelector, "joystick4") == 0) {
+            handleServoCommands(joystickX, joystickY, response);
+          }
+
+          if (!buttons.isNull()) {
+            handleButtonCommands(buttons, response);
+          }
+
+          Serial.println(response);
+        } else {
+          Serial.println(F("The JSON object does not have the required fields"));
+        }
       }
     }
   }
-};
 
+  void handleJoystickCommands(float joystickX, float joystickY, String &response) {
+    String command;
 
+    if (joystickY > 0.5) {
+      command = "reverse";
+    } else if (joystickY < -0.5) {
+      command = "forward";
+    } else if (joystickX > 0.5) {
+      command = "right";
+    } else if (joystickX < -0.5) {
+      command = "left";
+    } else if (abs(joystickX) < deadZone && abs(joystickY) < deadZone) {
+      command = "park";
+    }
 
-class MyCallbacks: public BLECharacteristicCallbacks {
-  void onWrite(BLECharacteristic *pCharacteristic) {
-    std::string rawValue = pCharacteristic->getValue();
-    if (rawValue.length() > 0) {
-      DynamicJsonDocument doc(1024);
-      DeserializationError error = deserializeJson(doc, rawValue);
+    if (command == "forward") {
+      moveForward();
+      response = "Moving forward";
+    } else if (command == "left") {
+      turnLeft();
+      response = "Turning left";
+    } else if (command == "right") {
+      turnRight();
+      response = "Turning right";
+    } else if (command == "reverse") {
+      reverse();
+      response = "Reversing";
+    } else if (command == "park") {
+      park();
+      response = "In park";
+    } else {
+      response = "Unknown joystick command";
+    }
+  }
 
-      if (error) {
-        Serial.print(F("deserializeJson() failed: "));
-        Serial.println(error.f_str());
-        return;
-      }
+  void handleServoCommands(float joystickX, float joystickY, String &response) {
+    String servoCommand;
 
-      // Ensure the JSON array has at least 4 elements
-      if (doc.size() >= 4) {      
-        value = doc[3].as<const char*>();
-        String response;
-        response = "unknown command";
-        //left joystick up
-        if (value == "forward") {
-          digitalWrite(IN1, HIGH);
-          digitalWrite(IN2, LOW);
-          digitalWrite(IN3, HIGH);
-          digitalWrite(IN4, LOW);
-          response = "Moving forward";
-        } 
-        //left joystick left
-        if (value == "left") {
-          digitalWrite(IN1, LOW);
-          digitalWrite(IN2, LOW);
-          digitalWrite(IN3, HIGH);
-          digitalWrite(IN4, LOW);
-          response = "turning left";
-        }
-        //left joystick right
-        if (value == "right") {
-          digitalWrite(IN1, HIGH);
-          digitalWrite(IN2, LOW);
-          digitalWrite(IN3, LOW);
-          digitalWrite(IN4, LOW);
-          response = "Turning right";        
-        }
-        //left joystick down
-        if (value == "reverse") {
-          digitalWrite(IN1, LOW);
-          digitalWrite(IN2, HIGH);
-          digitalWrite(IN3, LOW);
-          digitalWrite(IN4, HIGH);
-          response = "Reversing";
-        }
-        //left joystick center
-        if (value == "park") {
-          digitalWrite(IN1, LOW);
-          digitalWrite(IN2, LOW);
-          digitalWrite(IN3, LOW);
-          digitalWrite(IN4, LOW);
-          response = "In park";
-        }
-        //right joystick up
-        if (value == "rju") {
-          tiltPosition += 5; //changes servo position by this number
-          if (tiltPosition > MAX_VALUE) {
-            tiltPosition = 180;
-          }
-          if (tiltPosition < MIN_VALUE) {
-            tiltPosition = 0;
-          }
-          myServoTilt.write(tiltPosition);
-          response = "tilt servo position: " + tiltPosition;
-        }
-        //right joystick left
-        if (value == "rjl") {
-          panPosition -= 5; //changes servo position by this number
-          if (panPosition > MAX_VALUE) {
-            panPosition = 180;
-          }
-          if (panPosition < MIN_VALUE) {
-            panPosition = 0;
-          }
-          myServoPan.write(panPosition);
-          response = "pan servo position: " + panPosition;
-        }
-        //right joystick right
-        if (value == "rjr") {
-          panPosition += 5; //changes servo position by this number
-          if (panPosition > MAX_VALUE) {
-            panPosition = 180;
-          }
-          if (panPosition < MIN_VALUE) {
-            panPosition = 0;
-          }
-          myServoPan.write(panPosition);
-          response = "pan servo position: " + panPosition;
-        }
-        //right joystick down
-        if (value == "rjd") {
-          tiltPosition -= 5; //changes servo position by this number
-          if (tiltPosition > MAX_VALUE) {
-            tiltPosition = 180;
-          }
-          if (tiltPosition < MIN_VALUE) {
-            tiltPosition = 0;
-          }
-          myServoTilt.write(tiltPosition);
-          response = "tilt servo position: " + tiltPosition;
-        }
-        //right joystick center
-        if (value == "rjc") {
-          response = "right stick center";
-        }
-        //A button
-        if (value == "0") {
-          response = "Button pressed: A";
-        }  
-        //B button
-        if (value == "1") {
-          response = "Button pressed: B";       
-        } 
-        //X button
-        if (value == "2") {
-          response = "Button pressed: X";        
-        } 
-        //Y button
-        if (value == "3") {
-          response = "Button pressed: Y";        
-        } 
-        //L1 button
-        if (value == "4") {
-          response = "Button pressed: L1";        
-        } 
-        //R1 button
-        if (value == "5") {        
-          response = "Button pressed: R1";
-          }      
-        //L2 button
-        if (value == "6") {
-          response = "Button pressed: L2";      
-        } 
-        //R2 button
-        if (value == "7") {
-          response = "Button pressed: R2";       
-        } 
-        //Select
-        if (value == "8") {
-          response = "Button pressed: SELECT";       
-        } 
-        //Start
-        if (value == "9") {
-          response = "Button pressed: START";     
-        } 
-        //Left Joystick Pressed
-        if (value == "10") {
-          response = "Button pressed: Left Stick";       
-        } 
-        //Right Joystick Pressed
-        if (value == "11") {
-          response = "Button pressed: Right Stick";     
-        } 
-        //D-pad up
-        if (value == "12") {
-          response = "Button pressed: D-pad UP";      
-        }
-        //D-pad down
-        if (value == "13") {
-          response = "Button pressed: D-pad DOWN";  
-        } 
-        //D-pad left
-        if (value == "14") {
-          response = "Button pressed: D-pad LEFT";     
-        }
-        //D-pad right
-        if (value == "15") {
-          response = "Button pressed: D-pad RIGHT";      
-        }       
-        if (value == "off") {
-          for (int i = 0; i < numPins; i++) {
-            digitalWrite(gpioPins[i], LOW);  // Turn off each GPIO pin
-          }
-          response = "Pins off";
-        }
-        pCharacteristic->setValue(response);
-        pCharacteristic->notify();
+    if (joystickY > 0.5) {
+      servoCommand = "down";
+    } else if (joystickY < -0.5) {
+      servoCommand = "up";
+    } else if (joystickX > 0.5) {
+      servoCommand = "right";
+    } else if (joystickX < -0.5) {
+      servoCommand = "left";
+    } else if (abs(joystickX) < deadZone && abs(joystickY) < deadZone) {
+      servoCommand = "neutral";
+    }
+
+    if (servoCommand == "up") {
+      tiltPosition = min(MAX_VALUE, tiltPosition + 5);
+      response = "Servo: Moving up";
+    } else if (servoCommand == "down") {
+      tiltPosition = max(MIN_VALUE, tiltPosition - 5);
+      response = "Servo: Moving down";
+    } else if (servoCommand == "right") {
+      panPosition = min(MAX_VALUE, panPosition + 5);
+      response = "Servo: Moving right";
+    } else if (servoCommand == "left") {
+      panPosition = max(MIN_VALUE, panPosition - 5);
+      response = "Servo: Moving left";
+    } else if (servoCommand == "neutral") {
+      response = "Servo: Neutral position";
+    } else {
+      response = "Servo: unknown command";
+    }
+  }
+
+  void handleButtonCommands(JsonArray buttons, String &response) {
+    for (JsonVariant button : buttons) {
+      if (button == "0") {
+        response = "Button pressed: A";
+      } else if (button == "1") {
+        response = "Button pressed: B";
+      } else if (button == "2") {
+        response = "Button pressed: X";
+      } else if (button == "3") {
+        response = "Button pressed: Y";
+      } else if (button == "4") {
+        response = "Button pressed: L1";
+      } else if (button == "5") {
+        response = "Button pressed: R1";
+      } else if (button == "6") {
+        response = "Button pressed: L2";
+      } else if (button == "7") {
+        response = "Button pressed: R2";
+      } else if (button == "8") {
+        response = "Button pressed: SELECT";
+      } else if (button == "9") {
+        response = "Button pressed: START";
+      } else if (button == "10") {
+        response = "Button pressed: Left Stick";
+      } else if (button == "11") {
+        response = "Button pressed: Right Stick";
+      } else if (button == "12") {
+        moveForward();
+        response = "Moving forward";
+      } else if (button == "13") {
+        reverse();
+        response = "Reversing";
+      } else if (button == "14") {
+        turnLeft();
+        response = "Turning left";
+      } else if (button == "15") {
+        turnRight();
+        response = "Turning right";
+      } else if (button == "16") {
+        park();
+        response = "In park";
+      } else if (button == "off") {
+        response = "Pins off";
+      } else {
+        response = "unknown button command";
       }
     }
+  }
+
+  void moveForward() {
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+  }
+
+  void turnLeft() {
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+  }
+
+  void turnRight() {
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
+  }
+
+  void reverse() {
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
+  }
+
+  void park() {
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, LOW);
   }
 };
 
