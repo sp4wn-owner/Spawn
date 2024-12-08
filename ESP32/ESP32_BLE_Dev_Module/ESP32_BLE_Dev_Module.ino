@@ -64,7 +64,8 @@ class MyCallbacks: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     if (!handlingCMD) {
       handlingCMD = true;
-      std::string rawValue = pCharacteristic->getValue();
+      String response = "unknown command";
+      std::string rawValue = std::string(pCharacteristic->getValue().c_str());
       if (rawValue.length() > 0) {
         DynamicJsonDocument doc(1024);
         DeserializationError error = deserializeJson(doc, rawValue);
@@ -80,8 +81,6 @@ class MyCallbacks: public BLECharacteristicCallbacks {
           float joystickX = doc["joystickX"];
           float joystickY = doc["joystickY"];
           JsonArray buttons = doc["buttons"];
-
-          String response = "unknown command";
 
           if (strcmp(joystickSelector, "joystick1") == 0 || strcmp(joystickSelector, "joystick3") == 0) {
             handleJoystickCommands(joystickX, joystickY, response);
