@@ -62,11 +62,12 @@ class MyServerCallbacks: public BLEServerCallbacks {
 
 class MyCallbacks: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
+    Serial.print(F("received cmd"));
     if (!handlingCMD) {
       handlingCMD = true;
-      String response = "unknown command";
       std::string rawValue = std::string(pCharacteristic->getValue().c_str());
       if (rawValue.length() > 0) {
+        String response = "unknown command";
         DynamicJsonDocument doc(1024);
         DeserializationError error = deserializeJson(doc, rawValue);
 
@@ -98,10 +99,10 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         } else {
           Serial.println(F("The JSON object does not have the required fields"));
         }
+        pCharacteristic->setValue(response);
+        pCharacteristic->notify();
+        handlingCMD = false;
       }
-      pCharacteristic->setValue(response);
-      pCharacteristic->notify();
-      handlingCMD = false;
     }
   }
 
