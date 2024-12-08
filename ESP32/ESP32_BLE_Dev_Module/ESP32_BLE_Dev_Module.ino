@@ -63,6 +63,7 @@ class MyServerCallbacks: public BLEServerCallbacks {
 class MyCallbacks: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     if (!handlingCMD) {
+      handlingCMD = true;
       std::string rawValue = pCharacteristic->getValue();
       if (rawValue.length() > 0) {
         DynamicJsonDocument doc(1024);
@@ -99,6 +100,9 @@ class MyCallbacks: public BLECharacteristicCallbacks {
           Serial.println(F("The JSON object does not have the required fields"));
         }
       }
+      pCharacteristic->setValue(response);
+      pCharacteristic->notify();
+      handlingCMD = false;
     }
   }
 
