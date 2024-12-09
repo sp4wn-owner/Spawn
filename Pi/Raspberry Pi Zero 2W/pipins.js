@@ -52,7 +52,15 @@ function exportPwm(pwmChannel, callback) {
 function setPwmPeriod(pwmChannel, period, callback) {
   const periodPath = pwmPath + `pwm${pwmChannel}/period`;
   if (fs.existsSync(periodPath)) {
-    runCommand(`echo ${period} > ${periodPath}`, callback); // Set the period in nanoseconds
+    runCommand(`echo 0 > ${pwmPath}pwm${pwmChannel}/duty_cycle`, (err) => { // Set duty cycle to 0 before changing period
+      if (err) {
+        console.error(`Error setting duty cycle to 0 for PWM channel ${pwmChannel}:`, err.message);
+        if (callback) callback(err);
+        return;
+      }
+
+      runCommand(`echo ${period} > ${periodPath}`, callback); // Set the period in nanoseconds
+    });
   } else {
     console.error(`Error: PWM channel ${pwmChannel} not exported`);
     if (callback) callback(new Error(`PWM channel ${pwmChannel} not exported`));

@@ -238,18 +238,62 @@ function handleLogin(success, pic, tr, loc, des, priv, config) {
         }
 
         gpioPins.forEach(pin => {
-            pipins.exportPin(pin);
-            pipins.setPinDirection(pin, 'out');
-            pipins.writePinValue(pin, 0);
-            console.log(`GPIO pin ${pin} set as OUTPUT`);
+        pipins.exportPin(pin, (err) => {
+            if (err) {
+            console.error(`Error exporting GPIO pin ${pin}:`, err);
+            return;
+            }
+
+            pipins.setPinDirection(pin, 'out', (err) => {
+            if (err) {
+                console.error(`Error setting direction for GPIO pin ${pin}:`, err);
+                return;
+            }
+
+            pipins.writePinValue(pin, 0, (err) => {
+                if (err) {
+                console.error(`Error writing value to GPIO pin ${pin}:`, err);
+                return;
+                }
+
+                console.log(`GPIO pin ${pin} set as OUTPUT`);
+            });
+            });
         });
+        });
+
         pwmChannels.forEach(pin => {
-            pipins.exportPwm(pin);
-            pipins.setPwmPeriod(pin, period);
-            pipins.setPwmDutyCycle(pin, dutyCycle);
-            pipins.enablePwm(pin);
-            console.log(`PWM pin ${pin} enabled`);
+        pipins.exportPwm(pin, (err) => {
+            if (err) {
+            console.error(`Error exporting PWM channel ${pin}:`, err);
+            return;
+            }
+
+            pipins.setPwmPeriod(pin, period, (err) => {
+            if (err) {
+                console.error(`Error setting period for PWM channel ${pin}:`, err);
+                return;
+            }
+
+            pipins.setPwmDutyCycle(pin, dutyCycle, (err) => {
+                if (err) {
+                console.error(`Error setting duty cycle for PWM channel ${pin}:`, err);
+                return;
+                }
+
+                pipins.enablePwm(pin, (err) => {
+                if (err) {
+                    console.error(`Error enabling PWM channel ${pin}:`, err);
+                    return;
+                }
+
+                console.log(`PWM pin ${pin} enabled`);
+                });
+            });
+            });
         });
+        });
+
         captureImage();
         startImageCapture(15000);
     }
