@@ -6,7 +6,7 @@ const BASE_OFFSET = 512; // Define the base offset
 
 // Helper function to run commands with elevated permissions
 function runCommand(command, callback) {
-  exec(`sudo ${command}`, (err, stdout, stderr) => {
+  exec(`echo ${command} | sudo tee`, (err, stdout, stderr) => {
     if (err) {
       console.error(`Error running command "${command}":`, stderr);
     }
