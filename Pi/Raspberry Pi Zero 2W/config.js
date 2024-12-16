@@ -6,9 +6,10 @@ const password = "";
 const allowAllUsers = true; // true to allow all users to connect to your robot || false to only allow users specified in 'allowedUsers' #default is true
 const allowedUsers = ['user1', 'user2']; // Update this if you'd like to restrict access to specific usernames
 const allowPrivateToggle = true; // true to automatically update 'isPrivate' from the Spawn platform || false disables automatic updates of 'isPrivate' #default is true
-let isPrivate = false; // true to secure with secret code || false to allow access without secret code #default is false
+const isPrivate = false; // true to secure with secret code || false to allow access without secret code #default is false
 const handleSecretCodeAuth = false; // true to handle secret code authentication on this device || false to handle on our server #default is false
-const secretCode = ""; // Update this to set your secret code for handling authentication locally
+const secretCode = ""; // update this to set your secret code for handling authentication locally
+const isVisible = true; //true to add your robot to the public live feed || false prevents your robot from showing up in the public live feed. You'll need to follow your robot to see it in the feed (in this example your username doubles as a private key). To access on Spawn go to https://sp4wn.com/[username]
 
 // HARDWARE CONFIGURATION
 const gpioPins = [27, 22, 23, 24];
@@ -26,6 +27,7 @@ module.exports = {
   isPrivate,
   handleSecretCodeAuth,
   secretCode,
+  isVisible,
   gpioPins,
   pwmChannels,
   period,

@@ -12,6 +12,8 @@ const allowAllUsers = config.allowAllUsers;
 const allowedUsers = config.allowedUsers;
 const allowPrivateToggle = config.allowPrivateToggle;
 let isPrivate = config.isPrivate;
+//const isVisible = config.isVisible;
+const isVisible = false;
 const handleSecretCodeAuth = config.handleSecretCodeAuth;
 const secretCode = config.secretCode;
 const gpioPins = config.gpioPins;
@@ -628,7 +630,8 @@ async function captureImage() {
             location: location,
             description: description,
             botdevicetype: botdevicetype,
-            private: isPrivate
+            private: isPrivate,
+            visible: isVisible
         });
        // console.log("Sent image to server");        
     } catch (error) {
