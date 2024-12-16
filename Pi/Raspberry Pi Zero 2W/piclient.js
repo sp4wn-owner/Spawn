@@ -14,7 +14,8 @@ const allowPrivateToggle = config.allowPrivateToggle;
 let isPrivate = config.isPrivate;
 const handleSecretCodeAuth = config.handleSecretCodeAuth;
 const secretCode = config.secretCode;
-const isVisible = config.isVisible;
+const allowVisibilityToggle = config.allowVisibilityToggle;
+let isVisible = config.isVisible;
 const gpioPins = config.gpioPins;
 const pwmChannels = config.pwmChannels;
 const period = config.period;
@@ -202,7 +203,7 @@ function send(message) {
     signalingSocket.send(JSON.stringify(message));
  };
  
-function handleLogin(success, pic, tr, loc, des, priv, config) {
+function handleLogin(success, pic, tr, loc, des, priv, config, visibility) {
     if (!success) {
         console.log("User already logged in or password/username didn't match.");
         return;
@@ -233,6 +234,9 @@ function handleLogin(success, pic, tr, loc, des, priv, config) {
         }
         if(allowPrivateToggle && priv) {
             isPrivate = priv;
+        }
+        if(allowVisibilityToggle && visibility) {
+            isVisible = visibility;
         }
         else {
             console.log("No private status");
