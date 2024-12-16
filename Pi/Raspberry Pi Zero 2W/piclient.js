@@ -12,10 +12,9 @@ const allowAllUsers = config.allowAllUsers;
 const allowedUsers = config.allowedUsers;
 const allowPrivateToggle = config.allowPrivateToggle;
 let isPrivate = config.isPrivate;
-//const isVisible = config.isVisible;
-const isVisible = false;
 const handleSecretCodeAuth = config.handleSecretCodeAuth;
 const secretCode = config.secretCode;
+const isVisible = config.isVisible;
 const gpioPins = config.gpioPins;
 const pwmChannels = config.pwmChannels;
 const period = config.period;
@@ -619,7 +618,6 @@ function createOffer() {
             .catch(err => reject(err));
     });
  }
-
 async function captureImage() {
     try {
         send({
@@ -631,7 +629,7 @@ async function captureImage() {
             description: description,
             botdevicetype: botdevicetype,
             private: isPrivate,
-            visible: isVisible
+            visibility: isVisible
         });
        // console.log("Sent image to server");        
     } catch (error) {

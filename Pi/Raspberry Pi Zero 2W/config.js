@@ -9,7 +9,7 @@ const allowPrivateToggle = true; // true to automatically update 'isPrivate' fro
 const isPrivate = false; // true to secure with secret code || false to allow access without secret code #default is false
 const handleSecretCodeAuth = false; // true to handle secret code authentication on this device || false to handle on our server #default is false
 const secretCode = ""; // update this to set your secret code for handling authentication locally
-const isVisible = true; //true to add your robot to the public live feed || false prevents your robot from showing up in the public live feed. You'll need to follow your robot to see it in the feed (in this example your username doubles as a private key). To access on Spawn go to https://sp4wn.com/[username]
+const isVisible = true; //true to add your robot to the public live feed || false prevents your robot from showing up in the public live feed. You'll need to follow your robot to see it in the feed (in this situation your username doubles as a private key so only those who know your username will be able to access). To access on Spawn go to https://sp4wn.com/[username]
 
 // HARDWARE CONFIGURATION
 const gpioPins = [27, 22, 23, 24];
