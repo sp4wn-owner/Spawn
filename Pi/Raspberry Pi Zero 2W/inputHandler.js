@@ -1,4 +1,4 @@
-const pipins = require('./pipins');
+const pipins = require('@sp4wn/pipins');
 
 let servoPanPin = 1; 
 let servoTiltPin = 0; 

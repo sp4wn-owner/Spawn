@@ -242,8 +242,6 @@ function handleLogin(success, pic, tr, loc, des, priv, config, visibility) {
             console.log("No private status");
         }
 
-        const pipins = require('./pipins');
-
         // Setup GPIO Pins
         gpioPins.forEach(pin => {
             pipins.exportPin(pin);
