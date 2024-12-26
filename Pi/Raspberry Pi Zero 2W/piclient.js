@@ -95,7 +95,7 @@ async function connectToSignalingServer() {
         connectionTimeout = setTimeout(() => {
             signalingSocket.close();
             reject(new Error('Connection timed out'));
-        }, 5000);
+        }, 20000);
 
         signalingSocket.onopen = () => {
             clearTimeout(connectionTimeout);
@@ -242,61 +242,23 @@ function handleLogin(success, pic, tr, loc, des, priv, config, visibility) {
             console.log("No private status");
         }
 
+        const pipins = require('./pipins');
+
+        // Setup GPIO Pins
         gpioPins.forEach(pin => {
-        pipins.exportPin(pin, (err) => {
-            if (err) {
-            console.error(`Error exporting GPIO pin ${pin}:`, err);
-            return;
-            }
-
-            pipins.setPinDirection(pin, 'out', (err) => {
-            if (err) {
-                console.error(`Error setting direction for GPIO pin ${pin}:`, err);
-                return;
-            }
-
-            pipins.writePinValue(pin, 0, (err) => {
-                if (err) {
-                console.error(`Error writing value to GPIO pin ${pin}:`, err);
-                return;
-                }
-
-                console.log(`GPIO pin ${pin} set as OUTPUT`);
-            });
-            });
-        });
+            pipins.exportPin(pin);
+            pipins.setPinDirection(pin, 'out');
+            pipins.writePinValue(pin, 0);
+            console.log(`GPIO pin ${pin} set as OUTPUT`);
         });
 
+        // Setup PWM Channels
         pwmChannels.forEach(pin => {
-        pipins.exportPwm(pin, (err) => {
-            if (err) {
-            console.error(`Error exporting PWM channel ${pin}:`, err);
-            return;
-            }
-
-            pipins.setPwmPeriod(pin, period, (err) => {
-            if (err) {
-                console.error(`Error setting period for PWM channel ${pin}:`, err);
-                return;
-            }
-
-            pipins.setPwmDutyCycle(pin, dutyCycle, (err) => {
-                if (err) {
-                console.error(`Error setting duty cycle for PWM channel ${pin}:`, err);
-                return;
-                }
-
-                pipins.enablePwm(pin, (err) => {
-                if (err) {
-                    console.error(`Error enabling PWM channel ${pin}:`, err);
-                    return;
-                }
-
-                console.log(`PWM pin ${pin} enabled`);
-                });
-            });
-            });
-        });
+            pipins.exportPwm(pin);
+            pipins.setPwmPeriod(pin, period);
+            pipins.setPwmDutyCycle(pin, dutyCycle);
+            pipins.enablePwm(pin);
+            console.log(`PWM pin ${pin} enabled`);
         });
 
         captureImage();
@@ -325,6 +287,7 @@ async function createDataChannel(type) {
 }
 
 let handlingCMD = false;
+
 function handleInputChannel(inputChannel) {
     const inputProcess = spawn('node', ['inputHandler.js'], {
         stdio: ['pipe', 'pipe', 'pipe', 'ipc']
@@ -336,10 +299,17 @@ function handleInputChannel(inputChannel) {
     };
 
     inputChannel.onmessage = (event) => {
-        if(!handlingCMD) {
+        if (!handlingCMD) {
             handlingCMD = true;
-            let cmd = JSON.parse(event.data);
-            console.log(cmd);
+            let cmd;
+            try {
+                cmd = JSON.parse(event.data);
+            } catch (e) {
+                console.error('Error parsing command:', e);
+                handlingCMD = false;
+                return;
+            }
+            console.log('Command received:', cmd);
             inputProcess.send(cmd);
         }
     };
@@ -347,18 +317,40 @@ function handleInputChannel(inputChannel) {
     inputProcess.on('message', (response) => {
         console.log(`Message from input process: ${response}`);
         handlingCMD = false;
-        inputChannel.send(response);
+        if (inputChannel.readyState === 'open') {
+            inputChannel.send(response);
+        } else {
+            console.error('Cannot send response, input channel is closed');
+        }
     });
 
     inputChannel.onclose = () => {
         console.log('Input channel has been closed');
-        inputProcess.kill();
+        if (inputProcess && inputProcess.connected) {
+            inputProcess.kill();
+        }
     };
 
     inputProcess.on('error', (error) => {
         console.error('Input process error:', error);
     });
+
+    inputProcess.on('exit', (code, signal) => {
+        console.log(`Input process exited with code ${code} and signal ${signal}`);
+        handlingCMD = false;
+        if (inputChannel.readyState === 'open') {
+            inputChannel.send(`Process exited with code ${code}`);
+        }
+    });
+
+    process.on('exit', () => {
+        console.log('Main process exiting, killing input process');
+        if (inputProcess && inputProcess.connected) {
+            inputProcess.kill();
+        }
+    });
 }
+
 
 function handleVideoChannel(videoChannel) {
     videoChannel.onopen = () => {

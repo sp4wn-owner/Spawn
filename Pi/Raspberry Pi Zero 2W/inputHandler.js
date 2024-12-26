@@ -1,4 +1,4 @@
-const pipins = require('@sp4wn/pipins');
+const pipins = require('./pipins');
 
 let servoPanPin = 1; 
 let servoTiltPin = 0; 
@@ -6,7 +6,7 @@ let tiltPosition = 90;
 let panPosition = 90;
 const MIN_VALUE = 0;
 const MAX_VALUE = 180;
-const deadZone = .1;
+const deadZone = 0.1;
 
 function moveForward() {
     pipins.writePinValue(27, 1);
@@ -44,19 +44,18 @@ function park() {
 }
 
 process.on('message', (cmd) => {
-    
-    // You could also send this data to an Arduino or other microcontroller and handle commands there.
+    //{"joystickSelector":null,"joystickX":null,"joystickY":null,"buttons":["16"]}
 
     let response = "unknown command";
-    
+
     try {
         const { joystickSelector, joystickX, joystickY, buttons } = cmd;
 
-        if (joystickSelector == "joystick1" || joystickSelector == "joystick3") {
+        if (joystickSelector === "joystick1" || joystickSelector === "joystick3") {
             handleJoystickCommands(joystickX, joystickY);
         }
 
-        if (joystickSelector == "joystick2" || joystickSelector == "joystick4") {
+        if (joystickSelector === "joystick2" || joystickSelector === "joystick4") {
             handleServoCommands(joystickX, joystickY);
         }
 
@@ -106,12 +105,10 @@ process.on('message', (cmd) => {
             default:
                 response = "Unknown joystick command";
                 break;
-        }
-        
+        }        
     }
 
     function handleServoCommands(joystickX, joystickY) {
-
         let servoCommand;
         if (joystickY > 0.5) {
             servoCommand = "down";
@@ -122,32 +119,28 @@ process.on('message', (cmd) => {
         } else if (joystickX < -0.5) {
             servoCommand = "left";
         } else if (Math.abs(joystickX) < deadZone && Math.abs(joystickY) < deadZone) {
-            command = "neutral";
-        } 
+            servoCommand = "neutral";
+        }
 
         switch (servoCommand) {
             case "up":
                 tiltPosition = Math.min(MAX_VALUE, tiltPosition + 5);
                 pipins.setServoPosition(servoTiltPin, tiltPosition);
-                //response = `Tilt servo position: ${tiltPosition}`;
                 response = "Servo: Moving up";
                 break;
             case "down":
                 tiltPosition = Math.max(MIN_VALUE, tiltPosition - 5);
                 pipins.setServoPosition(servoTiltPin, tiltPosition);
-                //response = `Tilt servo position: ${tiltPosition}`;
                 response = "Servo: Moving down";
                 break;
             case "right":
                 panPosition = Math.min(MAX_VALUE, panPosition + 5);
                 pipins.setServoPosition(servoPanPin, panPosition);
-                //response = `Pan servo position: ${panPosition}`;
                 response = "Servo: Moving right";
                 break;
             case "left":
                 panPosition = Math.max(MIN_VALUE, panPosition - 5);
                 pipins.setServoPosition(servoPanPin, panPosition);
-                //response = `Pan servo position: ${panPosition}`;
                 response = "Servo: Moving left";
                 break;
             case "neutral":
