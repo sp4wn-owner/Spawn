@@ -113,7 +113,7 @@ async function connectToSignalingServer() {
 
             switch (message.type) {
                 case "authenticated":
-                    handleLogin(message.success, message.pic, message.tokenrate, message.location, message.description, message.priv, message.configuration);
+                    handleLogin(message.success, message.errormessage, message.pic, message.tokenrate, message.location, message.description, message.priv, message.configuration);
                     resolve();
                     break;
 
@@ -203,10 +203,22 @@ function send(message) {
     signalingSocket.send(JSON.stringify(message));
  };
  
-function handleLogin(success, pic, tr, loc, des, priv, config, visibility) {
+function handleLogin(success, errormessage, pic, tr, loc, des, priv, config, visibility) {
     if (!success) {
-        console.log("User already logged in or password/username didn't match.");
-        return;
+        if (errormessage == "User already connected") {
+            setTimeout(() => {
+                send({
+                    type: "robot",
+                    username: username,
+                    password: password,
+                    device: botdevicetype
+                });
+                console.log("Retrying login in 10 seconds. You'll need to disconnect any active sessions to login.");
+            }, 10000);
+        } else {
+            console.log("Invalid login", errormessage);
+            cleanup();
+        }
     }
     if (success)  {
         console.log("Successfully logged in");
