@@ -66,6 +66,10 @@ class MyCallbacks: public BLECharacteristicCallbacks {
     if (!handlingCMD) {
       handlingCMD = true;
       std::string rawValue = std::string(pCharacteristic->getValue().c_str());
+
+      Serial.print(F("Raw JSON string: "));
+      Serial.println(rawValue.c_str());
+
       if (rawValue.length() > 0) {
         String response = "unknown command";
         DynamicJsonDocument doc(1024);
@@ -74,31 +78,46 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         if (error) {
           Serial.print(F("deserializeJson() failed: "));
           Serial.println(error.f_str());
+          handlingCMD = false;
           return;
         }
 
-        if (doc.containsKey("joystickSelector") && doc.containsKey("joystickX") && doc.containsKey("joystickY") && doc.containsKey("buttons")) {
+        bool validData = false;
+
+        if (!doc["joystickSelector"].isNull() && !doc["joystickX"].isNull() && !doc["joystickY"].isNull()) {
           const char* joystickSelector = doc["joystickSelector"];
           float joystickX = doc["joystickX"];
           float joystickY = doc["joystickY"];
-          JsonArray buttons = doc["buttons"];
+
+          Serial.print(F("joystickSelector: "));
+          Serial.println(joystickSelector);
+          Serial.print(F("joystickX: "));
+          Serial.println(joystickX);
+          Serial.print(F("joystickY: "));
+          Serial.println(joystickY);
 
           if (strcmp(joystickSelector, "joystick1") == 0 || strcmp(joystickSelector, "joystick3") == 0) {
             handleJoystickCommands(joystickX, joystickY, response);
-          }
-
-          if (strcmp(joystickSelector, "joystick2") == 0 || strcmp(joystickSelector, "joystick4") == 0) {
+            validData = true;
+          } else if (strcmp(joystickSelector, "joystick2") == 0 || strcmp(joystickSelector, "joystick4") == 0) {
             handleServoCommands(joystickX, joystickY, response);
+            validData = true;
           }
+        }
 
-          if (!buttons.isNull()) {
-            handleButtonCommands(buttons, response);
-          }
+        if (!doc["buttons"].isNull() && doc["buttons"].size() > 0) {
+          JsonArray buttons = doc["buttons"];
+          handleButtonCommands(buttons, response);
+          validData = true;
+        }
 
+        if (validData) {
+          Serial.println(F("Updated response: "));
           Serial.println(response);
         } else {
-          Serial.println(F("The JSON object does not have the required fields"));
+          response = "unknown command";
         }
+
         pCharacteristic->setValue(response);
         pCharacteristic->notify();
         handlingCMD = false;
