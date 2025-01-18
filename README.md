@@ -23,7 +23,7 @@ Spawn is a free peer-to-peer telepresence robotics platform that serves as a mid
     &nbsp;&nbsp;&nbsp;&nbsp;- Optionally handle your own security locally thus eliminating any potential access to your device(s) in the event of a security breach on Spawn or your own network. Passwords/codes are securely hashed and all data is encrypted. No personal information is requested nor retained. Update the security parameters in the config.js on your Raspberry Pi.
 
 - Monetization  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Transform your telepresence robots/devices into revenue-generating assets. We take 20% of token redemptions to maintain and grow the platform.
+    &nbsp;&nbsp;&nbsp;&nbsp;- Transform your telepresence robots/devices into revenue-generating assets. Pay users for controlling your robot/device (i.e.remote telepresence gig) or charge them for access. We take a 20% fee from token redemptions to maintain and grow the platform.
 
 - Public/private access  
     &nbsp;&nbsp;&nbsp;&nbsp;- Share your robot with the world, add a secret code for authenticated access, and toggle visibility in our live feed. Robots removed from the live feed can still be accessed at sp4wn.com/[username]. Following the robot (clicking the star icon) will include it in your feed.
