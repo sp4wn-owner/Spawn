@@ -3,7 +3,6 @@ const { spawn } = require('child_process');
 const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
 const url = 'https://sp4wn-signaling-server.onrender.com';
 const pipins = require('@sp4wn/pipins');
-
 const config = require('./config');
 
 const username = config.username;
@@ -220,6 +219,7 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, config, vis
             cleanup();
         }
     }
+    
     if (success)  {
         console.log("Successfully logged in");
         configuration = config;
@@ -254,7 +254,6 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, config, vis
             console.log("No private status");
         }
 
-        // Setup GPIO Pins
         gpioPins.forEach(pin => {
             pipins.exportPin(pin);
             pipins.setPinDirection(pin, 'out');
@@ -262,7 +261,6 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, config, vis
             console.log(`GPIO pin ${pin} set as OUTPUT`);
         });
 
-        // Setup PWM Channels
         pwmChannels.forEach(pin => {
             pipins.exportPwm(pin);
             pipins.setPwmPeriod(pin, period);
@@ -281,7 +279,6 @@ async function createDataChannel(type) {
 
     try {
         dataChannel = peerConnection.createDataChannel(type);
-        //console.log(`Data channel "${type}" created successfully.`);
     } catch (error) {
         console.error(`Failed to create ${type} data channel:`, error);
         return; 
@@ -361,7 +358,6 @@ function handleInputChannel(inputChannel) {
     });
 }
 
-
 function handleVideoChannel(videoChannel) {
     videoChannel.onopen = () => {
         console.log("Video channel connected to peer");        
@@ -412,7 +408,6 @@ function startStream() {
 
             v4l2Process.on('exit', (code) => {
                 //console.log(`v4l2-ctl process exited with code ${code}`);
-                //cleanup();
             });
 
             v4l2Process.stderr.on('data', (error) => {
@@ -439,7 +434,6 @@ function startImageCapture(interval) {
       captureImage(); 
     }, interval);
     intervalIds.push(intervalId);
-    //console.log(`Started image capture interval #${intervalIds.length - 1}`);
 }
 
 function stopImageCapture() {
@@ -447,7 +441,6 @@ function stopImageCapture() {
        clearInterval(intervalIds.pop());
        deletelive();
     }
-    //console.log("All image captures terminated.");
 }
 
 const EventEmitter = require('events');
@@ -623,7 +616,8 @@ function createOffer() {
             })
             .catch(err => reject(err));
     });
- }
+}
+
 async function captureImage() {
     try {
         send({
@@ -637,7 +631,6 @@ async function captureImage() {
             private: isPrivate,
             visibility: isVisible
         });
-       // console.log("Sent image to server");        
     } catch (error) {
         console.log("Failed to process and send image to server", error);
     }

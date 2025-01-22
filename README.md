@@ -4,14 +4,15 @@
 
 # [Spawn](https://sp4wn.com)
 
-Spawn is a free peer-to-peer telepresence robotics platform that serves as a middleware solution between robots and end users. Its quick setup time facilitates the rapid deployment of custom telepresence robots and devices without the complexities of networking or communication management. 
-
-*** While this platform is free for individual and limited commercial use, commercial users interested in teleoperating multiple devices or fleets should contact us. 
+Spawn is telepresence software for advanced robots. Its quick setup time facilitates the rapid deployment of custom telepresence robots and devices without the complexities of networking or communication management. 
 
 ### Before setting up your robot, create an account on [Spawn](https://sp4wn.com)
-- Accounts are anonymous, but are still required to properly route traffic. Streams are securely sent through a p2p connection thus keeping sessions private and resulting in the lowest latency possible. However, in the event that a p2p connection could not be properly established, traffic will be routed through a global network of TURN servers leading to a slight increase in latency. 
+- Accounts are anonymous, yet required to access the application until the guest layer is implemented. Streams are securely sent through a direct p2p connection thus keeping sessions private and resulting in the lowest latency possible. However, in the event that a p2p connection could not be properly established, traffic will be routed through a global network of servers leading to a slight increase in latency. 
 
 ## Key Features:
+
+- Free to use  
+    &nbsp;&nbsp;&nbsp;&nbsp;- Because most connections are direct peer-to-peer, we avoid the need for an expensive network of servers to route data and process or store media. This allows us to offer this service for free. Should we see an overwhelming number of connections requiring third-party data routing then we may implement a paid option for this service.
 
 - Real-time control  
     &nbsp;&nbsp;&nbsp;&nbsp;- Experience ultra-low latency enabling near real-time control over the internet. 
@@ -20,17 +21,16 @@ Spawn is a free peer-to-peer telepresence robotics platform that serves as a mid
     &nbsp;&nbsp;&nbsp;&nbsp;- Operates seamlessly over any network and designed with Starlink connectivity in mind. Devices connected via satellite can be anywhere in the world.
 
 - Secure  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Optionally handle your own security locally thus eliminating any potential access to your device(s) in the event of a security breach on Spawn or your own network. Passwords/codes are securely hashed and all data is encrypted. No personal information is requested nor retained. Update the security parameters in the config.js on your Raspberry Pi.
+    &nbsp;&nbsp;&nbsp;&nbsp;- Optionally handle your own security locally thus eliminating any potential access to your device(s) in the event of a security breach on Spawn or your own network. Passwords/codes are securely hashed and all data is encrypted. No personal information is requested nor retained. Update the security parameters in the config.js file on your Raspberry Pi or other client implementation.
 
 - Monetization  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Transform your telepresence robots/devices into revenue-generating assets. Pay users for controlling your robot/device (i.e.remote telepresence gig) or charge them for access. We take a 20% fee from token redemptions to maintain and grow the platform.
+    &nbsp;&nbsp;&nbsp;&nbsp;- Transform your telepresence robots/devices into revenue-generating assets or pay users for controlling them (i.e.remote telepresence gig). We take 20% of token redemptions to maintain and grow the platform. Setting your token rate to a negative number will deduct tokens per min from your account to the other user while a positive token rate will deduct tokens from the user to your account. Setting the token rate to zero will enable free access.
 
 - Public/private access  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Share your robot with the world, add a secret code for authenticated access, and toggle visibility in our live feed. Robots removed from the live feed can still be accessed at sp4wn.com/[username]. Following the robot (clicking the star icon) will include it in your feed.
+    &nbsp;&nbsp;&nbsp;&nbsp;- Share your robot with the world, add a secret code for authenticated access, and toggle visibility in our live feed. Robots removed from the live feed can still be accessed at sp4wn.com/[username]. In this case, your username could double as a private key. Following the robot (clicking the star icon) will include it in your feed regardless of visibility, enabling a customizable feed of both public and personal robots/devices.
 
 - Quick and easy setup (no coding initially required)  
-    &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to get your bot up and running in minutes. You have full control over how to handle the received input commands. Controllers/gamepads are currently supported. In the future, we may add compatibility for VR controllers and other devices.
-
+    &nbsp;&nbsp;&nbsp;&nbsp;- We provide all the code necessary to connect your bot to our platform and start teleoperating in minutes. You have full control over how to handle the received input commands. Controllers/gamepads are currently supported. VR support is in development.
 
 ## Pi Robot:
 
