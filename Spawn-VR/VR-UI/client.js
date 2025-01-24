@@ -1,4 +1,4 @@
-// This web client represents the VR user and serves as a basic template to quickly start testing VR teleoperation. Open the console to inspect outgoing data. 
+// This web client represents the user and serves as a basic template to quickly start testing VR teleoperation. Open the console to inspect outgoing data. 
 
 // ENTER USERNAME, PASSWORD, AND THE ROBOT'S USERNAME
 const username = ""; // Username should be all lowercase
@@ -10,7 +10,7 @@ const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
 
 // UI Elements
 const spawnButton = document.getElementById('spawnButton');
-const endButton = document.getElementById('endButton');
+const vrButton = document.getElementById('vrButton');
 const remoteVideo = document.getElementById('remoteVideo');
 const enteredpw = document.getElementById("private-password-input");
 const submitPwBtn = document.getElementById("submit-password-button");
@@ -18,6 +18,9 @@ const snackbar = document.getElementById('snackbar');
 const modalPassword = document.getElementById("modal-enter-password");
 const pwModalSpan = document.getElementById("close-password-modal");
 const loadingOverlay = document.getElementById('loadingOverlay');
+const vrStatus = document.getElementById('status');
+let xrSession = null;
+let referenceSpace = null;
 
 // Global Variables
 let remoteStream;
@@ -40,7 +43,6 @@ let reconnectAttempts = 0;
 const reconnectDelay = 2000;
 
 document.addEventListener('DOMContentLoaded', () => {
-    endButton.style.display = "none";
     emitter = new EventEmitter3();
     connectToSignalingServer();
  });
@@ -137,6 +139,10 @@ async function handleSignalingData(message, resolve) {
         case "watch":
             watchStream(message.name, message.pw);
             break;
+
+        case "endStream":
+            endStream();
+            break;
     }
 }
 
@@ -207,13 +213,11 @@ submitPwBtn.onclick = async function() {
 };
 
 async function initSpawn() {
-    spawnButton.style.display = "none";
     if (tokenrate > 0) {
         const balance = await checkTokenBalance(username);
         if (!balance) {
             showSnackbar(`Not enough tokens. Rate: ${tokenrate}`);
             spawnButton.disabled = false; 
-            spawnButton.style.display = "inline-block";
             return;
         }
     } 
@@ -223,7 +227,6 @@ async function initSpawn() {
         if(!isBalanceAvailable) {
             showSnackbar(`Host doesn't have enough tokens. Rate: ${(Number(tokenrate) / 10 ** 6).toFixed(2)} tokens/min`);
             spawnButton.disabled = false; 
-            spawnButton.style.display = "inline-block";
             return;
         }
     }
@@ -248,33 +251,23 @@ async function startStream() {
                         removeVideoOverlayListeners();
                         const redeemSuccess = await startAutoRedeem(tokenrate);
                         if (!redeemSuccess) {  
-                            spawnButton.disabled = false;
-                            spawnButton.style.display = "inline-block";
                             console.error('Token redemption failed.');
                         } else {
                             console.log("Successfully started stream"); 
-                            endButton.style.display = "inline-block";
+                            spawnButton.textContent = "End";
+                            spawnButton.onclick = endStream;
                         }
                     } else {
-                        spawnButton.disabled = false;
-                        spawnButton.style.display = "inline-block";
                         throw new Error('Stream is not live.');
                     }
                 } else {
-                    spawnButton.disabled = false;
-                    spawnButton.style.display = "inline-block";
                     throw new Error('ICE connection failed.');
                 }
             } else {
-                spawnButton.disabled = false;
-                spawnButton.style.display = "inline-block";
                 throw new Error('Failed to open data channels.');
             }
         } else {
-            spawnButton.disabled = false;
-            spawnButton.style.display = "inline-block";
-            console.error('VR failed to load.');
-            showSnackbar("Failed to load VR")
+            throw new Error('VR failed to load.');
         }
     } catch (error) {
         showSnackbar("Failed to start stream");
@@ -282,7 +275,6 @@ async function startStream() {
         hideLoadingOverlay();
         endStream();
         spawnButton.disabled = false;
-        spawnButton.style.display = "inline-block";
     }
     spawnButton.disabled = false;
  }
@@ -393,6 +385,10 @@ function createOffer() {
 }
 
 async function start() {
+    if (!username || !password || !robotUsername) {
+        showSnackbar("Please fill in the username, password, and robot's username in the client.js file");
+        return;
+    }
     spawnButton.disabled = true;
     remoteVideo.srcObject = null;
     try {
@@ -594,6 +590,7 @@ function handleInputChannel(channel, incrementChannelCounter) {
  
     inputChannel.onclose = () => {
         console.log("Input channel has been closed");
+        endStream();
     };
  
     inputChannel.onerror = (error) => {
@@ -689,15 +686,14 @@ async function stopAutoRedeem() {
 
 function endStream() {
     stopAutoRedeem();
-    endButton.style.display = "none";
+    spawnButton.textContent = "Spawn";
+    spawnButton.onclick = start;
     console.log("Closing peer connection");
-    spawnButton.style.display = "inline-block";
     remoteVideo.srcObject = null;
     if (peerConnection) {
         peerConnection.close();
         peerConnection = null;
     }
-    spawnButton.disabled = false;
 }
 
 function showSnackbar(message) {
@@ -729,5 +725,68 @@ function hideLoadingOverlay() {
     loadingOverlay.style.display = 'none';
 }
 
-spawnButton.addEventListener('click', start);
-endButton.addEventListener('click', endStream);
+async function startXRSession() {
+    try {
+        xrSession = await navigator.xr.requestSession('immersive-vr');
+        
+        referenceSpace = await xrSession.requestReferenceSpace('local');
+        
+        xrSession.requestAnimationFrame(animate);
+
+        vrStatus.textContent = '';
+        vrButton.textContent = 'Exit VR';
+        vrButton.onclick = endXRSession;
+
+        xrSession.addEventListener('end', onSessionEnd);
+    } catch (error) {
+        console.error('Failed to start XR session:', error);
+        vrStatus.textContent = 'Failed to start VR session';
+    }
+}
+
+function endXRSession() {
+    if (xrSession) {
+        xrSession.end();
+    }
+}
+
+function onSessionEnd() {
+    console.log('XR Session ended');
+    xrSession = null;
+    referenceSpace = null;
+    vrStatus.textContent = 'VR Session Ended';
+    vrButton.textContent = 'Enter VR';
+    vrButton.onclick = startXRSession;
+}
+
+function animate(time, frame) {
+    if (!xrSession || !referenceSpace) return;
+
+    const viewerPose = frame.getViewerPose(referenceSpace);
+    if (viewerPose) {
+        console.log('Head Position:', viewerPose.transform.position);
+        console.log('Head Orientation:', viewerPose.transform.orientation);
+
+        for (const inputSource of frame.session.inputSources) {
+            if (inputSource.gripSpace) {
+                const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
+                if (gripPose) {
+                    console.log(`Controller (Grip) Position:`, gripPose.transform.position);
+                    console.log(`Controller (Grip) Orientation:`, gripPose.transform.orientation);
+                }
+            }
+
+            if (inputSource.targetRaySpace) {
+                const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
+                if (targetPose) {
+                    console.log(`Controller (Target) Position:`, targetPose.transform.position);
+                    console.log(`Controller (Target) Orientation:`, targetPose.transform.orientation);
+                }
+            }
+        }
+    }
+    xrSession.requestAnimationFrame(animate);
+}
+
+spawnButton.onclick = start;
+vrButton.onclick = startXRSession;

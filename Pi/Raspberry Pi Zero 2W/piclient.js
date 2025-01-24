@@ -156,6 +156,10 @@ async function connectToSignalingServer() {
                 case "watch":
                     watchStream(message.name, message.pw);
                     break;
+
+                case "endStream":
+                    cleanup();
+                    break;
             }
         };
 

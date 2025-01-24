@@ -19,7 +19,6 @@ const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
 
 // UI Elements
 const startButton = document.getElementById('startButton');
-const endButton = document.getElementById('endButton');
 const localVideo = document.getElementById('localVideo');
 
 // Global Variables
@@ -44,7 +43,6 @@ const reconnectDelay = 2000;
 let handlingCMD = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-    endButton.style.display = "none";
     emitter = new EventEmitter3();
     connectToSignalingServer();
 });
@@ -165,6 +163,10 @@ async function handleSignalingData(message, resolve) {
 
         case "watch":
             watchStream(message.name, message.pw);
+            break;
+
+        case "endStream":
+            endStream();
             break;
     }
 }
@@ -372,6 +374,8 @@ function createOffer() {
 }
 
 async function start() {
+    startButton.textContent = 'End';
+    startButton.onclick = endStream;
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localVideo.srcObject = localStream;
@@ -379,8 +383,6 @@ async function start() {
     } catch (err) {
         console.error('Error accessing media devices.', err);
     }
-    startButton.style.display = 'none';
-    endButton.style.display = 'inline-block';
 }
 
 async function createPeerConnection() {
@@ -514,16 +516,18 @@ async function stopAutoRedeem() {
             console.log(data.message);
             return true; 
         } else {
-            console.error('Failed to stop auto-redemption:', data.error);
+            console.log('Failed to stop auto-redemption:', data.error);
             return false; 
         }
     } catch (error) {
-        console.error('Error stopping auto-redemption:', error);
+        console.log('Error stopping auto-redemption:', error);
         return false; 
     }
 }
 
 function endStream() {
+    startButton.textContent = 'Start';
+    startButton.onclick = start;
     stopAutoRedeem();
     if (peerConnection) {
         peerConnection.close();
@@ -533,11 +537,12 @@ function endStream() {
         localStream.getTracks().forEach(track => {
             track.stop();
         });
+        localStream = null;
     }
-    localVideo.srcObject = null;
-    startButton.style.display = 'inline-block';
-    endButton.style.display = 'none';
+    if (localVideo.srcObject) {
+        localVideo.srcObject.getTracks().forEach(track => track.stop());
+        localVideo.srcObject = null;
+    }
 }
 
-startButton.addEventListener('click', start);
-endButton.addEventListener('click', endStream);
+startButton.onclick = start;

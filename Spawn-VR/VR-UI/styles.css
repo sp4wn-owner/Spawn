@@ -41,6 +41,7 @@ video {
 }
 
 button {
+    display: inline-block;
     margin: 0 5px;
     padding: 12px 25px; 
     font-size: 16px;
@@ -168,4 +169,9 @@ input {
 input:focus {
     outline: none;
     border-color: #66afe9;
+}
+
+#status {
+    height: 100%;
+    align-content: center;
 }
