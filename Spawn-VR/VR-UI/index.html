@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spawn-VR</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="container">        
+        <div id="videoContainer">
+            <div id="modal-enter-password" class="modal">
+                <div class="modal-content">
+                  <span id="close-password-modal" class="close">&times;</span>
+                  <h2>Enter Secret Code</h2>
+                  <input type="text" id="private-password-input" maxlength="50" style="margin-bottom: 20px; text-align: center;">
+                  <button class="main-btn" id="submit-password-button"><span>Confirm</span></button>            
+                </div>          
+            </div> 
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loader"></div>
+            </div>
+            <video id="remoteVideo" autoplay></video>
+            <div id="buttonContainer">
+                <button id="spawnButton">Spawn</button>
+                <button id="endButton">End</button>
+            </div>
+            <div id="snackbar"></div>
+        </div>
+    </div>
+    <script src="eventemitter3.min.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
