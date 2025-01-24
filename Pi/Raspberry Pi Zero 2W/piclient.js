@@ -112,7 +112,7 @@ async function connectToSignalingServer() {
 
             switch (message.type) {
                 case "authenticated":
-                    handleLogin(message.success, message.errormessage, message.pic, message.tokenrate, message.location, message.description, message.priv, message.configuration);
+                    handleLogin(message.success, message.errormessage, message.pic, message.tokenrate, message.location, message.description, message.priv, message.visibility, message.configuration);
                     resolve();
                     break;
 
@@ -204,7 +204,7 @@ function send(message) {
  
 function handleLogin(success, errormessage, pic, tr, loc, des, priv, config, visibility) {
     if (!success) {
-        if (errormessage == "User already connected") {
+        if (errormessage == "User is already logged in") {
             setTimeout(() => {
                 send({
                     type: "robot",
@@ -223,37 +223,13 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, config, vis
     if (success)  {
         console.log("Successfully logged in");
         configuration = config;
-        if(pic) {
-            profilePicture = pic;
-        } else {
-            console.log("No picture");
-        }
-        if(tr) {
-            tokenrate = tr;
-        } else {
-            console.log("No token rate");
-            tokenrate = 0;
-        }
-        if(loc) {
-            location = loc;
-        } else {
-            console.log("No location");
-        }
-        if(des) {
-            description = des;
-        } else {
-            console.log("No description");
-        }
-        if(allowPrivateToggle && priv) {
-            isPrivate = priv;
-        }
-        if(allowVisibilityToggle && visibility) {
-            isVisible = visibility;
-        }
-        else {
-            console.log("No private status");
-        }
-
+        profilePicture = pic || console.log("No picture");
+        tokenrate = tr || (console.log("No token rate"), 0);
+        mylocation = loc || console.log("No location");
+        description = des || console.log("No description");
+        if (allowPrivateToggle && typeof priv === 'boolean') isPrivate = priv; else console.log("No private status");
+        if (allowVisibilityToggle && typeof visibility === 'boolean') isVisible = visibility; else console.log("No visibility status");
+        
         gpioPins.forEach(pin => {
             pipins.exportPin(pin);
             pipins.setPinDirection(pin, 'out');
