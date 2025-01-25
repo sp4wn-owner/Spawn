@@ -26,6 +26,7 @@ const loadingOverlay = document.getElementById('loadingOverlay');
 const vrStatus = document.getElementById('status');
 let xrSession = null;
 let referenceSpace = null;
+let scene, camera, renderer;
 
 // Global Variables
 let remoteStream;
@@ -750,11 +751,34 @@ function hideLoadingOverlay() {
 
 async function startXRSession() {
     try {
+        if (!scene) {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.xr.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            const videoTexture = new THREE.VideoTexture(remoteVideo);
+            videoTexture.minFilter = THREE.LinearFilter;
+            videoTexture.magFilter = THREE.LinearFilter;
+            videoTexture.format = THREE.RGBFormat;
+
+            const videoMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, side: THREE.DoubleSide });
+            const videoGeometry = new THREE.PlaneGeometry(4, 3);
+            const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
+
+            scene.add(videoMesh);
+            videoMesh.position.set(0, 0, -5);
+        }
+
         xrSession = await navigator.xr.requestSession('immersive-vr');
         
         referenceSpace = await xrSession.requestReferenceSpace('local');
         
         xrSession.requestAnimationFrame(animate);
+
+        const xrLayer = new XRWebGLLayer(xrSession, renderer.getContext());
+        xrSession.updateRenderState({ baseLayer: xrLayer });
 
         vrStatus.textContent = '';
         vrButton.textContent = 'Exit VR';
@@ -787,25 +811,56 @@ function animate(time, frame) {
 
     const viewerPose = frame.getViewerPose(referenceSpace);
     if (viewerPose) {
-        console.log('Head Position:', viewerPose.transform.position);
-        console.log('Head Orientation:', viewerPose.transform.orientation);
+        const headPosition = viewerPose.transform.position;
+        const headOrientation = viewerPose.transform.orientation;
+
+        let controllerData = [];
 
         for (const inputSource of frame.session.inputSources) {
+            const controller = {};
+            
             if (inputSource.gripSpace) {
                 const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
                 if (gripPose) {
-                    console.log(`Controller (Grip) Position:`, gripPose.transform.position);
-                    console.log(`Controller (Grip) Orientation:`, gripPose.transform.orientation);
+                    controller.gripPosition = gripPose.transform.position;
+                    controller.gripOrientation = gripPose.transform.orientation;
                 }
             }
 
             if (inputSource.targetRaySpace) {
                 const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
                 if (targetPose) {
-                    console.log(`Controller (Target) Position:`, targetPose.transform.position);
-                    console.log(`Controller (Target) Orientation:`, targetPose.transform.orientation);
+                    controller.targetPosition = targetPose.transform.position;
+                    controller.targetOrientation = targetPose.transform.orientation;
                 }
             }
+
+            // Check for 'A' button press to exit VR
+            if (inputSource.gamepad) {
+                const aButton = inputSource.gamepad.buttons[0];
+                if (aButton && aButton.pressed) {
+                    setTimeout(function() {
+                        if (aButton.pressed) {
+                            endXRSession();
+                        }
+                    }, 500);
+                    return;
+                }
+            }
+
+            if (Object.keys(controller).length > 0) {
+                controllerData.push(controller);
+            }
+        }
+
+        if (inputChannel.readyState === 'open') {
+            inputChannel.send(JSON.stringify({
+                head: {
+                    position: headPosition,
+                    orientation: headOrientation
+                },
+                controllers: controllerData
+            }));
         }
     }
     xrSession.requestAnimationFrame(animate);
