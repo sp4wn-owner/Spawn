@@ -51,6 +51,7 @@ const reconnectDelay = 2000;
 document.addEventListener('DOMContentLoaded', () => {
     modalLogin.style.display = "block";
     emitter = new EventEmitter3();
+    vrButton.style.display = "none";
  });
 
 function login() {
@@ -277,6 +278,7 @@ async function startStream() {
                             console.error('Token redemption failed.');
                         } else {
                             console.log("Successfully started stream"); 
+                            vrButton.style.display = "inline-block";
                             spawnButton.textContent = "End";
                             spawnButton.onclick = endStream;
                         }
@@ -543,7 +545,6 @@ async function checkICEStatus(status) {
 async function handleVROnConnection() {
     return new Promise((resolve, reject) => {
         try {
-            // VR inilization logic
             initializeVideoOverlay();
             setTimeout(() => {
                 resolve(true);
@@ -718,6 +719,7 @@ function endStream() {
     stopAutoRedeem();
     spawnButton.textContent = "Spawn";
     spawnButton.onclick = start;
+    vrButton.style.display = "none";
     console.log("Closing peer connection");
     remoteVideo.srcObject = null;
     if (peerConnection) {
