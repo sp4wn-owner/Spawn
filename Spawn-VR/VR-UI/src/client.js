@@ -441,7 +441,8 @@ async function start() {
             initSpawn();
         }
     } catch (error) {
-        console.error("Error checking privacy status:", error);
+        console.error("Error checking robot status:", error);
+        spawnButton.disabled = false;
     }
 }
 
@@ -456,6 +457,11 @@ async function openPeerConnection() {
     peerConnection = new RTCPeerConnection(configuration);
     remoteStream = new MediaStream();
     remoteVideo.srcObject = remoteStream;
+    remoteVideo.playsInline = true;
+    remoteVideo.play().catch(error => {
+        console.error('Video play error:', error);
+        showSnackbar('Error playing video: ' + error.message);
+    });
  
     peerConnection.ontrack = (event) => {
         remoteStream.addTrack(event.track);
@@ -565,7 +571,7 @@ function setupDataChannelListenerWithTimeout() {
     return new Promise((resolve, reject) => {
         let channelsOpen = 0;
         const requiredChannels = 1;
-        const timeoutDuration = 5000;
+        const timeoutDuration = 15000;
         let timeoutId;
 
         peerConnection.ondatachannel = (event) => {
@@ -754,21 +760,53 @@ async function startXRSession() {
         if (!scene) {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            camera.position.z = 5; 
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.xr.enabled = true;
+            renderer.setSize(window.innerWidth, window.innerHeight); 
             document.body.appendChild(renderer.domElement);
+
+            if (!navigator.xr) {
+                showSnackbar('WebXR not supported, falling back to 2D view');
+                renderer.setAnimationLoop(() => { 
+                    renderer.render(scene, camera);
+                });
+                return;
+            }
 
             const videoTexture = new THREE.VideoTexture(remoteVideo);
             videoTexture.minFilter = THREE.LinearFilter;
             videoTexture.magFilter = THREE.LinearFilter;
             videoTexture.format = THREE.RGBFormat;
+            videoTexture.needsUpdate = true; 
 
-            const videoMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, side: THREE.DoubleSide });
+            const videoMaterial = new THREE.MeshBasicMaterial({ 
+                map: videoTexture, 
+                side: THREE.DoubleSide, 
+                transparent: true,
+                opacity: 1.0 
+            });
             const videoGeometry = new THREE.PlaneGeometry(4, 3);
             const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
 
             scene.add(videoMesh);
             videoMesh.position.set(0, 0, -5);
+
+            if (remoteVideo.readyState < 3) {
+                showSnackbar('Waiting for video to load...');
+                await new Promise(resolve => {
+                    remoteVideo.addEventListener('canplay', () => {
+                        resolve();
+                    }, { once: true });
+                });
+            }
+            remoteVideo.play().catch(error => {
+                console.error('Video play error:', error);
+                showSnackbar('Error playing video: ' + error.message);
+            });
+
+            remoteVideo.muted = true; 
+            remoteVideo.playsInline = true; 
         }
 
         xrSession = await navigator.xr.requestSession('immersive-vr');
@@ -785,6 +823,14 @@ async function startXRSession() {
         vrButton.onclick = endXRSession;
 
         xrSession.addEventListener('end', onSessionEnd);
+
+        if (remoteVideo.paused) {
+            remoteVideo.play().catch(error => {
+                console.error('Video play error in VR:', error);
+                showSnackbar('Error playing video in VR: ' + error.message);
+            });
+        }
+
     } catch (error) {
         let errorMessage = 'Failed to start VR session';
         if (error instanceof DOMException) {
@@ -810,7 +856,7 @@ function endXRSession() {
 }
 
 function onSessionEnd() {
-    console.log('XR Session ended');
+    showSnackbar('XR Session ended');
     xrSession = null;
     referenceSpace = null;
     vrStatus.textContent = 'VR Session Ended';
