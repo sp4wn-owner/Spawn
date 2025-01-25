@@ -9,13 +9,14 @@
 <body>
     <div id="container">        
         <div id="videoContainer">
+            <button class="main-btn" id="login-button"><span>Login</span></button> 
             <input type="text" id="robot-username-input" placeholder="robot username" maxlength="50">
             <div id="modal-login" class="modal">
                 <div class="modal-content">
                   <span id="close-login-modal" class="close">&times;</span>
                   <input type="text" id="username-input" placeholder="username" maxlength="50" style="margin-bottom: 20px; text-align: center;">
                   <input type="text" id="password-input" placeholder="password" maxlength="50" style="margin-bottom: 20px; text-align: center;">
-                  <button class="main-btn" id="login-button"><span>Login</span></button>            
+                  <button class="main-btn" id="confirm-login-button"><span>Login</span></button>            
                 </div>          
             </div> 
             <div id="modal-enter-password" class="modal">
@@ -30,7 +31,7 @@
                 <div class="loader"></div>
             </div>
             <video id="remoteVideo" autoplay></video>
-            <div id="status">Waiting for VR...</div>
+            <div id="status">Awaiting connection to robot...</div>
             <div id="buttonContainer">
                 <button id="spawnButton">Spawn</button>
                 <button id="vrButton">Enter VR</button>

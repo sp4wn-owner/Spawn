@@ -9,9 +9,10 @@ let robotUsername; // Username of the robot you want to control
 const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
 
 // UI Elements
+const loginButton = document.getElementById('login-button');
 const spawnButton = document.getElementById('spawnButton');
 const vrButton = document.getElementById('vrButton');
-const loginButton = document.getElementById('login-button');
+const confirmLoginButton = document.getElementById('confirm-login-button');
 const remoteVideo = document.getElementById('remoteVideo');
 const enteredpw = document.getElementById("private-password-input");
 const submitPwBtn = document.getElementById("submit-password-button");
@@ -47,12 +48,18 @@ let handlingCMD = false;
 const maxReconnectAttempts = 20;
 let reconnectAttempts = 0;
 const reconnectDelay = 2000;
+let isGuest = true;
 
 document.addEventListener('DOMContentLoaded', () => {
-    modalLogin.style.display = "block";
+    modalLogin.style.display = "none";
     emitter = new EventEmitter3();
     vrButton.style.display = "none";
- });
+    login();
+});
+
+function openLoginModal() {
+    modalLogin.style.display = "block";
+}
 
 function login() {
     console.log("Logging in...");
@@ -60,9 +67,11 @@ function login() {
     password = passwordInput.value;
     
     if (!username || !password) {
-        showSnackbar("Please fill in the username and password");
-        return;
+        isGuest = true;
+    } else {
+        isGuest = false;
     }
+    
     connectToSignalingServer();
 }
 
@@ -80,11 +89,18 @@ async function connectToSignalingServer() {
         signalingSocket.onopen = () => {
 
             clearTimeout(connectionTimeout);
-            send({
-                type: "wslogin",
-                username: username,
-                password: password
-            });
+            if (isGuest) {
+                send({
+                    type: "wslogin",
+                    guest: true
+                });
+            } else {
+                send({
+                    type: "wslogin",
+                    username: username,
+                    password: password
+                });
+            }
         };
 
         signalingSocket.onmessage = async (event) => {
@@ -97,12 +113,13 @@ async function connectToSignalingServer() {
             } else {
                 await handleSignalingData(message, resolve);
             }
+
         };
 
         signalingSocket.onclose = () => {
             clearTimeout(connectionTimeout);
             console.log('Disconnected from signaling server');
-            handleReconnect(username, password);
+            handleReconnect();
         };
 
         signalingSocket.onerror = (error) => {
@@ -122,7 +139,7 @@ function handleReconnect() {
         reconnectAttempts++;
         const delay = reconnectDelay * reconnectAttempts; 
         console.log(`Reconnecting in ${delay / 1000} seconds... (Attempt ${reconnectAttempts})`);
-        setTimeout(() => connectToSignalingServer, delay);
+        setTimeout(connectToSignalingServer, delay);
     } else {
         console.log('Max reconnect attempts reached. Please refresh the page.');
     }
@@ -131,7 +148,7 @@ function handleReconnect() {
 async function handleSignalingData(message, resolve) {
     switch (message.type) {
         case "authenticated":
-            handleLogin(message.success, message.configuration, message.errormessage );
+            handleLogin(message.success, message.configuration, message.errormessage, message.username );
             resolve();
             break;
 
@@ -165,10 +182,11 @@ async function handleSignalingData(message, resolve) {
         case "endStream":
             endStream();
             break;
+        
     }
 }
 
-function handleLogin(success, config, errormessage) {
+function handleLogin(success, config, errormessage, name) {
     if (!success) {
         if (errormessage == "User is already logged in") {
             setTimeout(() => {
@@ -186,8 +204,9 @@ function handleLogin(success, config, errormessage) {
         console.log("Successfully logged in");
         modalLogin.style.display = "none";
         configuration = config;
+        username = name;
+        console.log(username);
     }
-    
 }
 
 pwModalSpan.onclick = function() {
@@ -655,16 +674,25 @@ async function isStreamLive() {
 
 async function startAutoRedeem() {
     return new Promise((resolve, reject) => {
+        let userDetails = {
+            hostname: robotUsername,
+            username: username,
+            tokens: tokenrate
+        };
+        
+        if (isGuest) {
+            userDetails = {
+                ...userDetails,
+                guest: true
+            };
+        }
+
         fetch(`${wsUrl}/redeem`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                hostname: robotUsername,
-                username: username,
-                tokens: tokenrate
-            })
+            body: JSON.stringify(userDetails) // Use the prepared userDetails object here
         })
         .then(response => {
             if (!response.ok) {
@@ -689,15 +717,21 @@ async function startAutoRedeem() {
 
 async function stopAutoRedeem() {
     try {
+        const requestBody = {
+            userUsername: username,
+            hostUsername: robotUsername
+        };
+
+        if (isGuest) {
+            requestBody.guest = true;
+        }
+
         const response = await fetch(`${wsUrl}/stopAutoRedeem`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                userUsername: username,
-                hostUsername: robotUsername
-            })
+            body: JSON.stringify(requestBody)
         });
 
         const data = await response.json();
@@ -716,11 +750,11 @@ async function stopAutoRedeem() {
 }
 
 function endStream() {
+    console.log("Ending stream");
     stopAutoRedeem();
     spawnButton.textContent = "Spawn";
     spawnButton.onclick = start;
     vrButton.style.display = "none";
-    console.log("Closing peer connection");
     remoteVideo.srcObject = null;
     if (peerConnection) {
         peerConnection.close();
@@ -925,9 +959,10 @@ function animate(time, frame) {
     xrSession.requestAnimationFrame(animate);
 }
 
-loginButton.onclick = login;
+confirmLoginButton.onclick = login;
 spawnButton.onclick = start;
 vrButton.onclick = startXRSession;
+loginButton.onclick = openLoginModal;
 
 passwordInput.addEventListener('keydown', function(event) {
     if (event.key === 'Enter') {
