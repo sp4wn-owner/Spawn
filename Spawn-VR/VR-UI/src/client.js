@@ -18,6 +18,7 @@ const enteredpw = document.getElementById("private-password-input");
 const submitPwBtn = document.getElementById("submit-password-button");
 const snackbar = document.getElementById('snackbar');
 const modalLogin = document.getElementById("modal-login");
+const closeLoginSpan = document.getElementById("close-login-modal");
 const usernameInput = document.getElementById("username-input");
 const passwordInput = document.getElementById("password-input");
 const robotUsernameInput = document.getElementById("robot-username-input");
@@ -65,7 +66,7 @@ function login() {
     console.log("Logging in...");
     username = usernameInput.value.toLowerCase();
     password = passwordInput.value;
-    
+
     if (!username || !password) {
         isGuest = true;
     } else {
@@ -113,7 +114,6 @@ async function connectToSignalingServer() {
             } else {
                 await handleSignalingData(message, resolve);
             }
-
         };
 
         signalingSocket.onclose = () => {
@@ -213,6 +213,9 @@ pwModalSpan.onclick = function() {
     modalPassword.style.display = "none";
 }
 
+closeLoginSpan.onclick = function() {
+    modalLogin.style.display = "none";
+}
 submitPwBtn.onclick = async function() {
     if (enteredpw.value === "") {
         showSnackbar("Please enter a password");
@@ -901,62 +904,80 @@ function onSessionEnd() {
 }
 
 function animate(time, frame) {
-    if (!xrSession || !referenceSpace) return;
+    requestAnimationFrame((t) => animate(t, frame));
 
-    const viewerPose = frame.getViewerPose(referenceSpace);
-    if (viewerPose) {
-        const headPosition = viewerPose.transform.position;
-        const headOrientation = viewerPose.transform.orientation;
+    if (xrSession && referenceSpace) { 
+        const viewerPose = frame.getViewerPose(referenceSpace);
+        if (viewerPose) {
+            const headPosition = viewerPose.transform.position;
+            const headOrientation = viewerPose.transform.orientation;
 
-        let controllerData = [];
+            let controllerData = [];
 
-        for (const inputSource of frame.session.inputSources) {
-            const controller = {};
-            
-            if (inputSource.gripSpace) {
-                const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
-                if (gripPose) {
-                    controller.gripPosition = gripPose.transform.position;
-                    controller.gripOrientation = gripPose.transform.orientation;
+            for (const inputSource of frame.session.inputSources) {
+                const controller = {};
+                
+                if (inputSource.gripSpace) {
+                    const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
+                    if (gripPose) {
+                        controller.gripPosition = gripPose.transform.position;
+                        controller.gripOrientation = gripPose.transform.orientation;
+                    }
+                }
+
+                if (inputSource.targetRaySpace) {
+                    const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
+                    if (targetPose) {
+                        controller.targetPosition = targetPose.transform.position;
+                        controller.targetOrientation = targetPose.transform.orientation;
+                    }
+                }
+
+                if (inputSource.gamepad) {
+                    const aButton = inputSource.gamepad.buttons[0];
+                    if (aButton && aButton.pressed) {
+                        setTimeout(function() {
+                            if (aButton.pressed) {
+                                endXRSession();
+                            }
+                        }, 500);
+                        return;
+                    }
+                }
+
+                if (Object.keys(controller).length > 0) {
+                    controllerData.push(controller);
                 }
             }
 
-            if (inputSource.targetRaySpace) {
-                const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
-                if (targetPose) {
-                    controller.targetPosition = targetPose.transform.position;
-                    controller.targetOrientation = targetPose.transform.orientation;
-                }
+            if (inputChannel.readyState === 'open') {
+                inputChannel.send(JSON.stringify({
+                    head: {
+                        position: headPosition,
+                        orientation: headOrientation
+                    },
+                    controllers: controllerData
+                }));
             }
 
-            if (inputSource.gamepad) {
-                const aButton = inputSource.gamepad.buttons[0];
-                if (aButton && aButton.pressed) {
-                    setTimeout(function() {
-                        if (aButton.pressed) {
-                            endXRSession();
-                        }
-                    }, 500);
-                    return;
-                }
-            }
+            const xrLayer = new XRWebGLLayer(xrSession, renderer.getContext());
+            xrSession.updateRenderState({ baseLayer: xrLayer });
 
-            if (Object.keys(controller).length > 0) {
-                controllerData.push(controller);
+            for (const view of viewerPose.views) {
+                const viewport = xrLayer.getViewport(view);
+                renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
+                camera.projectionMatrix.fromArray(view.projectionMatrix);
+                
+                renderer.render(scene, camera);
             }
         }
-
-        if (inputChannel.readyState === 'open') {
-            inputChannel.send(JSON.stringify({
-                head: {
-                    position: headPosition,
-                    orientation: headOrientation
-                },
-                controllers: controllerData
-            }));
+    } else {
+        if (remoteVideo.readyState >= 3) {
+            videoTexture.needsUpdate = true;
         }
+
+        renderer.render(scene, camera);
     }
-    xrSession.requestAnimationFrame(animate);
 }
 
 confirmLoginButton.onclick = login;

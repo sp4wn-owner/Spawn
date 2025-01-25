@@ -87,7 +87,7 @@ async function connectToSignalingServer() {
         signalingSocket.onclose = () => {
             clearTimeout(connectionTimeout);
             console.log('Disconnected from signaling server');
-            handleReconnect(username, password);
+            handleReconnect();
         };
 
         signalingSocket.onerror = (error) => {
@@ -107,7 +107,7 @@ function handleReconnect() {
         reconnectAttempts++;
         const delay = reconnectDelay * reconnectAttempts; 
         console.log(`Reconnecting in ${delay / 1000} seconds... (Attempt ${reconnectAttempts})`);
-        setTimeout(() => connectToSignalingServer, delay);
+        setTimeout(connectToSignalingServer, delay);
     } else {
         console.log('Max reconnect attempts reached. Please refresh the page.');
     }
