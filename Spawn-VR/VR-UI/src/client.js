@@ -1,9 +1,9 @@
 // This web client represents the user and serves as a basic template to quickly start testing VR teleoperation. Open the console to inspect outgoing data. 
 
 // ENTER USERNAME, PASSWORD, AND THE ROBOT'S USERNAME
-const username = ""; // Username should be all lowercase
-const password = "";
-const robotUsername = ""; // Username of the robot you want to control
+let username; // Username should be all lowercase
+let password; // Password for the user
+let robotUsername; // Username of the robot you want to control
 
 // Server URL
 const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
@@ -11,10 +11,15 @@ const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
 // UI Elements
 const spawnButton = document.getElementById('spawnButton');
 const vrButton = document.getElementById('vrButton');
+const loginButton = document.getElementById('login-button');
 const remoteVideo = document.getElementById('remoteVideo');
 const enteredpw = document.getElementById("private-password-input");
 const submitPwBtn = document.getElementById("submit-password-button");
 const snackbar = document.getElementById('snackbar');
+const modalLogin = document.getElementById("modal-login");
+const usernameInput = document.getElementById("username-input");
+const passwordInput = document.getElementById("password-input");
+const robotUsernameInput = document.getElementById("robot-username-input");
 const modalPassword = document.getElementById("modal-enter-password");
 const pwModalSpan = document.getElementById("close-password-modal");
 const loadingOverlay = document.getElementById('loadingOverlay');
@@ -43,11 +48,25 @@ let reconnectAttempts = 0;
 const reconnectDelay = 2000;
 
 document.addEventListener('DOMContentLoaded', () => {
+    modalLogin.style.display = "block";
     emitter = new EventEmitter3();
-    connectToSignalingServer();
  });
 
+function login() {
+    console.log("Logging in...");
+    username = usernameInput.value.toLowerCase();
+    password = passwordInput.value;
+    
+    if (!username || !password) {
+        showSnackbar("Please fill in the username and password");
+        return;
+    }
+    connectToSignalingServer();
+}
+
 async function connectToSignalingServer() {
+    console.log('Connecting to signaling server...');
+
     return new Promise((resolve, reject) => {
         signalingSocket = new WebSocket(wsUrl);
 
@@ -57,6 +76,7 @@ async function connectToSignalingServer() {
         }, 20000);
 
         signalingSocket.onopen = () => {
+
             clearTimeout(connectionTimeout);
             send({
                 type: "wslogin",
@@ -162,8 +182,10 @@ function handleLogin(success, config, errormessage) {
         }
     } else if (success) {
         console.log("Successfully logged in");
+        modalLogin.style.display = "none";
         configuration = config;
     }
+    
 }
 
 pwModalSpan.onclick = function() {
@@ -385,8 +407,9 @@ function createOffer() {
 }
 
 async function start() {
-    if (!username || !password || !robotUsername) {
-        showSnackbar("Please fill in the username, password, and robot's username in the client.js file");
+    robotUsername = robotUsernameInput.value;
+    if (!robotUsername) {
+        showSnackbar("Please enter the robot's username");
         return;
     }
     spawnButton.disabled = true;
@@ -788,5 +811,12 @@ function animate(time, frame) {
     xrSession.requestAnimationFrame(animate);
 }
 
+loginButton.onclick = login;
 spawnButton.onclick = start;
 vrButton.onclick = startXRSession;
+
+passwordInput.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        login();
+    }
+});
