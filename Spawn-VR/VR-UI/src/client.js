@@ -786,7 +786,19 @@ async function startXRSession() {
 
         xrSession.addEventListener('end', onSessionEnd);
     } catch (error) {
-        console.error('Failed to start XR session:', error);
+        let errorMessage = 'Failed to start VR session';
+        if (error instanceof DOMException) {
+            errorMessage += `: ${error.name} - ${error.message}`;
+        } else if (error instanceof Error) {
+            errorMessage += `: ${error.name} - ${error.message}`;
+        } else {
+            errorMessage += ': Unknown error type';
+        }
+
+        console.error(errorMessage);
+        
+        showSnackbar(errorMessage);
+
         vrStatus.textContent = 'Failed to start VR session';
     }
 }
@@ -835,7 +847,6 @@ function animate(time, frame) {
                 }
             }
 
-            // Check for 'A' button press to exit VR
             if (inputSource.gamepad) {
                 const aButton = inputSource.gamepad.buttons[0];
                 if (aButton && aButton.pressed) {
