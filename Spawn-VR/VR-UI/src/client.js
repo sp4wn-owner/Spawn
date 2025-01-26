@@ -843,8 +843,7 @@ async function startTracking() {
         }
 
         const sessionInit = {
-            requiredFeatures: ['local'],
-            optionalFeatures: ['hand-tracking']
+            requiredFeatures: ['local']
         };
 
         xrSession = await navigator.xr.requestSession('inline', sessionInit);
@@ -869,32 +868,22 @@ function animate(time, frame) {
         let controllerData = [];
 
         frame.session.inputSources.forEach((inputSource) => {
-            if (inputSource.hand) {
-                inputSource.hand.forEach((joint) => {
+            if (inputSource.gripSpace) {
+                const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
+                if (gripPose) {
                     controllerData.push({
-                        jointName: joint.jointName,
-                        position: joint.transform.position,
-                        orientation: joint.transform.orientation
+                        gripPosition: gripPose.transform.position,
+                        gripOrientation: gripPose.transform.orientation
                     });
-                });
-            } else {
-                if (inputSource.gripSpace) {
-                    const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
-                    if (gripPose) {
-                        controllerData.push({
-                            gripPosition: gripPose.transform.position,
-                            gripOrientation: gripPose.transform.orientation
-                        });
-                    }
                 }
-                if (inputSource.targetRaySpace) {
-                    const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
-                    if (targetPose) {
-                        controllerData.push({
-                            targetPosition: targetPose.transform.position,
-                            targetOrientation: targetPose.transform.orientation
-                        });
-                    }
+            }
+            if (inputSource.targetRaySpace) {
+                const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
+                if (targetPose) {
+                    controllerData.push({
+                        targetPosition: targetPose.transform.position,
+                        targetOrientation: targetPose.transform.orientation
+                    });
                 }
             }
         });
