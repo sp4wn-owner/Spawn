@@ -918,20 +918,26 @@ function animate(time, frame) {
             if (inputChannel && inputChannel.readyState === 'open') {
                 inputChannel.send(JSON.stringify(trackingData));
                 console.log('Data sent:', JSON.stringify(trackingData));
+                showSnackbar('Tracking data sent.');
             } else {
                 console.log('Input channel not open or not available');
+                showSnackbar('Tracking data not sent: channel unavailable.');
             }
 
             if (trackingDataSpan) {
                 trackingDataSpan.textContent = JSON.stringify(trackingData, null, 2); 
+                showSnackbar('Tracking data updated in UI.');
             } else {
                 console.warn('Element with id "tracking-data" not found');
+                showSnackbar('Could not update tracking data in UI.');
             }
         } catch (error) {
             console.error('Error in animate function:', error);
+            showSnackbar('Error in tracking: ' + error.message);
         }
     } else {
         console.log('No viewer pose available for this frame');
+        showSnackbar('No tracking data available for this frame.');
     }
 
     xrSession.requestAnimationFrame(animate);
