@@ -810,6 +810,8 @@ async function startTracking() {
     }
 }
 
+let trackingInterval;
+
 async function startTracking() {
     vrButton.textContent = "Stop Tracking";
     vrButton.onclick = stopTracking;
@@ -821,7 +823,7 @@ async function startTracking() {
         }
 
         console.log('Tracking started');
-        trackingInterval = setInterval(trackData, 1000 / 60); 
+        trackingInterval = setInterval(trackData, 1000 / 60);
 
     } catch (error) {
         console.error('Failed to start tracking:', error);
@@ -830,63 +832,71 @@ async function startTracking() {
     }
 }
 
-function trackData() {
-    let headPosition = { x: 0, y: 0, z: 0 };
-    let headOrientation = { x: 0, y: 0, z: 0, w: 1 };
-    let controllerData = [];
+async function trackData() {
+    try {
+        if (navigator.xr && navigator.xr.getViewerPose && navigator.xr.getInputSources) {
+            const headPosition = navigator.xr.getViewerPose().transform.position;
+            const headOrientation = navigator.xr.getViewerPose().transform.orientation;
+            let controllerData = [];
 
-    let exampleInputSources = [
-        {
-            hand: true,
-            gripSpace: { transform: { position: { x: 1, y: 2, z: 3 }, orientation: { x: 0, y: 0, z: 0, w: 1 } } },
-            targetRaySpace: { transform: { position: { x: 4, y: 5, z: 6 }, orientation: { x: 0, y: 0, z: 0, w: 1 } } }
-        }
-    ];
-
-    exampleInputSources.forEach((inputSource) => {
-        if (inputSource.hand) {
-            controllerData.push({
-                jointName: 'hand',
-                position: inputSource.gripSpace.transform.position,
-                orientation: inputSource.gripSpace.transform.orientation
+            navigator.xr.getInputSources().forEach((inputSource) => {
+                if (inputSource.hand) {
+                    inputSource.hand.forEach((joint) => {
+                        controllerData.push({
+                            jointName: joint.jointName,
+                            position: joint.transform.position,
+                            orientation: joint.transform.orientation
+                        });
+                    });
+                } else {
+                    if (inputSource.gripSpace) {
+                        const gripPose = navigator.xr.getPose(inputSource.gripSpace);
+                        if (gripPose) {
+                            controllerData.push({
+                                gripPosition: gripPose.transform.position,
+                                gripOrientation: gripPose.transform.orientation
+                            });
+                        }
+                    }
+                    if (inputSource.targetRaySpace) {
+                        const targetPose = navigator.xr.getPose(inputSource.targetRaySpace);
+                        if (targetPose) {
+                            controllerData.push({
+                                targetPosition: targetPose.transform.position,
+                                targetOrientation: targetPose.transform.orientation
+                            });
+                        }
+                    }
+                }
             });
-        } else {
-            if (inputSource.gripSpace) {
-                controllerData.push({
-                    gripPosition: inputSource.gripSpace.transform.position,
-                    gripOrientation: inputSource.gripSpace.transform.orientation
-                });
-            }
-            if (inputSource.targetRaySpace) {
-                controllerData.push({
-                    targetPosition: inputSource.targetRaySpace.transform.position,
-                    targetOrientation: inputSource.targetRaySpace.transform.orientation
-                });
-            }
-        }
-    });
 
-    if (inputChannel && inputChannel.readyState === 'open') {
-        try {
-            const trackingData = {
-                head: {
-                    position: headPosition,
-                    orientation: headOrientation
-                },
-                controllers: controllerData
-            };
-            inputChannel.send(JSON.stringify(trackingData));
-            console.log('Data sent:', JSON.stringify(trackingData));
-        } catch (sendError) {
-            console.error('Error sending tracking data:', sendError);
+            if (inputChannel && inputChannel.readyState === 'open') {
+                try {
+                    const trackingData = {
+                        head: {
+                            position: headPosition,
+                            orientation: headOrientation
+                        },
+                        controllers: controllerData
+                    };
+                    inputChannel.send(JSON.stringify(trackingData));
+                    console.log('Data sent:', JSON.stringify(trackingData));
+                } catch (sendError) {
+                    console.error('Error sending tracking data:', sendError);
+                }
+            } else {
+                console.log('Input channel not open or not available');
+            }
+        } else {
+            console.error('Unable to access tracking data');
         }
-    } else {
-        console.log('Input channel not open or not available');
+    } catch (error) {
+        console.error('Error in trackData:', error);
     }
 }
 
 function stopTracking() {
-    clearInterval(trackingInterval);
+    clearInterval(trackingInterval); // Clear the tracking interval
     vrButton.textContent = "Start Tracking";
     vrButton.onclick = startTracking;
     console.log('Tracking stopped');
