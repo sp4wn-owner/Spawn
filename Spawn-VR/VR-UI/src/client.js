@@ -794,8 +794,6 @@ function hideLoadingOverlay() {
     loadingOverlay.style.display = 'none';
 }
 
-
-
 let videoTexture, videoMaterial, videoMesh;
 
 async function startXRSession() {
@@ -815,13 +813,6 @@ async function startXRSession() {
                     renderer.render(scene, camera);
                 });
                 return;
-            }
-
-            if (!navigator.xr) {
-                await import('webxr-polyfill').then((module) => {
-                    new module.WebXRPolyfill();
-                    console.log('WebXR Polyfill initialized');
-                });
             }
 
             videoTexture = new THREE.VideoTexture(remoteVideo);
@@ -858,7 +849,7 @@ async function startXRSession() {
 
         const sessionInit = {
             requiredFeatures: [],
-            optionalFeatures: []
+            optionalFeatures: [] 
         };
 
         console.log('Requesting immersive-vr session');
@@ -867,31 +858,15 @@ async function startXRSession() {
             xrSession = await navigator.xr.requestSession('immersive-vr', sessionInit);
             console.log('Session created successfully');
 
-            let supportedSpaces = ['bounded-floor', 'local-floor', 'local'];
-            let spaceFound = false;
-
-            for (let space of supportedSpaces) {
-                if (await xrSession.isReferenceSpaceSupported(space)) {
-                    referenceSpace = await xrSession.requestReferenceSpace(space);
-                    console.log(`Using ${space} reference space`);
-                    spaceFound = true;
-                    break;
-                }
-            }
-
-            if (!spaceFound) {
-                referenceSpace = await xrSession.requestReferenceSpace('viewer');
-                console.log('Falling back to viewer reference space');
-            }
-
-            console.log('Reference Space:', referenceSpace); 
+            referenceSpace = await xrSession.requestReferenceSpace('local');
+            console.log('Using local reference space');
 
             const xrLayer = new XRWebGLLayer(xrSession, renderer.getContext());
             xrSession.updateRenderState({ baseLayer: xrLayer });
 
             xrSession.requestAnimationFrame(animate);
         } else {
-            console.log('Immersive VR not supported, trying inline mode...');
+            console.log('Immersive VR not supported, trying inline mode...'); 
             xrSession = await navigator.xr.requestSession('inline', sessionInit);
         }
 
@@ -919,11 +894,8 @@ function animate(time, frame) {
     if (xrSession) {
         const viewerPose = frame.getViewerPose(referenceSpace);
         if (viewerPose) {
-            const xrLayer = new XRWebGLLayer(xrSession, renderer.getContext());
-            xrSession.updateRenderState({ baseLayer: xrLayer });
-
             for (const view of viewerPose.views) {
-                const viewport = xrLayer.getViewport(view);
+                const viewport = xrSession.renderState.baseLayer.getViewport(view);
                 renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
                 camera.projectionMatrix.fromArray(view.projectionMatrix);
 
@@ -937,7 +909,6 @@ function animate(time, frame) {
         }
         xrSession.requestAnimationFrame(animate);
     } else {
-        // Fallback for non-VR rendering
         if (remoteVideo.readyState >= 3 && remoteVideo.currentTime !== videoTexture.lastUpdateTime) {
             videoTexture.needsUpdate = true;
             videoTexture.lastUpdateTime = remoteVideo.currentTime;
@@ -946,7 +917,6 @@ function animate(time, frame) {
         renderer.render(scene, camera);
     }
 }
-
 confirmLoginButton.onclick = login;
 spawnButton.onclick = start;
 vrButton.onclick = startXRSession;
