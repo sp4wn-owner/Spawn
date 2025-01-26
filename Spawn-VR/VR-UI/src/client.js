@@ -799,7 +799,7 @@ async function startXRSession() {
         if (!scene) {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 5; 
+            camera.position.z = 0; 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.xr.enabled = true;
             renderer.setSize(window.innerWidth, window.innerHeight); 
