@@ -790,67 +790,35 @@ function hideLoadingOverlay() {
     loadingOverlay.style.display = 'none';
 }
 
-async function startXRSession() {
+async function startTracking() {
+    vrButton.textContent = "Stop Tracking";
+    vrButton.onclick = stopTracking;
     try {
-        if (!scene) {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 1.6, 0);
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.xr.enabled = true;
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-
-            if (!navigator.xr) {
-                console.log('WebXR not supported, falling back to 2D view');
-                renderer.setAnimationLoop(() => {
-                    renderer.render(scene, camera);
-                });
-                return;
-            }
+        if (!navigator.xr) {
+            console.log('WebXR not supported');
+            return;
         }
 
         const sessionInit = {
             requiredFeatures: ['local'],
-            optionalFeatures: [] 
+            optionalFeatures: []
         };
 
-        console.log('Requesting immersive-vr session');
-        
-        if (await navigator.xr.isSessionSupported('immersive-vr')) {
-            xrSession = await navigator.xr.requestSession('immersive-vr', sessionInit);
-            console.log('Session created successfully');
+        if (await navigator.xr.isSessionSupported('inline')) {
+            xrSession = await navigator.xr.requestSession('inline', sessionInit);
+            console.log('Tracking session started');
 
             referenceSpace = await xrSession.requestReferenceSpace('local');
             console.log('Using local reference space');
 
-            const xrLayer = new XRWebGLLayer(xrSession, renderer.getContext());
-            xrSession.updateRenderState({ baseLayer: xrLayer });
-
             xrSession.requestAnimationFrame(animate);
         } else {
-            console.log('Immersive VR not supported, trying inline mode...'); 
-            xrSession = await navigator.xr.requestSession('inline', sessionInit);
+            console.log('Inline XR session not supported');
         }
 
     } catch (error) {
-        console.error('Failed to start VR session:', error);
+        console.error('Failed to start tracking session:', error);
     }
-}
-
-function endXRSession() {
-    if (xrSession) {
-        xrSession.end();
-    }
-}
-
-function onSessionEnd() {
-    console.log('XR Session ended');
-    xrSession = null;
-    referenceSpace = null;
-    vrStatus.textContent = 'VR Session Ended';
-    vrButton.textContent = 'Enter VR';
-    vrButton.onclick = startXRSession;
 }
 
 function animate(time, frame) {
@@ -898,9 +866,23 @@ function animate(time, frame) {
     }
 }
 
+function stopTracking() {
+    if (xrSession) {
+        xrSession.end();
+        xrSession = null;
+        referenceSpace = null;
+        console.log('Tracking session stopped');
+    }
+    if (inputChannel) {
+        inputChannel.close();
+        inputChannel = null;
+        console.log('Data channel closed');
+    }
+}
+
 confirmLoginButton.onclick = login;
 spawnButton.onclick = start;
-vrButton.onclick = startXRSession;
+vrButton.onclick = startTracking;
 loginButton.onclick = openLoginModal;
 
 passwordInput.addEventListener('keydown', function(event) {
