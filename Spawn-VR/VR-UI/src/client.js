@@ -832,74 +832,105 @@ async function startTracking() {
     }
 }
 
-async function trackData() {
+async function startTracking() {
+    vrButton.textContent = "Stop Tracking";
+    vrButton.onclick = stopTracking;
+
     try {
-        if (navigator.xr && navigator.xr.getViewerPose && navigator.xr.getInputSources) {
-            const headPosition = navigator.xr.getViewerPose().transform.position;
-            const headOrientation = navigator.xr.getViewerPose().transform.orientation;
-            let controllerData = [];
-
-            navigator.xr.getInputSources().forEach((inputSource) => {
-                if (inputSource.hand) {
-                    inputSource.hand.forEach((joint) => {
-                        controllerData.push({
-                            jointName: joint.jointName,
-                            position: joint.transform.position,
-                            orientation: joint.transform.orientation
-                        });
-                    });
-                } else {
-                    if (inputSource.gripSpace) {
-                        const gripPose = navigator.xr.getPose(inputSource.gripSpace);
-                        if (gripPose) {
-                            controllerData.push({
-                                gripPosition: gripPose.transform.position,
-                                gripOrientation: gripPose.transform.orientation
-                            });
-                        }
-                    }
-                    if (inputSource.targetRaySpace) {
-                        const targetPose = navigator.xr.getPose(inputSource.targetRaySpace);
-                        if (targetPose) {
-                            controllerData.push({
-                                targetPosition: targetPose.transform.position,
-                                targetOrientation: targetPose.transform.orientation
-                            });
-                        }
-                    }
-                }
-            });
-
-            if (inputChannel && inputChannel.readyState === 'open') {
-                try {
-                    const trackingData = {
-                        head: {
-                            position: headPosition,
-                            orientation: headOrientation
-                        },
-                        controllers: controllerData
-                    };
-                    inputChannel.send(JSON.stringify(trackingData));
-                    console.log('Data sent:', JSON.stringify(trackingData));
-                } catch (sendError) {
-                    console.error('Error sending tracking data:', sendError);
-                }
-            } else {
-                console.log('Input channel not open or not available');
-            }
-        } else {
-            console.error('Unable to access tracking data');
+        if (!navigator.xr) {
+            console.log('WebXR not supported');
+            return;
         }
+
+        const sessionInit = {
+            requiredFeatures: ['local'],
+            optionalFeatures: ['hand-tracking']
+        };
+
+        xrSession = await navigator.xr.requestSession('inline', sessionInit);
+        referenceSpace = await xrSession.requestReferenceSpace('local');
+        xrSession.requestAnimationFrame(animate);
+
+        console.log('Tracking started');
+
     } catch (error) {
-        console.error('Error in trackData:', error);
+        console.error('Failed to start tracking session:', error);
+        vrButton.textContent = "Start Tracking";
+        vrButton.onclick = startTracking;
     }
 }
 
+function animate(time, frame) {
+    const viewerPose = frame.getViewerPose(referenceSpace);
+
+    if (viewerPose) {
+        const headPosition = viewerPose.transform.position;
+        const headOrientation = viewerPose.transform.orientation;
+        let controllerData = [];
+
+        frame.session.inputSources.forEach((inputSource) => {
+            if (inputSource.hand) {
+                inputSource.hand.forEach((joint) => {
+                    controllerData.push({
+                        jointName: joint.jointName,
+                        position: joint.transform.position,
+                        orientation: joint.transform.orientation
+                    });
+                });
+            } else {
+                if (inputSource.gripSpace) {
+                    const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
+                    if (gripPose) {
+                        controllerData.push({
+                            gripPosition: gripPose.transform.position,
+                            gripOrientation: gripPose.transform.orientation
+                        });
+                    }
+                }
+                if (inputSource.targetRaySpace) {
+                    const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
+                    if (targetPose) {
+                        controllerData.push({
+                            targetPosition: targetPose.transform.position,
+                            targetOrientation: targetPose.transform.orientation
+                        });
+                    }
+                }
+            }
+        });
+
+        if (inputChannel && inputChannel.readyState === 'open') {
+            try {
+                const trackingData = {
+                    head: {
+                        position: headPosition,
+                        orientation: headOrientation
+                    },
+                    controllers: controllerData
+                };
+                inputChannel.send(JSON.stringify(trackingData));
+                console.log('Data sent:', JSON.stringify(trackingData));
+            } catch (sendError) {
+                console.error('Error sending tracking data:', sendError);
+            }
+        } else {
+            console.log('Input channel not open or not available');
+        }
+    }
+
+    xrSession.requestAnimationFrame(animate);
+}
+
 function stopTracking() {
-    clearInterval(trackingInterval); // Clear the tracking interval
+    if (xrSession) {
+        xrSession.end();
+        xrSession = null;
+        referenceSpace = null;
+        console.log('Tracking session stopped');
+    }
+
     vrButton.textContent = "Start Tracking";
     vrButton.onclick = startTracking;
-    console.log('Tracking stopped');
 }
 
 confirmLoginButton.onclick = login;
