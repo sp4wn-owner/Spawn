@@ -820,21 +820,27 @@ async function startTracking() {
     try {
         if (!navigator.xr) {
             console.log('WebXR not supported');
+            showSnackbar('WebXR is not supported in this browser.');
             return;
         }
 
         const sessionInit = {};
 
+        console.log('Trying to request session...');
         xrSession = await navigator.xr.requestSession('inline', sessionInit);
+        console.log('Session requested successfully', xrSession);
         referenceSpace = await xrSession.requestReferenceSpace('local');
+        console.log('Reference space obtained', referenceSpace);
         xrSession.requestAnimationFrame(animate);
-
         console.log('Tracking started');
+        showSnackbar('Tracking started successfully.');
 
     } catch (error) {
         console.error('Failed to start tracking session:', error);
         vrButton.textContent = "Start Tracking";
         vrButton.onclick = startTracking;
+        
+        showSnackbar('Failed to start tracking: ' + error.message);
     }
 }
 
