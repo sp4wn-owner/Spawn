@@ -805,8 +805,8 @@ async function startTracking() {
             optionalFeatures: ['hand-tracking']
         };
 
-        if (await navigator.xr.isSessionSupported('immersive-vr')) {
-            xrSession = await navigator.xr.requestSession('immersive-vr', sessionInit);
+        if (await navigator.xr.isSessionSupported('inline')) {
+            xrSession = await navigator.xr.requestSession('inline', sessionInit);
             console.log('Tracking session started');
 
             referenceSpace = await xrSession.requestReferenceSpace('local');
@@ -814,8 +814,8 @@ async function startTracking() {
 
             xrSession.requestAnimationFrame(animate);
         } else {
-            console.log('Immersive VR session not supported');
-            throw new Error('Immersive VR session not supported');
+            console.log('Inline XR session not supported');
+            throw new Error('Inline XR session not supported');
         }
 
     } catch (error) {
