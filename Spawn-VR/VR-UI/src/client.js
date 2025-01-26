@@ -801,7 +801,7 @@ async function startTracking() {
         }
 
         console.log('Tracking started');
-        trackingInterval = setInterval(trackData, 1000 / 60); // 60 FPS
+        trackingInterval = setInterval(trackData, 1000 / 60);
 
     } catch (error) {
         console.error('Failed to start tracking:', error);
@@ -821,7 +821,7 @@ async function startTracking() {
         }
 
         console.log('Tracking started');
-        trackingInterval = setInterval(trackData, 1000 / 60); // 60 FPS
+        trackingInterval = setInterval(trackData, 1000 / 60);
 
     } catch (error) {
         console.error('Failed to start tracking:', error);
@@ -831,8 +831,8 @@ async function startTracking() {
 }
 
 function trackData() {
-    navigator.xr.requestReferenceSpace('local').then((xrReferenceSpace) => {
-        const xrViewerPose = new XRViewerPose();
+    navigator.xr.requestReferenceSpace('local').then((_xrReferenceSpace) => {
+        const xrViewerPose = new xrViewerPose();
         const headPosition = xrViewerPose.transform.position;
         const headOrientation = xrViewerPose.transform.orientation;
         let controllerData = [];
@@ -886,16 +886,17 @@ function trackData() {
     });
 }
 
-
 function stopTracking() {
+    clearInterval(trackingInterval);
+
     if (xrSession) {
         xrSession.end();
         xrSession = null;
-        referenceSpace = null;
-        vrButton.textContent = "Start Tracking";
-        vrButton.onclick = startTracking;
         console.log('Tracking session stopped');
     }
+
+    vrButton.textContent = "Start Tracking";
+    vrButton.onclick = startTracking;
 }
 
 confirmLoginButton.onclick = login;
