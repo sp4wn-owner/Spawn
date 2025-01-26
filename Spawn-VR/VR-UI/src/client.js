@@ -695,7 +695,7 @@ async function startAutoRedeem() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(userDetails) // Use the prepared userDetails object here
+            body: JSON.stringify(userDetails) 
         })
         .then(response => {
             if (!response.ok) {
@@ -793,13 +793,17 @@ function showLoadingOverlay() {
 function hideLoadingOverlay() {
     loadingOverlay.style.display = 'none';
 }
-let videoMaterial, videoMesh
+
+
+
+let videoTexture, videoMaterial, videoMesh;
+
 async function startXRSession() {
     try {
         if (!scene) {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 0;
+            camera.position.set(0, 1.6, 0);
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.xr.enabled = true;
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -813,38 +817,83 @@ async function startXRSession() {
                 return;
             }
 
+            if (!navigator.xr) {
+                await import('webxr-polyfill').then((module) => {
+                    new module.WebXRPolyfill();
+                    console.log('WebXR Polyfill initialized');
+                });
+            }
+
             videoTexture = new THREE.VideoTexture(remoteVideo);
             videoTexture.minFilter = THREE.LinearFilter;
             videoTexture.magFilter = THREE.LinearFilter;
             videoTexture.format = THREE.RGBFormat;
             videoTexture.needsUpdate = true;
+            videoTexture.lastUpdateTime = 0;
 
             videoMaterial = new THREE.MeshBasicMaterial({
                 map: videoTexture,
-                side: THREE.DoubleSide
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 1.0
             });
             const videoGeometry = new THREE.PlaneGeometry(4, 3);
             videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
 
             scene.add(videoMesh);
-            videoMesh.position.set(0, 0, -5);  
+            videoMesh.position.set(0, 1.6, -5); 
 
-            if (remoteVideo.paused) {
-                await remoteVideo.play().catch(error => {
-                    console.error('Video play error:', error);
+            if (remoteVideo.readyState < 3) {
+                await new Promise(resolve => {
+                    remoteVideo.addEventListener('canplay', resolve, { once: true });
                 });
             }
+            await remoteVideo.play().catch(error => {
+                console.error('Video play error:', error);
+            });
 
             remoteVideo.muted = true;
             remoteVideo.playsInline = true;
         }
 
-        xrSession = await navigator.xr.requestSession('immersive-vr');
-        
-        const xrLayer = new XRWebGLLayer(xrSession, renderer.getContext());
-        xrSession.updateRenderState({ baseLayer: xrLayer });
+        const sessionInit = {
+            requiredFeatures: [],
+            optionalFeatures: []
+        };
 
-        xrSession.requestAnimationFrame(animate);
+        console.log('Requesting immersive-vr session');
+        
+        if (await navigator.xr.isSessionSupported('immersive-vr')) {
+            xrSession = await navigator.xr.requestSession('immersive-vr', sessionInit);
+            console.log('Session created successfully');
+
+            let supportedSpaces = ['bounded-floor', 'local-floor', 'local'];
+            let spaceFound = false;
+
+            for (let space of supportedSpaces) {
+                if (await xrSession.isReferenceSpaceSupported(space)) {
+                    referenceSpace = await xrSession.requestReferenceSpace(space);
+                    console.log(`Using ${space} reference space`);
+                    spaceFound = true;
+                    break;
+                }
+            }
+
+            if (!spaceFound) {
+                referenceSpace = await xrSession.requestReferenceSpace('viewer');
+                console.log('Falling back to viewer reference space');
+            }
+
+            console.log('Reference Space:', referenceSpace); 
+
+            const xrLayer = new XRWebGLLayer(xrSession, renderer.getContext());
+            xrSession.updateRenderState({ baseLayer: xrLayer });
+
+            xrSession.requestAnimationFrame(animate);
+        } else {
+            console.log('Immersive VR not supported, trying inline mode...');
+            xrSession = await navigator.xr.requestSession('inline', sessionInit);
+        }
 
     } catch (error) {
         console.error('Failed to start VR session:', error);
@@ -858,7 +907,7 @@ function endXRSession() {
 }
 
 function onSessionEnd() {
-    showSnackbar('XR Session ended');
+    console.log('XR Session ended');
     xrSession = null;
     referenceSpace = null;
     vrStatus.textContent = 'VR Session Ended';
@@ -868,7 +917,7 @@ function onSessionEnd() {
 
 function animate(time, frame) {
     if (xrSession) {
-        const viewerPose = frame.getViewerPose(frame.session.requestReferenceSpace('local'));
+        const viewerPose = frame.getViewerPose(referenceSpace);
         if (viewerPose) {
             const xrLayer = new XRWebGLLayer(xrSession, renderer.getContext());
             xrSession.updateRenderState({ baseLayer: xrLayer });
@@ -887,16 +936,16 @@ function animate(time, frame) {
             }
         }
         xrSession.requestAnimationFrame(animate);
+    } else {
+        // Fallback for non-VR rendering
+        if (remoteVideo.readyState >= 3 && remoteVideo.currentTime !== videoTexture.lastUpdateTime) {
+            videoTexture.needsUpdate = true;
+            videoTexture.lastUpdateTime = remoteVideo.currentTime;
+        }
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
     }
 }
-
-let aButtonPressed = false;
-let videoTexture = new THREE.VideoTexture(remoteVideo);
-videoTexture.minFilter = THREE.LinearFilter;
-videoTexture.magFilter = THREE.LinearFilter;
-videoTexture.format = THREE.RGBFormat;
-videoTexture.needsUpdate = true;
-videoTexture.lastUpdateTime = 0;
 
 confirmLoginButton.onclick = login;
 spawnButton.onclick = start;
