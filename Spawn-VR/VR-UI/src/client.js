@@ -50,6 +50,7 @@ const maxReconnectAttempts = 20;
 let reconnectAttempts = 0;
 const reconnectDelay = 2000;
 let isGuest = true;
+let videoTextureSetup = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     modalLogin.style.display = "none";
@@ -480,12 +481,13 @@ async function openPeerConnection() {
     await closeDataChannels();
     peerConnection = new RTCPeerConnection(configuration);
     remoteStream = new MediaStream();
-    //remoteVideo.srcObject = remoteStream;
- 
+    remoteVideo.srcObject = remoteStream;
+
+    
     peerConnection.ontrack = (event) => {
         remoteStream.addTrack(event.track);
         console.log("Received track:", event.track);
-        setupVideoTexture(remoteStream);
+        
     };
 
     peerConnection.onicecandidate = function (event) {
@@ -817,6 +819,11 @@ function hideLoadingOverlay() {
 let videoTexture, videoMaterial, videoMesh;
 
 async function startXRSession() {
+    if (!videoTextureSetup) {
+        setupVideoTexture(remoteStream);
+        videoTextureSetup = true;
+        remoteVideo.srcObject = "";
+    }
     try {
         if (!scene) {
             scene = new THREE.Scene();
@@ -871,6 +878,7 @@ async function startXRSession() {
 function endXRSession() {
     if (xrSession) {
         xrSession.end();
+        remoteVideo.srcObject = remoteStream;
     }
 }
 
@@ -883,6 +891,10 @@ function onSessionEnd() {
     vrButton.onclick = startXRSession;
 }
 
+let lastUpdate = 0;
+const streamFPS = 30;
+const frameTime = 1000 / streamFPS;
+
 function animate(time, frame) {
     if (xrSession) {
         const viewerPose = frame.getViewerPose(referenceSpace);
@@ -894,12 +906,10 @@ function animate(time, frame) {
 
                 const streamTracks = remoteStream.getVideoTracks();
                 if (streamTracks.length > 0) {
-                    const videoTrack = streamTracks[0];
-                    const currentTime = videoTrack.muted ? 0 : performance.now() / 1000; 
-                    
-                    if (currentTime !== videoTexture.lastUpdateTime) {
+                    if (time - lastUpdate > frameTime) {
                         videoTexture.needsUpdate = true;
-                        videoTexture.lastUpdateTime = currentTime;
+                        lastUpdate = time;
+                        console.log(`Texture updated at ${time}`);
                     }
                 }
 
@@ -912,6 +922,7 @@ function animate(time, frame) {
         renderer.render(scene, camera);
     }
 }
+
 confirmLoginButton.onclick = login;
 spawnButton.onclick = start;
 vrButton.onclick = startXRSession;
