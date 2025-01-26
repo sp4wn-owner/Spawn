@@ -793,6 +793,7 @@ function hideLoadingOverlay() {
 async function startTracking() {
     vrButton.textContent = "Stop Tracking";
     vrButton.onclick = stopTracking;
+
     try {
         if (!navigator.xr) {
             console.log('WebXR not supported');
@@ -801,11 +802,11 @@ async function startTracking() {
 
         const sessionInit = {
             requiredFeatures: ['local'],
-            optionalFeatures: []
+            optionalFeatures: ['hand-tracking']
         };
 
-        if (await navigator.xr.isSessionSupported('inline')) {
-            xrSession = await navigator.xr.requestSession('inline', sessionInit);
+        if (await navigator.xr.isSessionSupported('immersive-vr')) {
+            xrSession = await navigator.xr.requestSession('immersive-vr', sessionInit);
             console.log('Tracking session started');
 
             referenceSpace = await xrSession.requestReferenceSpace('local');
@@ -813,8 +814,8 @@ async function startTracking() {
 
             xrSession.requestAnimationFrame(animate);
         } else {
-            console.log('Inline XR session not supported');
-            throw new Error('Inline XR session not supported');
+            console.log('Immersive VR session not supported');
+            throw new Error('Immersive VR session not supported');
         }
 
     } catch (error) {
@@ -833,22 +834,32 @@ function animate(time, frame) {
             let controllerData = [];
 
             for (const inputSource of frame.session.inputSources) {
-                if (inputSource.gripSpace) {
-                    const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
-                    if (gripPose) {
+                if (inputSource.hand) {
+                    inputSource.hand.forEach((joint) => {
                         controllerData.push({
-                            gripPosition: gripPose.transform.position,
-                            gripOrientation: gripPose.transform.orientation
+                            jointName: joint.jointName,
+                            position: joint.transform.position,
+                            orientation: joint.transform.orientation
                         });
+                    });
+                } else {
+                    if (inputSource.gripSpace) {
+                        const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
+                        if (gripPose) {
+                            controllerData.push({
+                                gripPosition: gripPose.transform.position,
+                                gripOrientation: gripPose.transform.orientation
+                            });
+                        }
                     }
-                }
-                if (inputSource.targetRaySpace) {
-                    const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
-                    if (targetPose) {
-                        controllerData.push({
-                            targetPosition: targetPose.transform.position,
-                            targetOrientation: targetPose.transform.orientation
-                        });
+                    if (inputSource.targetRaySpace) {
+                        const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
+                        if (targetPose) {
+                            controllerData.push({
+                                targetPosition: targetPose.transform.position,
+                                targetOrientation: targetPose.transform.orientation
+                            });
+                        }
                     }
                 }
             }
@@ -882,6 +893,8 @@ function stopTracking() {
         xrSession.end();
         xrSession = null;
         referenceSpace = null;
+        vrButton.textContent = "Start Tracking";
+        vrButton.onclick = startTracking;
         console.log('Tracking session stopped');
     }
 }
