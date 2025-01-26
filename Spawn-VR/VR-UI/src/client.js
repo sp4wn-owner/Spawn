@@ -28,7 +28,6 @@ const loadingOverlay = document.getElementById('loadingOverlay');
 const vrStatus = document.getElementById('status');
 const trackingDataSpan = document.getElementById('tracking-data');
 let xrSession = null;
-let referenceSpace = null;
 let scene, camera, renderer;
 
 // Global Variables
@@ -813,6 +812,7 @@ async function startTracking() {
 }
 
 let trackingInterval;
+let referenceSpace;
 
 async function startTracking() {
     vrButton.textContent = "Stop Tracking";
@@ -832,7 +832,7 @@ async function startTracking() {
         console.log('Session requested successfully', xrSession);
 
         try {
-            let referenceSpace;
+            
             if (xrSession.getSupportedReferenceSpaces) {
                 const supportedSpaces = await xrSession.getSupportedReferenceSpaces();
                 console.log('Supported reference spaces:', supportedSpaces);
