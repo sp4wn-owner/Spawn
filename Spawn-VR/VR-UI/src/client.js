@@ -823,9 +823,7 @@ async function startTracking() {
             return;
         }
 
-        const sessionInit = {
-            requiredFeatures: ['local']
-        };
+        const sessionInit = {};
 
         xrSession = await navigator.xr.requestSession('inline', sessionInit);
         referenceSpace = await xrSession.requestReferenceSpace('local');
