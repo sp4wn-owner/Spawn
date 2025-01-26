@@ -480,16 +480,12 @@ async function openPeerConnection() {
     await closeDataChannels();
     peerConnection = new RTCPeerConnection(configuration);
     remoteStream = new MediaStream();
-    remoteVideo.srcObject = remoteStream;
-    remoteVideo.playsInline = true;
-    remoteVideo.play().catch(error => {
-        console.error('Video play error:', error);
-        showSnackbar('Error playing video: ' + error.message);
-    });
+    //remoteVideo.srcObject = remoteStream;
  
     peerConnection.ontrack = (event) => {
         remoteStream.addTrack(event.track);
         console.log("Received track:", event.track);
+        setupVideoTexture(remoteStream);
     };
 
     peerConnection.onicecandidate = function (event) {
@@ -509,6 +505,30 @@ async function openPeerConnection() {
         host: robotUsername,
         pw: tempPW
     });
+}
+
+function setupVideoTexture(stream) {
+    if (!videoTexture) {
+        videoTexture = new THREE.VideoTexture(stream);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBFormat;
+        videoTexture.needsUpdate = true;
+        videoTexture.lastUpdateTime = 0;
+
+        videoMaterial = new THREE.MeshBasicMaterial({
+            map: videoTexture,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 1.0
+        });
+        
+        const videoGeometry = new THREE.PlaneGeometry(4, 3);
+        videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
+
+        scene.add(videoMesh);
+        videoMesh.position.set(0, 1.6, -5);
+    }
 }
 
 async function closeDataChannels() {
@@ -815,36 +835,9 @@ async function startXRSession() {
                 return;
             }
 
-            videoTexture = new THREE.VideoTexture(remoteVideo);
-            videoTexture.minFilter = THREE.LinearFilter;
-            videoTexture.magFilter = THREE.LinearFilter;
-            videoTexture.format = THREE.RGBFormat;
-            videoTexture.needsUpdate = true;
-            videoTexture.lastUpdateTime = 0;
-
-            videoMaterial = new THREE.MeshBasicMaterial({
-                map: videoTexture,
-                side: THREE.DoubleSide,
-                transparent: true,
-                opacity: 1.0
-            });
-            const videoGeometry = new THREE.PlaneGeometry(4, 3);
-            videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
-
-            scene.add(videoMesh);
-            videoMesh.position.set(0, 1.6, -5); 
-
-            if (remoteVideo.readyState < 3) {
-                await new Promise(resolve => {
-                    remoteVideo.addEventListener('canplay', resolve, { once: true });
-                });
+            if (!videoTexture) {
+                setupVideoTexture(remoteStream);
             }
-            await remoteVideo.play().catch(error => {
-                console.error('Video play error:', error);
-            });
-
-            remoteVideo.muted = true;
-            remoteVideo.playsInline = true;
         }
 
         const sessionInit = {
@@ -899,9 +892,15 @@ function animate(time, frame) {
                 renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
                 camera.projectionMatrix.fromArray(view.projectionMatrix);
 
-                if (remoteVideo.readyState >= 3 && remoteVideo.currentTime !== videoTexture.lastUpdateTime) {
-                    videoTexture.needsUpdate = true;
-                    videoTexture.lastUpdateTime = remoteVideo.currentTime;
+                const streamTracks = remoteStream.getVideoTracks();
+                if (streamTracks.length > 0) {
+                    const videoTrack = streamTracks[0];
+                    const currentTime = videoTrack.muted ? 0 : performance.now() / 1000; 
+                    
+                    if (currentTime !== videoTexture.lastUpdateTime) {
+                        videoTexture.needsUpdate = true;
+                        videoTexture.lastUpdateTime = currentTime;
+                    }
                 }
 
                 renderer.render(scene, camera);
@@ -909,10 +908,6 @@ function animate(time, frame) {
         }
         xrSession.requestAnimationFrame(animate);
     } else {
-        if (remoteVideo.readyState >= 3 && remoteVideo.currentTime !== videoTexture.lastUpdateTime) {
-            videoTexture.needsUpdate = true;
-            videoTexture.lastUpdateTime = remoteVideo.currentTime;
-        }
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
     }
