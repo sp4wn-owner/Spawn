@@ -904,8 +904,6 @@ function onSessionEnd() {
 }
 
 function animate(time, frame) {
-    requestAnimationFrame((t) => animate(t, frame));
-
     if (xrSession && referenceSpace) { 
         const viewerPose = frame.getViewerPose(referenceSpace);
         if (viewerPose) {
@@ -976,8 +974,11 @@ function animate(time, frame) {
             videoTexture.needsUpdate = true;
         }
 
+        requestAnimationFrame(animate);
         renderer.render(scene, camera);
+        return;
     }
+    xrSession.requestAnimationFrame(animate);
 }
 
 confirmLoginButton.onclick = login;
