@@ -814,10 +814,13 @@ async function startTracking() {
             xrSession.requestAnimationFrame(animate);
         } else {
             console.log('Inline XR session not supported');
+            throw new Error('Inline XR session not supported');
         }
 
     } catch (error) {
         console.error('Failed to start tracking session:', error);
+        vrButton.textContent = "Start Tracking";
+        vrButton.onclick = startTracking;
     }
 }
 
@@ -851,13 +854,21 @@ function animate(time, frame) {
             }
 
             if (inputChannel && inputChannel.readyState === 'open') {
-                inputChannel.send(JSON.stringify({
-                    head: {
-                        position: headPosition,
-                        orientation: headOrientation
-                    },
-                    controllers: controllerData
-                }));
+                try {
+                    const trackingData = {
+                        head: {
+                            position: headPosition,
+                            orientation: headOrientation
+                        },
+                        controllers: controllerData
+                    };
+                    inputChannel.send(JSON.stringify(trackingData));
+                    console.log('Data sent:', JSON.stringify(trackingData));
+                } catch (sendError) {
+                    console.error('Error sending tracking data:', sendError);
+                }
+            } else {
+                console.log('Input channel not open or not available');
             }
         }
         xrSession.requestAnimationFrame(animate);
@@ -872,11 +883,6 @@ function stopTracking() {
         xrSession = null;
         referenceSpace = null;
         console.log('Tracking session stopped');
-    }
-    if (inputChannel) {
-        inputChannel.close();
-        inputChannel = null;
-        console.log('Data channel closed');
     }
 }
 
