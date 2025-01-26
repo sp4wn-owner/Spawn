@@ -934,11 +934,13 @@ function animate(time, frame) {
                 if (inputSource.gamepad) {
                     const aButton = inputSource.gamepad.buttons[0];
                     if (aButton && aButton.pressed) {
-                        setTimeout(function() {
-                            if (aButton.pressed) {
+                        if (!aButtonPressed) {
+                            aButtonPressed = true;
+                            setTimeout(() => {
+                                aButtonPressed = false;
                                 endXRSession();
-                            }
-                        }, 500);
+                            }, 500);
+                        }
                         return;
                     }
                 }
@@ -966,12 +968,18 @@ function animate(time, frame) {
                 renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
                 camera.projectionMatrix.fromArray(view.projectionMatrix);
                 
+                if (remoteVideo.readyState >= 3 && remoteVideo.currentTime !== videoTexture.lastUpdateTime) {
+                    videoTexture.needsUpdate = true;
+                    videoTexture.lastUpdateTime = remoteVideo.currentTime;
+                }
+                
                 renderer.render(scene, camera);
             }
         }
     } else {
-        if (remoteVideo.readyState >= 3) {
+        if (remoteVideo.readyState >= 3 && remoteVideo.currentTime !== videoTexture.lastUpdateTime) {
             videoTexture.needsUpdate = true;
+            videoTexture.lastUpdateTime = remoteVideo.currentTime;
         }
 
         requestAnimationFrame(animate);
@@ -980,6 +988,14 @@ function animate(time, frame) {
     }
     xrSession.requestAnimationFrame(animate);
 }
+
+let aButtonPressed = false;
+let videoTexture = new THREE.VideoTexture(remoteVideo);
+videoTexture.minFilter = THREE.LinearFilter;
+videoTexture.magFilter = THREE.LinearFilter;
+videoTexture.format = THREE.RGBFormat;
+videoTexture.needsUpdate = true;
+videoTexture.lastUpdateTime = 0;
 
 confirmLoginButton.onclick = login;
 spawnButton.onclick = start;
