@@ -26,6 +26,7 @@ const modalPassword = document.getElementById("modal-enter-password");
 const pwModalSpan = document.getElementById("close-password-modal");
 const loadingOverlay = document.getElementById('loadingOverlay');
 const vrStatus = document.getElementById('status');
+const trackingDataSpan = document.getElementById('tracking-data');
 let xrSession = null;
 let referenceSpace = null;
 let scene, camera, renderer;
@@ -905,23 +906,32 @@ function animate(time, frame) {
             }
         });
 
-        if (inputChannel && inputChannel.readyState === 'open') {
-            try {
-                const trackingData = {
-                    head: {
-                        position: headPosition,
-                        orientation: headOrientation
-                    },
-                    controllers: controllerData
-                };
+        const trackingData = {
+            head: {
+                position: headPosition,
+                orientation: headOrientation
+            },
+            controllers: controllerData
+        };
+
+        try {
+            if (inputChannel && inputChannel.readyState === 'open') {
                 inputChannel.send(JSON.stringify(trackingData));
                 console.log('Data sent:', JSON.stringify(trackingData));
-            } catch (sendError) {
-                console.error('Error sending tracking data:', sendError);
+            } else {
+                console.log('Input channel not open or not available');
             }
-        } else {
-            console.log('Input channel not open or not available');
+
+            if (trackingDataSpan) {
+                trackingDataSpan.textContent = JSON.stringify(trackingData, null, 2); 
+            } else {
+                console.warn('Element with id "tracking-data" not found');
+            }
+        } catch (error) {
+            console.error('Error in animate function:', error);
         }
+    } else {
+        console.log('No viewer pose available for this frame');
     }
 
     xrSession.requestAnimationFrame(animate);
