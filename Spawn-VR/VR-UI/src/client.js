@@ -793,98 +793,61 @@ function showLoadingOverlay() {
 function hideLoadingOverlay() {
     loadingOverlay.style.display = 'none';
 }
-
+let videoMaterial, videoMesh
 async function startXRSession() {
     try {
         if (!scene) {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 0; 
+            camera.position.z = 0;
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.xr.enabled = true;
-            renderer.setSize(window.innerWidth, window.innerHeight); 
+            renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
             if (!navigator.xr) {
-                showSnackbar('WebXR not supported, falling back to 2D view');
-                renderer.setAnimationLoop(() => { 
+                console.log('WebXR not supported, falling back to 2D view');
+                renderer.setAnimationLoop(() => {
                     renderer.render(scene, camera);
                 });
                 return;
             }
 
-            const videoTexture = new THREE.VideoTexture(remoteVideo);
+            videoTexture = new THREE.VideoTexture(remoteVideo);
             videoTexture.minFilter = THREE.LinearFilter;
             videoTexture.magFilter = THREE.LinearFilter;
             videoTexture.format = THREE.RGBFormat;
-            videoTexture.needsUpdate = true; 
+            videoTexture.needsUpdate = true;
 
-            const videoMaterial = new THREE.MeshBasicMaterial({ 
-                map: videoTexture, 
-                side: THREE.DoubleSide, 
-                transparent: true,
-                opacity: 1.0 
+            videoMaterial = new THREE.MeshBasicMaterial({
+                map: videoTexture,
+                side: THREE.DoubleSide
             });
             const videoGeometry = new THREE.PlaneGeometry(4, 3);
-            const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
+            videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
 
             scene.add(videoMesh);
-            videoMesh.position.set(0, 0, -5);
+            videoMesh.position.set(0, 0, -5);  
 
-            if (remoteVideo.readyState < 3) {
-                showSnackbar('Waiting for video to load...');
-                await new Promise(resolve => {
-                    remoteVideo.addEventListener('canplay', () => {
-                        resolve();
-                    }, { once: true });
+            if (remoteVideo.paused) {
+                await remoteVideo.play().catch(error => {
+                    console.error('Video play error:', error);
                 });
             }
-            remoteVideo.play().catch(error => {
-                console.error('Video play error:', error);
-                showSnackbar('Error playing video: ' + error.message);
-            });
 
-            remoteVideo.muted = true; 
-            remoteVideo.playsInline = true; 
+            remoteVideo.muted = true;
+            remoteVideo.playsInline = true;
         }
 
         xrSession = await navigator.xr.requestSession('immersive-vr');
         
-        referenceSpace = await xrSession.requestReferenceSpace('local');
-        
-        xrSession.requestAnimationFrame(animate);
-
         const xrLayer = new XRWebGLLayer(xrSession, renderer.getContext());
         xrSession.updateRenderState({ baseLayer: xrLayer });
 
-        vrStatus.textContent = '';
-        vrButton.textContent = 'Exit VR';
-        vrButton.onclick = endXRSession;
-
-        xrSession.addEventListener('end', onSessionEnd);
-
-        if (remoteVideo.paused) {
-            remoteVideo.play().catch(error => {
-                console.error('Video play error in VR:', error);
-                showSnackbar('Error playing video in VR: ' + error.message);
-            });
-        }
+        xrSession.requestAnimationFrame(animate);
 
     } catch (error) {
-        let errorMessage = 'Failed to start VR session';
-        if (error instanceof DOMException) {
-            errorMessage += `: ${error.name} - ${error.message}`;
-        } else if (error instanceof Error) {
-            errorMessage += `: ${error.name} - ${error.message}`;
-        } else {
-            errorMessage += ': Unknown error type';
-        }
-
-        console.error(errorMessage);
-        
-        showSnackbar(errorMessage);
-
-        vrStatus.textContent = 'Failed to start VR session';
+        console.error('Failed to start VR session:', error);
     }
 }
 
@@ -904,62 +867,9 @@ function onSessionEnd() {
 }
 
 function animate(time, frame) {
-    if (xrSession && referenceSpace) { 
-        const viewerPose = frame.getViewerPose(referenceSpace);
+    if (xrSession) {
+        const viewerPose = frame.getViewerPose(frame.session.requestReferenceSpace('local'));
         if (viewerPose) {
-            const headPosition = viewerPose.transform.position;
-            const headOrientation = viewerPose.transform.orientation;
-
-            let controllerData = [];
-
-            for (const inputSource of frame.session.inputSources) {
-                const controller = {};
-                
-                if (inputSource.gripSpace) {
-                    const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
-                    if (gripPose) {
-                        controller.gripPosition = gripPose.transform.position;
-                        controller.gripOrientation = gripPose.transform.orientation;
-                    }
-                }
-
-                if (inputSource.targetRaySpace) {
-                    const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
-                    if (targetPose) {
-                        controller.targetPosition = targetPose.transform.position;
-                        controller.targetOrientation = targetPose.transform.orientation;
-                    }
-                }
-
-                if (inputSource.gamepad) {
-                    const aButton = inputSource.gamepad.buttons[0];
-                    if (aButton && aButton.pressed) {
-                        if (!aButtonPressed) {
-                            aButtonPressed = true;
-                            setTimeout(() => {
-                                aButtonPressed = false;
-                                endXRSession();
-                            }, 500);
-                        }
-                        return;
-                    }
-                }
-
-                if (Object.keys(controller).length > 0) {
-                    controllerData.push(controller);
-                }
-            }
-
-            if (inputChannel.readyState === 'open') {
-                inputChannel.send(JSON.stringify({
-                    head: {
-                        position: headPosition,
-                        orientation: headOrientation
-                    },
-                    controllers: controllerData
-                }));
-            }
-
             const xrLayer = new XRWebGLLayer(xrSession, renderer.getContext());
             xrSession.updateRenderState({ baseLayer: xrLayer });
 
@@ -967,26 +877,17 @@ function animate(time, frame) {
                 const viewport = xrLayer.getViewport(view);
                 renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
                 camera.projectionMatrix.fromArray(view.projectionMatrix);
-                
+
                 if (remoteVideo.readyState >= 3 && remoteVideo.currentTime !== videoTexture.lastUpdateTime) {
                     videoTexture.needsUpdate = true;
                     videoTexture.lastUpdateTime = remoteVideo.currentTime;
                 }
-                
+
                 renderer.render(scene, camera);
             }
         }
-    } else {
-        if (remoteVideo.readyState >= 3 && remoteVideo.currentTime !== videoTexture.lastUpdateTime) {
-            videoTexture.needsUpdate = true;
-            videoTexture.lastUpdateTime = remoteVideo.currentTime;
-        }
-
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
-        return;
+        xrSession.requestAnimationFrame(animate);
     }
-    xrSession.requestAnimationFrame(animate);
 }
 
 let aButtonPressed = false;
