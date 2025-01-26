@@ -829,17 +829,39 @@ async function startTracking() {
         console.log('Trying to request session...');
         xrSession = await navigator.xr.requestSession('inline', sessionInit);
         console.log('Session requested successfully', xrSession);
-        referenceSpace = await xrSession.requestReferenceSpace('local');
-        console.log('Reference space obtained', referenceSpace);
-        xrSession.requestAnimationFrame(animate);
-        console.log('Tracking started');
-        showSnackbar('Tracking started successfully.');
+
+        try {
+            const supportedSpaces = await xrSession.getSupportedReferenceSpaces();
+            console.log('Supported reference spaces:', supportedSpaces);
+            showSnackbar('Supported reference spaces:', supportedSpaces);
+            
+            if (supportedSpaces.includes('local')) {
+                referenceSpace = await xrSession.requestReferenceSpace('local');
+            } else if (supportedSpaces.includes('viewer')) {
+                console.warn('Using viewer reference space instead of local.');
+                referenceSpace = await xrSession.requestReferenceSpace('viewer');
+                showSnackbar('Falling back to viewer reference space, as local is not supported.');
+            } else {
+                throw new Error('No suitable reference space available');
+            }
+            
+            console.log('Reference space obtained', referenceSpace);
+            xrSession.requestAnimationFrame(animate);
+            console.log('Tracking started');
+            showSnackbar('Tracking started successfully.');
+
+        } catch (referenceSpaceError) {
+            console.error('Error getting reference space:', referenceSpaceError);
+            showSnackbar('Error: ' + referenceSpaceError.message);
+            vrButton.textContent = "Start Tracking";
+            vrButton.onclick = startTracking;
+            return;
+        }
 
     } catch (error) {
         console.error('Failed to start tracking session:', error);
         vrButton.textContent = "Start Tracking";
         vrButton.onclick = startTracking;
-        
         showSnackbar('Failed to start tracking: ' + error.message);
     }
 }
