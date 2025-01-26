@@ -748,13 +748,14 @@ async function stopAutoRedeem() {
     }
 }
 
-function endStream() {
+async function endStream() {
     console.log("Ending stream");
     stopAutoRedeem();
     spawnButton.textContent = "Spawn";
     spawnButton.onclick = start;
     vrButton.style.display = "none";
     remoteVideo.srcObject = null;
+    await closeDataChannels();
     if (peerConnection) {
         peerConnection.close();
         peerConnection = null;
@@ -811,26 +812,6 @@ async function startTracking() {
 }
 
 let trackingInterval;
-
-async function startTracking() {
-    vrButton.textContent = "Stop Tracking";
-    vrButton.onclick = stopTracking;
-
-    try {
-        if (!navigator.xr) {
-            console.log('WebXR not supported');
-            return;
-        }
-
-        console.log('Tracking started');
-        trackingInterval = setInterval(trackData, 1000 / 60);
-
-    } catch (error) {
-        console.error('Failed to start tracking:', error);
-        vrButton.textContent = "Start Tracking";
-        vrButton.onclick = startTracking;
-    }
-}
 
 async function startTracking() {
     vrButton.textContent = "Stop Tracking";
