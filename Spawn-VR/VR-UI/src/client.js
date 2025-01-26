@@ -828,7 +828,7 @@ async function startTracking() {
         const sessionInit = {};
 
         console.log('Trying to request session...');
-        xrSession = await navigator.xr.requestSession('inline', sessionInit);
+        xrSession = await navigator.xr.requestSession('immersive-vr', sessionInit);
         console.log('Session requested successfully', xrSession);
 
         try {
