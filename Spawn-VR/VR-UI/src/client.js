@@ -50,7 +50,6 @@ const maxReconnectAttempts = 20;
 let reconnectAttempts = 0;
 const reconnectDelay = 2000;
 let isGuest = true;
-let videoTextureSetup = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     modalLogin.style.display = "none";
@@ -487,7 +486,6 @@ async function openPeerConnection() {
     peerConnection.ontrack = (event) => {
         remoteStream.addTrack(event.track);
         console.log("Received track:", event.track);
-        
     };
 
     peerConnection.onicecandidate = function (event) {
@@ -507,30 +505,6 @@ async function openPeerConnection() {
         host: robotUsername,
         pw: tempPW
     });
-}
-
-function setupVideoTexture(stream) {
-    if (!videoTexture) {
-        videoTexture = new THREE.VideoTexture(stream);
-        videoTexture.minFilter = THREE.LinearFilter;
-        videoTexture.magFilter = THREE.LinearFilter;
-        videoTexture.format = THREE.RGBFormat;
-        videoTexture.needsUpdate = true;
-        videoTexture.lastUpdateTime = 0;
-
-        videoMaterial = new THREE.MeshBasicMaterial({
-            map: videoTexture,
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 1.0
-        });
-        
-        const videoGeometry = new THREE.PlaneGeometry(4, 3);
-        videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
-
-        scene.add(videoMesh);
-        videoMesh.position.set(0, 1.6, -5);
-    }
 }
 
 async function closeDataChannels() {
@@ -816,14 +790,7 @@ function hideLoadingOverlay() {
     loadingOverlay.style.display = 'none';
 }
 
-let videoTexture, videoMaterial, videoMesh;
-
 async function startXRSession() {
-    if (!videoTextureSetup) {
-        setupVideoTexture(remoteStream);
-        videoTextureSetup = true;
-        remoteVideo.srcObject = "";
-    }
     try {
         if (!scene) {
             scene = new THREE.Scene();
@@ -841,14 +808,10 @@ async function startXRSession() {
                 });
                 return;
             }
-
-            if (!videoTexture) {
-                setupVideoTexture(remoteStream);
-            }
         }
 
         const sessionInit = {
-            requiredFeatures: [],
+            requiredFeatures: ['local'],
             optionalFeatures: [] 
         };
 
@@ -878,7 +841,6 @@ async function startXRSession() {
 function endXRSession() {
     if (xrSession) {
         xrSession.end();
-        remoteVideo.srcObject = remoteStream;
     }
 }
 
@@ -891,35 +853,48 @@ function onSessionEnd() {
     vrButton.onclick = startXRSession;
 }
 
-let lastUpdate = 0;
-const streamFPS = 30;
-const frameTime = 1000 / streamFPS;
-
 function animate(time, frame) {
     if (xrSession) {
         const viewerPose = frame.getViewerPose(referenceSpace);
         if (viewerPose) {
-            for (const view of viewerPose.views) {
-                const viewport = xrSession.renderState.baseLayer.getViewport(view);
-                renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
-                camera.projectionMatrix.fromArray(view.projectionMatrix);
+            const headPosition = viewerPose.transform.position;
+            const headOrientation = viewerPose.transform.orientation;
+            let controllerData = [];
 
-                const streamTracks = remoteStream.getVideoTracks();
-                if (streamTracks.length > 0) {
-                    if (time - lastUpdate > frameTime) {
-                        videoTexture.needsUpdate = true;
-                        lastUpdate = time;
-                        console.log(`Texture updated at ${time}`);
+            for (const inputSource of frame.session.inputSources) {
+                if (inputSource.gripSpace) {
+                    const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
+                    if (gripPose) {
+                        controllerData.push({
+                            gripPosition: gripPose.transform.position,
+                            gripOrientation: gripPose.transform.orientation
+                        });
                     }
                 }
+                if (inputSource.targetRaySpace) {
+                    const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
+                    if (targetPose) {
+                        controllerData.push({
+                            targetPosition: targetPose.transform.position,
+                            targetOrientation: targetPose.transform.orientation
+                        });
+                    }
+                }
+            }
 
-                renderer.render(scene, camera);
+            if (inputChannel && inputChannel.readyState === 'open') {
+                inputChannel.send(JSON.stringify({
+                    head: {
+                        position: headPosition,
+                        orientation: headOrientation
+                    },
+                    controllers: controllerData
+                }));
             }
         }
         xrSession.requestAnimationFrame(animate);
     } else {
         requestAnimationFrame(animate);
-        renderer.render(scene, camera);
     }
 }
 
