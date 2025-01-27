@@ -1,5 +1,4 @@
 // This web client represents the user and serves as a basic template to quickly start testing VR teleoperation. Open the console to inspect outgoing data. 
-
 // ENTER USERNAME, PASSWORD, AND THE ROBOT'S USERNAME
 let username; // Username should be all lowercase
 let password; // Password for the user
@@ -11,6 +10,7 @@ const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
 // UI Elements
 const loginButton = document.getElementById('login-button');
 const spawnButton = document.getElementById('spawnButton');
+const fsButton = document.getElementById('fsButton');
 const vrButton = document.getElementById('vrButton');
 const confirmLoginButton = document.getElementById('confirm-login-button');
 const remoteVideo = document.getElementById('remoteVideo');
@@ -302,6 +302,7 @@ async function startStream() {
                             vrButton.style.display = "inline-block";
                             spawnButton.textContent = "End";
                             spawnButton.onclick = endStream;
+                            fsButton.style.display = "inline-block";
                         }
                     } else {
                         throw new Error('Stream is not live.');
@@ -765,7 +766,7 @@ function showSnackbar(message) {
  
         setTimeout(function() {
             snackbar.className = snackbar.className.replace('show', '');
-        }, 5000);
+        }, 15000);
     } catch (error) {
         console.error('Error showing snackbar:', error);
     }
@@ -787,78 +788,62 @@ function hideLoadingOverlay() {
     loadingOverlay.style.display = 'none';
 }
 
-let scene = new THREE.Scene();
-let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // Wider FOV if too far
-let renderer;
+let scene, camera, renderer;
 
-// Function to setup the scene with video, combining setupScene and setupVideoInScene functionality
 async function setupScene() {
-
     container.style.display = "block";
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    if (remoteVideo.srcObject) { // Check if video has a source
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1, 2); 
+
+    if (remoteVideo.srcObject) { 
         const videoTexture = new THREE.VideoTexture(remoteVideo);
         videoTexture.minFilter = THREE.LinearFilter;
         videoTexture.magFilter = THREE.LinearFilter;
         videoTexture.format = THREE.RGBAFormat;
+        videoTexture.wrapS = THREE.ClampToEdgeWrapping; 
+        videoTexture.wrapT = THREE.ClampToEdgeWrapping;
+        videoTexture.repeat.set(1, 1);
+        videoTexture.generateMipmaps = false;
+        videoTexture.needsUpdate = true;
 
-        const videoMaterial = new THREE.MeshBasicMaterial({ 
-            map: videoTexture, 
-            side: THREE.DoubleSide
-        });
+        scene.background = videoTexture;
 
-        // Calculate aspect ratios
-        const videoAspectRatio = remoteVideo.videoWidth / remoteVideo.videoHeight;
-        const rendererAspectRatio = window.innerWidth / window.innerHeight;
-
-        // Determine plane dimensions to ensure video fits entire scene
-        let planeWidth, planeHeight;
-        if (videoAspectRatio > rendererAspectRatio) {
-            planeWidth = 2;  // Width of 2 units in world space. Adjust if your scene scale is different
-            planeHeight = planeWidth / videoAspectRatio;
-        } else {
-            planeHeight = 2; 
-            planeWidth = planeHeight * videoAspectRatio;
-        }
-
-        // Plane for video, dynamically sized
-        const videoGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-        const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
-
-        // Position video plane in front of camera, centered
-        videoMesh.position.set(0, 0, -1); // Closer to camera, adjust based on scene scale
-
-        // Add the video mesh to the scene
-        scene.add(videoMesh);
-
-        // Camera setup
-        camera.position.set(0, 0, 0); // Camera at origin
-        camera.lookAt(videoMesh.position); // Camera looks at the video plane
-
-        // Update camera aspect ratio to match renderer
-        camera.aspect = rendererAspectRatio;
-        camera.updateProjectionMatrix();
+        remoteVideo.loop = true;
+        remoteVideo.play();
     } else {
         console.warn('No video stream is set for remoteVideo');
     }
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
 }
 
 async function enterVR() {
-    await setupScene(); // Ensure scene is set up before entering VR
+    await setupScene(); 
     vrButton.textContent = "Exit VR";
     vrButton.onclick = exitVR;
 
     if (navigator.xr) {
         try {
+            const gl = renderer.getContext();
+            await gl.makeXRCompatible();
             const session = await navigator.xr.requestSession('immersive-vr');
             console.log('Session requested successfully', session);
 
             session.addEventListener('end', () => {
                 console.log('VR session ended');
-                exitVR(); // Stop tracking if session ends
+                exitVR();
             });
 
             renderer.xr.enabled = true;
@@ -871,6 +856,8 @@ async function enterVR() {
             const referenceSpace = await session.requestReferenceSpace('local');
             renderer.xr.setReferenceSpaceType('local');
             renderer.xr.setSession(session);
+
+            animate();
 
             function onAnimationFrame(time, frame) {
                 const viewerPose = frame.getViewerPose(referenceSpace);
@@ -918,7 +905,6 @@ async function enterVR() {
                             showSnackbar('Tracking data not sent: channel unavailable.');
                         }
 
-                        // Assuming you have a place to display this data in your UI
                         if (trackingDataSpan) {
                             trackingDataSpan.textContent = JSON.stringify(trackingData, null, 2); 
                             showSnackbar('Tracking data updated in UI.');
@@ -968,6 +954,35 @@ confirmLoginButton.onclick = login;
 spawnButton.onclick = start;
 vrButton.onclick = enterVR;
 loginButton.onclick = openLoginModal;
+
+fsButton.addEventListener('click', async function() {
+    if (!document.fullscreenElement) {
+        try {
+            console.log('Attempting to enter fullscreen...');
+            if (document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) { 
+                await document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullscreen) { 
+                await document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) { 
+                await document.documentElement.msRequestFullscreen();
+            }
+        } catch (err) {
+            console.error('Failed to enter fullscreen:', err);
+            showSnackbar('Failed to enter fullscreen:', err);
+        }
+    } else {
+        console.log('Attempting to exit fullscreen...');
+        showSnackbar('Attempting to exit fullscreen...');
+        try {
+            await document.exitFullscreen();
+        } catch (err) {
+            console.error('Failed to exit fullscreen:', err);
+            showSnackbar('Failed to exit fullscreen:', err);
+        }
+    }
+});
 
 passwordInput.addEventListener('keydown', function(event) {
     if (event.key === 'Enter') {
