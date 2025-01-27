@@ -477,9 +477,7 @@ function handleInputChannel(inputChannel) {
     };
 
     inputChannel.onmessage = (event) => {
-        if (!handlingCMD) {
-            handlingCMD = true;
-            let cmd;
+        let cmd;
             try {
                 cmd = JSON.parse(event.data);
             } catch (e) {
@@ -489,7 +487,6 @@ function handleInputChannel(inputChannel) {
             }
             console.log('Command received:', cmd);
             // Handle the command here
-        }
     };
 
     inputChannel.onclose = () => {

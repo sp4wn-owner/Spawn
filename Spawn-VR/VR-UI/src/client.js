@@ -27,8 +27,7 @@ const pwModalSpan = document.getElementById("close-password-modal");
 const loadingOverlay = document.getElementById('loadingOverlay');
 const vrStatus = document.getElementById('status');
 const trackingDataSpan = document.getElementById('tracking-data');
-let xrSession = null;
-let scene, camera, renderer;
+const container = document.getElementById('vr-container');
 
 // Global Variables
 let remoteStream;
@@ -52,6 +51,7 @@ const reconnectDelay = 2000;
 let isGuest = true;
 
 document.addEventListener('DOMContentLoaded', () => {
+    
     modalLogin.style.display = "none";
     emitter = new EventEmitter3();
     vrButton.style.display = "none";
@@ -438,7 +438,6 @@ async function start() {
         return;
     }
     spawnButton.disabled = true;
-    remoteVideo.srcObject = null;
     try {
         const response = await fetch(`${wsUrl}/fetch-robot-details?username=${encodeURIComponent(robotUsername)}`, {
             method: 'GET',
@@ -454,13 +453,11 @@ async function start() {
         const result = await response.json();
         if (!result.isLive) {
             showSnackbar("Robot isn't available");
-            spawnButton.disabled = false;
             return;
         }
         tokenrate = Number(result.tokenrate);
         if (result.isPrivate) {
             modalPassword.style.display = "block";
-            spawnButton.disabled = false;
         } else {
             initSpawn();
         }
@@ -791,167 +788,193 @@ function hideLoadingOverlay() {
     loadingOverlay.style.display = 'none';
 }
 
-async function startTracking() {
-    vrButton.textContent = "Stop Tracking";
-    vrButton.onclick = stopTracking;
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000); // Wider FOV if too far
+let renderer;
 
-    try {
-        if (!navigator.xr) {
-            console.log('WebXR not supported');
-            return;
-        }
+// Function to setup the scene with video, combining setupScene and setupVideoInScene functionality
+async function setupScene() {
 
-        console.log('Tracking started');
-        trackingInterval = setInterval(trackData, 1000 / 60);
+    container.style.display = "block";
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
 
-    } catch (error) {
-        console.error('Failed to start tracking:', error);
-        vrButton.textContent = "Start Tracking";
-        vrButton.onclick = startTracking;
-    }
-}
+    if (remoteVideo.srcObject) { // Check if video has a source
+        const videoTexture = new THREE.VideoTexture(remoteVideo);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBAFormat;
 
-let trackingInterval;
-let referenceSpace;
-
-async function startTracking() {
-    vrButton.textContent = "Stop Tracking";
-    vrButton.onclick = stopTracking;
-
-    try {
-        if (!navigator.xr) {
-            console.log('WebXR not supported');
-            showSnackbar('WebXR is not supported in this browser.');
-            return;
-        }
-
-        const sessionInit = {};
-
-        console.log('Trying to request session...');
-        xrSession = await navigator.xr.requestSession('immersive-vr', sessionInit);
-        console.log('Session requested successfully', xrSession);
-
-        try {
-            let supportedSpaces = [];
-            
-            if (xrSession.getSupportedReferenceSpaces) {
-                supportedSpaces = await xrSession.getSupportedReferenceSpaces();
-                console.log('Supported reference spaces:', supportedSpaces);
-            }
-
-            if (supportedSpaces.includes('viewer')) {
-                referenceSpace = await xrSession.requestReferenceSpace('viewer');
-                console.log('Using viewer reference space.');
-            } else if (supportedSpaces.includes('local')) {
-                referenceSpace = await xrSession.requestReferenceSpace('local');
-                console.warn('Viewer reference space not supported, using local.');
-                showSnackbar('Falling back to local reference space.');
-            } else {
-                throw new Error('No suitable reference space available');
-            }
-            
-            console.log('Reference space obtained', referenceSpace);
-            xrSession.requestAnimationFrame(animate);
-            console.log('Tracking started');
-            showSnackbar('Tracking started successfully.');
-
-        } catch (referenceSpaceError) {
-            console.error('Error getting reference space:', referenceSpaceError);
-            showSnackbar('Error: ' + referenceSpaceError.message);
-            vrButton.textContent = "Start Tracking";
-            vrButton.onclick = startTracking;
-            return;
-        }
-
-    } catch (error) {
-        console.error('Failed to start tracking session:', error);
-        vrButton.textContent = "Start Tracking";
-        vrButton.onclick = startTracking;
-        showSnackbar('Failed to start tracking: ' + error.message);
-    }
-}
-
-function animate(time, frame) {
-    const viewerPose = frame.getViewerPose(referenceSpace);
-
-    if (viewerPose) {
-        const headPosition = viewerPose.transform.position;
-        const headOrientation = viewerPose.transform.orientation;
-        let controllerData = [];
-
-        frame.session.inputSources.forEach((inputSource) => {
-            if (inputSource.gripSpace) {
-                const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
-                if (gripPose) {
-                    controllerData.push({
-                        gripPosition: gripPose.transform.position,
-                        gripOrientation: gripPose.transform.orientation
-                    });
-                }
-            }
-            if (inputSource.targetRaySpace) {
-                const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
-                if (targetPose) {
-                    controllerData.push({
-                        targetPosition: targetPose.transform.position,
-                        targetOrientation: targetPose.transform.orientation
-                    });
-                }
-            }
+        const videoMaterial = new THREE.MeshBasicMaterial({ 
+            map: videoTexture, 
+            side: THREE.DoubleSide
         });
 
-        const trackingData = {
-            head: {
-                position: headPosition,
-                orientation: headOrientation
-            },
-            controllers: controllerData
-        };
+        // Calculate aspect ratios
+        const videoAspectRatio = remoteVideo.videoWidth / remoteVideo.videoHeight;
+        const rendererAspectRatio = window.innerWidth / window.innerHeight;
 
-        try {
-            if (inputChannel && inputChannel.readyState === 'open') {
-                inputChannel.send(JSON.stringify(trackingData));
-                console.log('Data sent:', JSON.stringify(trackingData));
-                showSnackbar('Tracking data sent.');
-            } else {
-                console.log('Input channel not open or not available');
-                showSnackbar('Tracking data not sent: channel unavailable.');
-            }
-
-            if (trackingDataSpan) {
-                trackingDataSpan.textContent = JSON.stringify(trackingData, null, 2); 
-                showSnackbar('Tracking data updated in UI.');
-            } else {
-                console.warn('Element with id "tracking-data" not found');
-                showSnackbar('Could not update tracking data in UI.');
-            }
-        } catch (error) {
-            console.error('Error in animate function:', error);
-            showSnackbar('Error in tracking: ' + error.message);
+        // Determine plane dimensions to ensure video fits entire scene
+        let planeWidth, planeHeight;
+        if (videoAspectRatio > rendererAspectRatio) {
+            planeWidth = 2;  // Width of 2 units in world space. Adjust if your scene scale is different
+            planeHeight = planeWidth / videoAspectRatio;
+        } else {
+            planeHeight = 2; 
+            planeWidth = planeHeight * videoAspectRatio;
         }
-    } else {
-        console.log('No viewer pose available for this frame');
-        showSnackbar('No tracking data available for this frame.');
-    }
 
-    xrSession.requestAnimationFrame(animate);
+        // Plane for video, dynamically sized
+        const videoGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+        const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
+
+        // Position video plane in front of camera, centered
+        videoMesh.position.set(0, 0, 0); // Closer to camera, adjust based on scene scale
+
+        // Add the video mesh to the scene
+        scene.add(videoMesh);
+
+        // Camera setup
+        camera.position.set(0, 0, 0); // Camera at origin
+        camera.lookAt(videoMesh.position); // Camera looks at the video plane
+
+        // Update camera aspect ratio to match renderer
+        camera.aspect = rendererAspectRatio;
+        camera.updateProjectionMatrix();
+    } else {
+        console.warn('No video stream is set for remoteVideo');
+    }
 }
 
-function stopTracking() {
-    if (xrSession) {
-        xrSession.end();
-        xrSession = null;
-        referenceSpace = null;
-        console.log('Tracking session stopped');
-    }
+async function enterVR() {
+    await setupScene(); // Ensure scene is set up before entering VR
+    vrButton.textContent = "Exit VR";
+    vrButton.onclick = exitVR;
 
-    vrButton.textContent = "Start Tracking";
-    vrButton.onclick = startTracking;
+    if (navigator.xr) {
+        try {
+            const session = await navigator.xr.requestSession('immersive-vr');
+            console.log('Session requested successfully', session);
+
+            session.addEventListener('end', () => {
+                console.log('VR session ended');
+                exitVR(); // Stop tracking if session ends
+            });
+
+            renderer.xr.enabled = true;
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            session.updateRenderState({
+                baseLayer: new XRWebGLLayer(session, renderer.getContext())
+            });
+
+            const referenceSpace = await session.requestReferenceSpace('local');
+            renderer.xr.setReferenceSpaceType('local');
+            renderer.xr.setSession(session);
+
+            function onAnimationFrame(time, frame) {
+                const viewerPose = frame.getViewerPose(referenceSpace);
+                if (viewerPose) {
+                    const headPosition = viewerPose.transform.position;
+                    const headOrientation = viewerPose.transform.orientation;
+                    let controllerData = [];
+
+                    frame.session.inputSources.forEach((inputSource) => {
+                        if (inputSource.gripSpace) {
+                            const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
+                            if (gripPose) {
+                                controllerData.push({
+                                    gripPosition: gripPose.transform.position,
+                                    gripOrientation: gripPose.transform.orientation
+                                });
+                            }
+                        }
+                        if (inputSource.targetRaySpace) {
+                            const targetPose = frame.getPose(inputSource.targetRaySpace, referenceSpace);
+                            if (targetPose) {
+                                controllerData.push({
+                                    targetPosition: targetPose.transform.position,
+                                    targetOrientation: targetPose.transform.orientation
+                                });
+                            }
+                        }
+                    });
+
+                    const trackingData = {
+                        head: {
+                            position: headPosition,
+                            orientation: headOrientation
+                        },
+                        controllers: controllerData
+                    };
+
+                    try {
+                        if (inputChannel && inputChannel.readyState === 'open') {
+                            inputChannel.send(JSON.stringify(trackingData));
+                            console.log('Data sent:', JSON.stringify(trackingData));
+                            showSnackbar('Tracking data sent.');
+                        } else {
+                            console.log('Input channel not open or not available');
+                            showSnackbar('Tracking data not sent: channel unavailable.');
+                        }
+
+                        // Assuming you have a place to display this data in your UI
+                        if (trackingDataSpan) {
+                            trackingDataSpan.textContent = JSON.stringify(trackingData, null, 2); 
+                            showSnackbar('Tracking data updated in UI.');
+                        } else {
+                            console.warn('Element with id "tracking-data" not found');
+                            showSnackbar('Could not update tracking data in UI.');
+                        }
+                    } catch (error) {
+                        console.error('Error in tracking:', error);
+                        showSnackbar('Error in tracking: ' + error.message);
+                    }
+                } else {
+                    console.log('No viewer pose available for this frame');
+                    showSnackbar('No tracking data available for this frame.');
+                }
+
+                renderer.render(scene, camera);
+                session.requestAnimationFrame(onAnimationFrame);
+            }
+            session.requestAnimationFrame(onAnimationFrame);
+
+        } catch (error) {
+            console.error('Failed to enter VR session:', error);
+            vrButton.textContent = "Enter VR";
+            vrButton.onclick = enterVR;
+            showSnackbar('Failed to enter VR: ' + error.message);
+        }
+    } else {
+        console.warn('WebXR API is not supported in this browser.');
+        showSnackbar('WebXR is not supported in this browser.');
+    }
+}
+
+// Function to exit VR
+function exitVR() {
+    if (renderer.xr.getSession()) {
+        renderer.xr.getSession().end().then(() => {
+            console.log('VR session ended');
+        });
+    }
+    container.style.display = "none";
+    remoteVideo.style.display = "block";
+    vrButton.textContent = "Enter VR";
+    vrButton.onclick = enterVR;
+}
+
+// Function to show snackbar (assuming this is a custom function for notifications)
+function showSnackbar(message) {
+    // Implement your snackbar functionality here
+    console.log(message);
 }
 
 confirmLoginButton.onclick = login;
 spawnButton.onclick = start;
-vrButton.onclick = startTracking;
+vrButton.onclick = enterVR;
 loginButton.onclick = openLoginModal;
 
 passwordInput.addEventListener('keydown', function(event) {
