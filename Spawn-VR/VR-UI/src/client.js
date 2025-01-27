@@ -832,28 +832,22 @@ async function startTracking() {
         console.log('Session requested successfully', xrSession);
 
         try {
+            let supportedSpaces = [];
             
             if (xrSession.getSupportedReferenceSpaces) {
-                const supportedSpaces = await xrSession.getSupportedReferenceSpaces();
+                supportedSpaces = await xrSession.getSupportedReferenceSpaces();
                 console.log('Supported reference spaces:', supportedSpaces);
-                
-                if (supportedSpaces.includes('local')) {
-                    referenceSpace = await xrSession.requestReferenceSpace('local');
-                } else if (supportedSpaces.includes('viewer')) {
-                    console.warn('Using viewer reference space instead of local.');
-                    referenceSpace = await xrSession.requestReferenceSpace('viewer');
-                    showSnackbar('Falling back to viewer reference space, as local is not supported.');
-                } else {
-                    throw new Error('No suitable reference space available');
-                }
+            }
+
+            if (supportedSpaces.includes('viewer')) {
+                referenceSpace = await xrSession.requestReferenceSpace('viewer');
+                console.log('Using viewer reference space.');
+            } else if (supportedSpaces.includes('local')) {
+                referenceSpace = await xrSession.requestReferenceSpace('local');
+                console.warn('Viewer reference space not supported, using local.');
+                showSnackbar('Falling back to local reference space.');
             } else {
-                try {
-                    referenceSpace = await xrSession.requestReferenceSpace('local');
-                } catch (localError) {
-                    console.warn('Local reference space not supported, trying viewer.');
-                    referenceSpace = await xrSession.requestReferenceSpace('viewer');
-                    showSnackbar('Falling back to viewer reference space, as local is not supported.');
-                }
+                throw new Error('No suitable reference space available');
             }
             
             console.log('Reference space obtained', referenceSpace);
