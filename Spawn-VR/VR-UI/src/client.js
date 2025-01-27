@@ -54,7 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     modalLogin.style.display = "none";
     emitter = new EventEmitter3();
-    vrButton.style.display = "none";
     login();
 });
 
@@ -789,7 +788,7 @@ function hideLoadingOverlay() {
 }
 
 let scene = new THREE.Scene();
-let camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000); // Wider FOV if too far
+let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // Wider FOV if too far
 let renderer;
 
 // Function to setup the scene with video, combining setupScene and setupVideoInScene functionality
@@ -830,7 +829,7 @@ async function setupScene() {
         const videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
 
         // Position video plane in front of camera, centered
-        videoMesh.position.set(0, 0, 0); // Closer to camera, adjust based on scene scale
+        videoMesh.position.set(0, 0, -1); // Closer to camera, adjust based on scene scale
 
         // Add the video mesh to the scene
         scene.add(videoMesh);
@@ -953,7 +952,6 @@ async function enterVR() {
     }
 }
 
-// Function to exit VR
 function exitVR() {
     if (renderer.xr.getSession()) {
         renderer.xr.getSession().end().then(() => {
