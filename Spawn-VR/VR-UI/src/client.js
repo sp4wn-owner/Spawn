@@ -966,12 +966,6 @@ function exitVR() {
     vrButton.onclick = enterVR;
 }
 
-// Function to show snackbar (assuming this is a custom function for notifications)
-function showSnackbar(message) {
-    // Implement your snackbar functionality here
-    console.log(message);
-}
-
 confirmLoginButton.onclick = login;
 spawnButton.onclick = start;
 vrButton.onclick = enterVR;
