@@ -8,10 +8,10 @@ Spawn-VR is an open-source VR framework tailored for telepresence robotics appli
 - On [Spawn](https://sp4wn.com), create at least one account for your robot. 
 
 ### Robot login
-- Enter your username and password and then click the "Start" button to connect to Spawn. The Robot-UI can be run locally ([portal](https://spawn-pk3x.onrender.com)). Open developer tools to inspect incoming tracking data. 
+- Enter your username and password, and then click the "Start" button to connect to Spawn. The Robot-UI can be run locally or through our [portal](https://spawn-pk3x.onrender.com). Open the developer tools to inspect incoming tracking data. 
 
 ### VR login
-- You'll be automatically logged in as a guest, but you're welcome to log in with your username and password. Just enter your robot's username and then click the 'Spawn' button to connect to your robot. The VR-UI requires HTTPS, so you'll either need to install a certificate to run it locally or use a hosting provider. You may also use the [portal](https://spawn-vr.onrender.com). 
+- You'll be automatically logged in as a guest, but you're welcome to log in with your username and password. Just enter your robot's username and then click the "Spawn" button to connect to your robot. The VR-UI requires HTTPS, so you'll either need to install a certificate to run it locally or use a hosting provider. You may also use our [portal](https://spawn-vr.onrender.com). 
 
 ### VR tips
 - In the Oculus browser, navigate to your VR-UI or use our portal [spawn-vr.onrender.com].
