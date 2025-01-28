@@ -4,8 +4,8 @@ Spawn-VR is an open-source VR framework tailored for telepresence robotics appli
 
 ## Features: 
 
-- Built-in cryptocurrency (deposit/withdraw on Spawn)  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Connecting to Spawn gives you access to the built-in cryptocurrency, $SPAWN token, making it easy to incentivize or monetize controlling your robot.
+- Integrated cryptocurrency (deposit/withdraw on Spawn)  
+    &nbsp;&nbsp;&nbsp;&nbsp;- Connecting your robot to Spawn provides access to our $SPAWN token, facilitating seamless incentivization or monetization of your robot.
 
 - Real-time control  
     &nbsp;&nbsp;&nbsp;&nbsp;- Experience ultra-low latency enabling near real-time control over the internet. Perfect for teleoperation/telepresence applications.
@@ -19,21 +19,19 @@ Spawn-VR is an open-source VR framework tailored for telepresence robotics appli
 ## Steps:
 
 ### Create accounts
-- On [Spawn](https://sp4wn.com), create two accounts: one for the robot and one for you. 
+- On [Spawn](https://sp4wn.com), create at least one account for your robot. 
 
-### Update client.js
-- For both the Robot UI and VR UI, update the account information with your username/password
+### Update Robot-UI
+- Edit the client.js file to include your username and password. The VR-UI will automatically log in as a guest.
 
-### Open index.html
-- Using a web browser, open the index.html file for both the Robot UI and VR UI. This can be done locally or hosted. 
+### Open index.html files
+- Open the index.html file for the Robot UI in a web browser. While the Robot UI can be run locally, the VR UI requires HTTPS. You can test the VR UI using the [portal](https://spawn-vr.onrender.com)
 
 ### Start the robot's stream
-- Click the "Start" button to make your robot simulator accessible. 
+- Click the "Start" button to connect your robot to Spawn. 
 
-### Connect to your robot from the VR-UI client
-- Click the "Spawn" button to create a connection to your robot. Test portal available [here](https://spawn-vr.onrender.com)
+### From the VR-UI connect to your robot
+- Enter your robot's username and click the "Spawn" button to connect to your robot.
 
 ### Update your accounts on Spawn
-
-## TODO
-- Integrate the VR system into the VR UI
+- Deposit/withdraw tokens
