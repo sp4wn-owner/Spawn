@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="container">        
+    <div id="main-container">        
         <div id="videoContainer">
             <button class="main-btn" id="login-button"><span>Login</span></button> 
             <input type="text" id="robot-username-input" placeholder="robot username" value="" maxlength="50">
@@ -36,11 +36,13 @@
             <div id="buttonContainer">
                 <button id="spawnButton">Spawn</button>
                 <button id="vrButton">Enter VR</button>
+                <button id="fsButton">Fullscreen</button>
             </div>
             <div id="snackbar"></div>
         </div>
     </div>
     <div id="vr-container"></div>
+    <script src="https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.138.0/build/three.min.js"></script>
     <script src="eventemitter3.min.js"></script>
     <script src="client.js"></script>
