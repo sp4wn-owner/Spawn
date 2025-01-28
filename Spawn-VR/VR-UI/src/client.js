@@ -204,6 +204,10 @@ function handleLogin(success, config, errormessage, name) {
         configuration = config;
         username = name;
         console.log(username);
+
+        if (!isGuest) {
+            loginButton.style.display = "none";
+        }
     }
 }
 
@@ -635,6 +639,7 @@ function handleInputChannel(channel, incrementChannelCounter) {
  
     inputChannel.onclose = () => {
         console.log("Input channel has been closed");
+        exitVR();
         endStream();
     };
  
@@ -870,12 +875,6 @@ async function enterVR() {
             await gl.makeXRCompatible();
             const session = await navigator.xr.requestSession('immersive-vr');
             console.log('Session requested successfully', session);
-
-            session.addEventListener('end', () => {
-                console.log('VR session ended');
-                exitVR();
-            });
-
             renderer.xr.enabled = true;
             renderer.setPixelRatio(window.devicePixelRatio);
 
