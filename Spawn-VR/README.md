@@ -1,6 +1,27 @@
 # Spawn-VR
 
-Spawn-VR is an open-source VR framework tailored for telepresence robotics applications. It empowers developers to create custom interfaces and offers the option to connect to Spawn for quick deployment and testing via secure peer-to-peer connections. VR Test portal available [here](https://spawn-vr.onrender.com)
+Spawn-VR is an open-source VR framework tailored for telepresence robotics applications. It empowers developers to create custom interfaces and offers the option to connect to Spawn for quick deployment and testing via secure peer-to-peer connections.
+
+## Instructions:
+
+### Create accounts
+- On [Spawn](https://sp4wn.com), create at least one account for your robot. 
+
+### Robot login
+- Enter your username and password and then click the "Start" button to connect to Spawn. The Robot-UI can be run locally. [portal](https://spawn-pk3x.onrender.com). Open developer tools to inspect incoming tracking data. 
+
+### VR login
+- After logging in with your username and password, enter your robot's username and then click the "Spawn" button to connect to your robot. The VR-UI requires HTTPS so you'll either need to install a certificate to run locally or use a hosting provider. You may also use the [portal](https://spawn-vr.onrender.com). 
+
+### VR tips
+- In the Oculus browser, navigate to your VR-UI or use our portal [spawn-vr.onrender.com].
+- This application isn't optimized yet so you may need to re-enter VR mode if you see a black screen. 
+
+### Update your accounts on Spawn
+- Deposit/withdraw tokens
+- Toggle secret code
+- Toggle public visibility
+- Update account details
 
 ## Features: 
 
@@ -15,23 +36,3 @@ Spawn-VR is an open-source VR framework tailored for telepresence robotics appli
 
 - Secure  
     &nbsp;&nbsp;&nbsp;&nbsp;- Optionally handle your own security locally thus eliminating any potential access to your device(s) in the event of a security breach on Spawn or your own network. Passwords/codes are securely hashed and all data is encrypted. No personal information is requested nor retained. Update the security parameters in the robot's client.js file or on Spawn.
-
-## Steps:
-
-### Create accounts
-- On [Spawn](https://sp4wn.com), create at least one account for your robot. 
-
-### Update Robot-UI
-- Edit the client.js file to include your username and password. The VR-UI will automatically log in as a guest.
-
-### Open index.html files
-- Open the index.html file for the Robot UI in a web browser. While the Robot UI can be run locally, the VR UI requires HTTPS. You can test the VR UI using the [portal](https://spawn-vr.onrender.com)
-
-### Start the robot's stream
-- Click the "Start" button to connect your robot to Spawn. 
-
-### From the VR-UI connect to your robot
-- Enter your robot's username and click the "Spawn" button to connect to your robot.
-
-### Update your accounts on Spawn
-- Deposit/withdraw tokens
