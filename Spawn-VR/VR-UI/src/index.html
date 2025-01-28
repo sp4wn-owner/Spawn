@@ -14,11 +14,14 @@
             <span id="tracking-data"></span>
             <div id="modal-login" class="modal">
                 <div class="modal-content">
-                  <span id="close-login-modal" class="close">&times;</span>
-                  <input type="text" id="username-input" placeholder="username" maxlength="50" style="margin-bottom: 20px; text-align: center;">
-                  <input type="text" id="password-input" placeholder="password" maxlength="50" style="margin-bottom: 20px; text-align: center;">
-                  <button class="main-btn" id="confirm-login-button"><span>Login</span></button>            
-                </div>          
+                    <span id="close-login-modal" class="close">&times;</span>
+                    <span style="font-size: 28px; font-weight: bold;">Login</span>
+                    <div id="login-container">
+                        <input type="text" id="username-input" placeholder="username" maxlength="50" style="margin-bottom: 20px; text-align: center;">
+                        <input type="text" id="password-input" placeholder="password" maxlength="50" style="margin-bottom: 20px; text-align: center;">
+                        <button class="main-btn" id="confirm-login-button"><span>Login</span></button>            
+                    </div>
+                </div>               
             </div> 
             <div id="modal-enter-password" class="modal">
                 <div class="modal-content">
@@ -36,7 +39,6 @@
             <div id="buttonContainer">
                 <button id="spawnButton">Spawn</button>
                 <button id="vrButton">Enter VR</button>
-                <button id="fsButton">Fullscreen</button>
             </div>
             <div id="snackbar"></div>
         </div>

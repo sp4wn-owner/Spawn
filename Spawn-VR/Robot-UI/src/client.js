@@ -1,8 +1,8 @@
 // Basic template for simulating your robot in the browser. Open the console to inspect incoming data from the VR client. 
 // Your robot's hardware and software may require a custom client script to ensure compatibility with Spawn.
 // ENTER USERNAME AND PASSWORD HERE
-const username = ""; // Username should be all lowercase
-const password = "";
+let username; // Username should be all lowercase
+let password;
 
 // SECURITY PARAMETERS
 const allowAllUsers = true; // true to allow all users to connect to your robot || false to only allow users specified in 'allowedUsers' #default is true
@@ -20,6 +20,13 @@ const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
 // UI Elements
 const startButton = document.getElementById('startButton');
 const localVideo = document.getElementById('localVideo');
+const snackbar = document.getElementById('snackbar');
+const loginButton = document.getElementById('login-button');
+const modalLogin = document.getElementById("modal-login");
+const closeLoginSpan = document.getElementById("close-login-modal");
+const usernameInput = document.getElementById("username-input");
+const passwordInput = document.getElementById("password-input");
+const confirmLoginButton = document.getElementById('confirm-login-button');
 
 // Global Variables
 let localStream;
@@ -44,8 +51,34 @@ let handlingCMD = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     emitter = new EventEmitter3();
-    connectToSignalingServer();
 });
+
+function openLoginModal() {
+    modalLogin.style.display = "block";
+}
+
+closeLoginSpan.onclick = function() {
+    modalLogin.style.display = "none";
+}
+
+passwordInput.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        login();
+    }
+});
+
+function login() {
+    console.log("Logging in...");
+    username = usernameInput.value.toLowerCase();
+    password = passwordInput.value;
+
+    if (!username || !password) {
+        showSnackbar("Please enter username and password");
+        return;
+    }
+    
+    connectToSignalingServer();
+}
 
 async function connectToSignalingServer() {
 
@@ -190,6 +223,8 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, visibility,
     
     if (success) {
         console.log("Successfully logged in");
+        showSnackbar("Sucessfully logged in");
+        modalLogin.style.display = "none";
         configuration = config;
         profilePicture = pic || console.log("No picture");
         tokenrate = tr || (console.log("No token rate"), 0);
@@ -374,6 +409,11 @@ function createOffer() {
 }
 
 async function start() {
+    if (!signalingSocket || signalingSocket.readyState !== WebSocket.OPEN) {
+        showSnackbar('You must be logged in to start streaming.');
+        return;
+    }
+
     startButton.textContent = 'End';
     startButton.onclick = endStream;
     try {
@@ -381,9 +421,10 @@ async function start() {
         localVideo.srcObject = localStream;
         createPeerConnection();
     } catch (err) {
-        console.error('Error accessing media devices.', err);
+        showSnackbar('Error accessing media devices.', err);
     }
 }
+
 
 async function createPeerConnection() {
     
@@ -542,4 +583,19 @@ function endStream() {
     }
 }
 
+function showSnackbar(message) {
+    try {
+        snackbar.textContent = message;
+        snackbar.className = 'snackbar show';
+ 
+        setTimeout(function() {
+            snackbar.className = snackbar.className.replace('show', '');
+        }, 5000);
+    } catch (error) {
+        console.error('Error showing snackbar:', error);
+    }
+}
+
 startButton.onclick = start;
+confirmLoginButton.onclick = login;
+loginButton.onclick = openLoginModal;

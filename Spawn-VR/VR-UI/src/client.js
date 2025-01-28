@@ -10,7 +10,6 @@ const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
 // UI Elements
 const loginButton = document.getElementById('login-button');
 const spawnButton = document.getElementById('spawnButton');
-const fsButton = document.getElementById('fsButton');
 const vrButton = document.getElementById('vrButton');
 const confirmLoginButton = document.getElementById('confirm-login-button');
 const remoteVideo = document.getElementById('remoteVideo');
@@ -51,7 +50,6 @@ const reconnectDelay = 2000;
 let isGuest = true;
 
 document.addEventListener('DOMContentLoaded', () => {
-    
     modalLogin.style.display = "none";
     emitter = new EventEmitter3();
     login();
@@ -202,6 +200,7 @@ function handleLogin(success, config, errormessage, name) {
     } else if (success) {
         console.log("Successfully logged in");
         modalLogin.style.display = "none";
+        showSnackbar("Successfully logged in");
         configuration = config;
         username = name;
         console.log(username);
@@ -215,6 +214,7 @@ pwModalSpan.onclick = function() {
 closeLoginSpan.onclick = function() {
     modalLogin.style.display = "none";
 }
+
 submitPwBtn.onclick = async function() {
     if (enteredpw.value === "") {
         showSnackbar("Please enter a password");
@@ -222,8 +222,8 @@ submitPwBtn.onclick = async function() {
         return;
     }
     if (robotUsername === "") {
-        showSnackbar("Update robotUsername in the client.js file");
-        console.log("Update robotUsername in the client.js file");
+        showSnackbar("Update robotUsername");
+        console.log("Update robotUsername");
         return;
     }
     submitPwBtn.disabled = true;
@@ -302,7 +302,6 @@ async function startStream() {
                             vrButton.style.display = "inline-block";
                             spawnButton.textContent = "End";
                             spawnButton.onclick = endStream;
-                            fsButton.style.display = "inline-block";
                         }
                     } else {
                         throw new Error('Stream is not live.');
@@ -324,7 +323,7 @@ async function startStream() {
         spawnButton.disabled = false;
     }
     spawnButton.disabled = false;
- }
+}
 
 function checkTokenBalance(name) {
     return new Promise((resolve, reject) => {
@@ -766,7 +765,7 @@ function showSnackbar(message) {
  
         setTimeout(function() {
             snackbar.className = snackbar.className.replace('show', '');
-        }, 15000);
+        }, 5000);
     } catch (error) {
         console.error('Error showing snackbar:', error);
     }
@@ -788,7 +787,7 @@ function hideLoadingOverlay() {
     loadingOverlay.style.display = 'none';
 }
 
-let scene, camera, renderer;
+let scene, camera, renderer, xrSession, referenceSpace, videoMesh;
 
 async function setupScene() {
     container.style.display = "block";
@@ -798,35 +797,66 @@ async function setupScene() {
     container.appendChild(renderer.domElement);
 
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 1, 2); 
+    camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 1);
 
     if (remoteVideo.srcObject) { 
+        console.log('Video source found');
         const videoTexture = new THREE.VideoTexture(remoteVideo);
         videoTexture.minFilter = THREE.LinearFilter;
         videoTexture.magFilter = THREE.LinearFilter;
         videoTexture.format = THREE.RGBAFormat;
-        videoTexture.wrapS = THREE.ClampToEdgeWrapping; 
-        videoTexture.wrapT = THREE.ClampToEdgeWrapping;
-        videoTexture.repeat.set(1, 1);
-        videoTexture.generateMipmaps = false;
-        videoTexture.needsUpdate = true;
 
-        scene.background = videoTexture;
+        const videoMaterial = new THREE.MeshBasicMaterial({ 
+            map: videoTexture, 
+            side: THREE.FrontSide
+        });
 
+        const videoAspectRatio = remoteVideo.videoWidth / remoteVideo.videoHeight;
+        const rendererAspectRatio = window.innerWidth / window.innerHeight;
+
+        let planeWidth, planeHeight;
+        if (videoAspectRatio > rendererAspectRatio) {
+            planeWidth = 2;
+            planeHeight = planeWidth / videoAspectRatio;
+        } else {
+            planeHeight = 2; 
+            planeWidth = planeHeight * videoAspectRatio;
+        }
+        const videoGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+        videoMesh = new THREE.Mesh(videoGeometry, videoMaterial);
+        videoMesh.position.set(0, 0, -2);
+        scene.add(videoMesh);
+        camera.lookAt(videoMesh.position);
+        camera.aspect = rendererAspectRatio;
+        camera.updateProjectionMatrix();
         remoteVideo.loop = true;
         remoteVideo.play();
+
+        console.log('Video should now be playing on the plane');
     } else {
         console.warn('No video stream is set for remoteVideo');
     }
-
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 }
 
+function updateVideomeshPosition(camera, videomesh) {
+    const offset = new THREE.Vector3(0, 0, -2);
+    offset.applyQuaternion(camera.quaternion);
+    videomesh.position.copy(camera.position).add(offset);
+    videomesh.quaternion.copy(camera.quaternion);
+}
+
 function animate() {
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
+    if (renderer.xr.isPresenting) {
+        renderer.setAnimationLoop(() => {
+            renderer.render(scene, camera);
+        });
+    } else {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
 }
 
 async function enterVR() {
@@ -859,13 +889,15 @@ async function enterVR() {
 
             animate();
 
-            function onAnimationFrame(time, frame) {
+            function onAnimationFrame(frame) {
                 const viewerPose = frame.getViewerPose(referenceSpace);
                 if (viewerPose) {
                     const headPosition = viewerPose.transform.position;
                     const headOrientation = viewerPose.transform.orientation;
+            
+                    updateVideomeshPosition(camera, videoMesh);
+            
                     let controllerData = [];
-
                     frame.session.inputSources.forEach((inputSource) => {
                         if (inputSource.gripSpace) {
                             const gripPose = frame.getPose(inputSource.gripSpace, referenceSpace);
@@ -886,7 +918,7 @@ async function enterVR() {
                             }
                         }
                     });
-
+            
                     const trackingData = {
                         head: {
                             position: headPosition,
@@ -894,7 +926,7 @@ async function enterVR() {
                         },
                         controllers: controllerData
                     };
-
+            
                     try {
                         if (inputChannel && inputChannel.readyState === 'open') {
                             inputChannel.send(JSON.stringify(trackingData));
@@ -904,7 +936,7 @@ async function enterVR() {
                             console.log('Input channel not open or not available');
                             showSnackbar('Tracking data not sent: channel unavailable.');
                         }
-
+            
                         if (trackingDataSpan) {
                             trackingDataSpan.textContent = JSON.stringify(trackingData, null, 2); 
                             showSnackbar('Tracking data updated in UI.');
@@ -920,10 +952,11 @@ async function enterVR() {
                     console.log('No viewer pose available for this frame');
                     showSnackbar('No tracking data available for this frame.');
                 }
-
+            
                 renderer.render(scene, camera);
                 session.requestAnimationFrame(onAnimationFrame);
             }
+            
             session.requestAnimationFrame(onAnimationFrame);
 
         } catch (error) {
@@ -954,35 +987,6 @@ confirmLoginButton.onclick = login;
 spawnButton.onclick = start;
 vrButton.onclick = enterVR;
 loginButton.onclick = openLoginModal;
-
-fsButton.addEventListener('click', async function() {
-    if (!document.fullscreenElement) {
-        try {
-            console.log('Attempting to enter fullscreen...');
-            if (document.documentElement.requestFullscreen) {
-                await document.documentElement.requestFullscreen();
-            } else if (document.documentElement.mozRequestFullScreen) { 
-                await document.documentElement.mozRequestFullScreen();
-            } else if (document.documentElement.webkitRequestFullscreen) { 
-                await document.documentElement.webkitRequestFullscreen();
-            } else if (document.documentElement.msRequestFullscreen) { 
-                await document.documentElement.msRequestFullscreen();
-            }
-        } catch (err) {
-            console.error('Failed to enter fullscreen:', err);
-            showSnackbar('Failed to enter fullscreen:', err);
-        }
-    } else {
-        console.log('Attempting to exit fullscreen...');
-        showSnackbar('Attempting to exit fullscreen...');
-        try {
-            await document.exitFullscreen();
-        } catch (err) {
-            console.error('Failed to exit fullscreen:', err);
-            showSnackbar('Failed to exit fullscreen:', err);
-        }
-    }
-});
 
 passwordInput.addEventListener('keydown', function(event) {
     if (event.key === 'Enter') {
