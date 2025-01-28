@@ -889,7 +889,7 @@ async function enterVR() {
 
             animate();
 
-            function onAnimationFrame(frame) {
+            function onAnimationFrame(time, frame) {
                 const viewerPose = frame.getViewerPose(referenceSpace);
                 if (viewerPose) {
                     const headPosition = viewerPose.transform.position;

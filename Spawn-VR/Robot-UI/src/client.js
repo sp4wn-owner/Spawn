@@ -224,6 +224,7 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, visibility,
     if (success) {
         console.log("Successfully logged in");
         showSnackbar("Sucessfully logged in");
+        loginButton.style.display = "none";
         modalLogin.style.display = "none";
         configuration = config;
         profilePicture = pic || console.log("No picture");
