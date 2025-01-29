@@ -236,7 +236,6 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, visibility,
         description = des || console.log("No description");
         if (allowPrivateToggle && typeof priv === 'boolean') isPrivate = priv; else console.log("No private status");
         if (allowVisibilityToggle && typeof visibility === 'boolean') isVisible = visibility; else console.log("No visibility status");
-        pushLive();
     }
 }
 
@@ -424,6 +423,7 @@ async function start() {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localVideo.srcObject = localStream;
         createPeerConnection();
+        pushLive();
     } catch (err) {
         showSnackbar('Error accessing media devices.', err);
     }
