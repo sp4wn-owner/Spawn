@@ -192,15 +192,16 @@ function handleLogin(success, config, errormessage, name) {
                     username: username,
                     password: password,
                 });
-                console.log("Retrying login in 10 seconds. You'll need to disconnect any active sessions to login.");
+                console.log("Retrying login in 10 seconds");
+                showSnackbar("Retrying login in 10 seconds");
             }, 10000);
         } else {
             console.log("Invalid login", errormessage);
+            showSnackbar("Invalid login", errormessage);
         }
     } else if (success) {
         console.log("Successfully logged in");
         modalLogin.style.display = "none";
-        showSnackbar("Successfully logged in");
         configuration = config;
         username = name;
         console.log(username);
