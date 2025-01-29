@@ -152,3 +152,18 @@ input:focus {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
+
+#toggleAudio {
+    color: gray;
+    display: block;
+    font-size: 28px;
+    padding-bottom: 20px;
+    align-content: center;
+    cursor: pointer; 
+    text-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease-in-out, color 0.3s ease;
+  }
+  
+  #toggleAudio:hover {
+    transform: scale(1.2);
+  }

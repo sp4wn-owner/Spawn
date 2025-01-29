@@ -214,6 +214,7 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, visibility,
                     password: password,
                     device: botdevicetype
                 });
+                showSnackbar("Retrying login in 10 seconds. You'll need to disconnect any active sessions to login.");
                 console.log("Retrying login in 10 seconds. You'll need to disconnect any active sessions to login.");
             }, 10000);
         } else {
@@ -223,7 +224,6 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, visibility,
     
     if (success) {
         console.log("Successfully logged in");
-        showSnackbar("Sucessfully logged in");
         loginButton.style.display = "none";
         modalLogin.style.display = "none";
         configuration = config;
@@ -595,6 +595,26 @@ function showSnackbar(message) {
     } catch (error) {
         console.error('Error showing snackbar:', error);
     }
+}
+
+let isAudioEnabled = true;
+
+function toggleAudio() {
+    isAudioEnabled = !isAudioEnabled;
+    const audioIcon = document.getElementById('toggleAudio');
+    if (isAudioEnabled) {
+        audioIcon.classList.remove('fa-microphone-slash');
+        audioIcon.classList.add('fa-microphone');
+    } else {
+        audioIcon.classList.remove('fa-microphone');
+        audioIcon.classList.add('fa-microphone-slash');
+    }
+
+    if (localStream) {
+      localStream.getAudioTracks().forEach(track => {
+          track.enabled = isAudioEnabled;
+      });
+  }
 }
 
 startButton.onclick = start;
