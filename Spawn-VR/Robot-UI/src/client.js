@@ -204,10 +204,12 @@ async function handleSignalingData(message, resolve) {
     }
 }
 
+let loginRetryTimeout;
+
 function handleLogin(success, errormessage, pic, tr, loc, des, priv, visibility, config) {
     if (!success) {
-        if (errormessage == "User is already logged in") {
-            setTimeout(() => {
+        if (errormessage === "User is already logged in") {
+            loginRetryTimeout = setTimeout(() => {
                 send({
                     type: "robot",
                     username: username,
@@ -223,6 +225,7 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, visibility,
     }
     
     if (success) {
+        clearTimeout(loginRetryTimeout);
         console.log("Successfully logged in");
         loginButton.style.display = "none";
         modalLogin.style.display = "none";
@@ -565,6 +568,10 @@ async function stopAutoRedeem() {
 }
 
 function endStream() {
+    send({
+        type: "updatelive",
+        username: username
+     });
     startButton.textContent = 'Start';
     startButton.onclick = start;
     stopAutoRedeem();
