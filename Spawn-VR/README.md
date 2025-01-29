@@ -4,6 +4,8 @@ Spawn-VR is an open-source VR framework tailored for telepresence robotics appli
 
 ## Instructions:
 
+The platform is functional. Test it out by opening two browser tabs: one for the [VR-UI](https://spawn-vr.onrender.com) and one for the [Robot-UI](https://spawn-pk3x.onrender.com). Just install the WebXR Chrome extension and open the developer tools (same category as elements and console) to simulate the 3D immersive environment.
+
 ### Create accounts
 - On [Spawn](https://sp4wn.com), create at least one account for your robot. 
 
