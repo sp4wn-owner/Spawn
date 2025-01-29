@@ -4,13 +4,13 @@ Spawn-VR is an open-source VR framework tailored for telepresence robotics appli
 
 ## Instructions:
 
-The platform is functional. Test it out by opening two browser tabs: one for the [VR-UI](https://spawn-vr.onrender.com) and one for the [Robot-UI](https://spawn-pk3x.onrender.com). Just install the WebXR Chrome extension and open the developer tools (same category as elements and console) to simulate the 3D immersive environment.
+The platform is functional. Test it out by opening two browser tabs: one for the [VR-UI](https://spawn-vr.onrender.com) and one for the [Robot-UI](https://robot-csyy.onrender.com). Just install the WebXR Chrome extension and open the developer tools (same category as elements and console) to simulate the 3D immersive environment.
 
 ### Create accounts
 - On [Spawn](https://sp4wn.com), create at least one account for your robot. 
 
 ### Robot login
-- Enter your username and password, and then click the "Start" button to connect to Spawn. The Robot-UI can be run locally or through our [portal](https://spawn-pk3x.onrender.com). Open the developer tools to inspect incoming tracking data. 
+- Enter your username and password, and then click the "Start" button to connect to Spawn. The Robot-UI can be run locally or through our [portal](https://robot-csyy.onrender.com). Open the developer tools to inspect incoming tracking data. 
 
 ### VR login
 - You'll be automatically logged in as a guest, but you're welcome to log in with your username and password. Just enter your robot's username and then click the "Spawn" button to connect to your robot. The VR-UI requires HTTPS, so you'll either need to install a certificate to run it locally or use a hosting provider. You may also use our [portal](https://spawn-vr.onrender.com). 
