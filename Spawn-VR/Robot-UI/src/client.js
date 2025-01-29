@@ -429,7 +429,6 @@ async function start() {
     }
 }
 
-
 async function createPeerConnection() {
     
     peerConnection = new RTCPeerConnection(configuration);
@@ -463,6 +462,10 @@ async function createPeerConnection() {
                 break;
             case 'connected':
                 console.log('ICE Connection has been established.');
+                send({
+                    type: "updatelive",
+                    username: username
+                 });
                 break;
             case 'completed':
                 console.log('ICE Connection is completed.');
@@ -471,6 +474,7 @@ async function createPeerConnection() {
                 console.log("peer connection failed");   
             case 'disconnected':
                 console.log("peer disconnected");   
+                pushLive();
             case 'closed':
             break;
         }
