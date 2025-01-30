@@ -1,7 +1,11 @@
 # Spawn-VR
 
 Spawn-VR is an open-source VR framework tailored for telepresence robotics applications. It empowers developers to create custom interfaces and offers the option to connect to Spawn for quick deployment and testing via secure peer-to-peer connections.
-[![Demo](https://img.youtube.com/vi/RPz4-uel9Uk/0.jpg)](https://youtu.be/RPz4-uel9Uk?si=XMEG3FItI1AMAv_V)
+<div align="center">
+  <a href="https://youtu.be/RPz4-uel9Uk?si=XMEG3FItI1AMAv_V">
+    <img src="https://img.youtube.com/vi/RPz4-uel9Uk/0.jpg" alt="Watch the video">
+  </a>
+</div>
 
 ## Instructions:
 
