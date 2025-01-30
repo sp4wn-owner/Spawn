@@ -457,6 +457,7 @@ async function start() {
         const result = await response.json();
         if (!result.isLive) {
             showSnackbar("Robot isn't available");
+            spawnButton.disabled = false;
             return;
         }
         tokenrate = Number(result.tokenrate);
@@ -808,6 +809,7 @@ async function setupScene() {
 
     if (remoteVideo.srcObject) { 
         console.log('Video source found');
+        remoteVideo.style.display = "none";
         const videoTexture = new THREE.VideoTexture(remoteVideo);
         videoTexture.minFilter = THREE.LinearFilter;
         videoTexture.magFilter = THREE.LinearFilter;
