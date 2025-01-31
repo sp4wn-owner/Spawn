@@ -50,10 +50,19 @@ const reconnectDelay = 2000;
 let isGuest = true;
 
 document.addEventListener('DOMContentLoaded', () => {
-    modalLogin.style.display = "none";
+    let robotCookie = getCookie('robotusername');
+    if (robotCookie) {
+        robotUsernameInput.value = decodeURIComponent(robotCookie);
+    }
     emitter = new EventEmitter3();
     login();
 });
+
+function getCookie(name) {
+    let value = "; " + document.cookie;
+    let parts = value.split("; " + name + "=");
+    if (parts.length == 2) return parts.pop().split(";").shift();
+}
 
 function openLoginModal() {
     modalLogin.style.display = "block";
@@ -437,6 +446,7 @@ function createOffer() {
 
 async function start() {
     robotUsername = robotUsernameInput.value;
+    document.cookie = `robotusername=${encodeURIComponent(robotUsername)}; max-age=31536000; path=/`;
     if (!robotUsername) {
         showSnackbar("Please enter the robot's username");
         return;
