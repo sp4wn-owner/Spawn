@@ -76,6 +76,7 @@ button:hover span {
     z-index: 3;
     left: 5px;
     top: 5px;
+    margin: 0;
 }
 
 #confirm-login-button {
@@ -182,8 +183,30 @@ input:focus {
     cursor: pointer; 
     text-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     transition: transform 0.3s ease-in-out, color 0.3s ease;
-  }
+}
   
-  #toggleAudio:hover {
+#toggleAudio:hover {
     transform: scale(1.2);
-  }
+}
+
+#sim-server-input {
+    position: absolute;
+    opacity: 50%;
+    right: 5px;
+    top: 5px;
+    width: 250px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    color: #333;
+    font-size: 16px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 3;
+}
+
+#sim-server-input:focus {
+    border-color: #777;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}

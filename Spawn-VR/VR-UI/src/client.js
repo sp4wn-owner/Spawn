@@ -89,13 +89,17 @@ async function connectToSignalingServer() {
         signalingSocket = new WebSocket(wsUrl);
 
         connectionTimeout = setTimeout(() => {
-            signalingSocket.close();
+            try {
+                signalingSocket.close();
+            } catch (error) {
+                console.log(error);
+            }
             reject(new Error('Connection timed out'));
-        }, 20000);
+        }, 10000);
 
         signalingSocket.onopen = () => {
-
             clearTimeout(connectionTimeout);
+            reconnectAttempts = 0;
             if (isGuest) {
                 send({
                     type: "wslogin",
@@ -108,6 +112,7 @@ async function connectToSignalingServer() {
                     password: password
                 });
             }
+            resolve();
         };
 
         signalingSocket.onmessage = async (event) => {

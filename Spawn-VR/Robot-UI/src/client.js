@@ -27,6 +27,7 @@ const closeLoginSpan = document.getElementById("close-login-modal");
 const usernameInput = document.getElementById("username-input");
 const passwordInput = document.getElementById("password-input");
 const confirmLoginButton = document.getElementById('confirm-login-button');
+const simServerInput = document.getElementById('sim-server-input');
 
 // Global Variables
 let localStream;
@@ -34,24 +35,39 @@ let peerConnection;
 let connectedUser;
 let configuration;
 let connectionTimeout;
+let simConnectionTimeout;
 let profilePicture;
 let mylocation;
 let description;
 let tokenrate;
 let signalingSocket;
+let simServer;
+let simURL;
 let inputChannel;
 const botdevicetype = "vr";
 let responseHandlers = {};
 let emitter;
 let isConnectedToSignalingServer = false;
-const maxReconnectAttempts = 20;
+let isConnectedToSimServer = false;
+let isUserAuthenticated = false;
+const maxReconnectAttempts = 5;
 let reconnectAttempts = 0;
+let simReconnectAttempts = 0;
 const reconnectDelay = 2000;
-let handlingCMD = false;
 
 document.addEventListener('DOMContentLoaded', () => {
+    let simServerCookie = getCookie('simserverurl');
+    if (simServerCookie) {
+        simServerInput.value = decodeURIComponent(simServerCookie);
+    }
     emitter = new EventEmitter3();
 });
+
+function getCookie(name) {
+    let value = "; " + document.cookie;
+    let parts = value.split("; " + name + "=");
+    if (parts.length == 2) return parts.pop().split(";").shift();
+}
 
 function openLoginModal() {
     modalLogin.style.display = "block";
@@ -91,11 +107,18 @@ async function connectToSignalingServer() {
         signalingSocket = new WebSocket(wsUrl);
 
         connectionTimeout = setTimeout(() => {
-            signalingSocket.close();
+            try {
+                signalingSocket.close();
+            } catch (error) {
+                console.log(error);
+            }
             reject(new Error('Connection timed out'));
-        }, 20000);
+        }, 10000);
 
         signalingSocket.onopen = () => {
+            console.log("Authenticating user...");
+            isConnectedToSignalingServer = true;
+            reconnectAttempts = 0; 
             clearTimeout(connectionTimeout);
             send({
                 type: "robot",
@@ -119,12 +142,16 @@ async function connectToSignalingServer() {
 
         signalingSocket.onclose = () => {
             clearTimeout(connectionTimeout);
+            isConnectedToSignalingServer = false;
             console.log('Disconnected from signaling server');
-            handleReconnect();
+            if(isUserAuthenticated) {
+                handleReconnect();
+            }
         };
 
         signalingSocket.onerror = (error) => {
             clearTimeout(connectionTimeout);
+            isConnectedToSignalingServer = false;
             console.error('WebSocket error:', error);
             reject(error);
         };
@@ -152,8 +179,6 @@ async function handleSignalingData(message, resolve) {
             handleLogin(message.success, message.errormessage, message.pic, message.tokenrate, message.location, message.description, message.priv, message.visibility, message.configuration);
             if (message.success) {
                 resolve(true);
-            } else {
-                console.log('Authentication failed: ' + message.errormessage);
             }
             break;
 
@@ -218,14 +243,18 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, visibility,
                 });
                 showSnackbar("Retrying login in 10 seconds. You'll need to disconnect any active sessions to login.");
                 console.log("Retrying login in 10 seconds. You'll need to disconnect any active sessions to login.");
-            }, 10000);
+                isConnectedToSignalingServer = false;
+                connectToSignalingServer();
+            }, 5000);
         } else {
-            console.log("Invalid login", errormessage);
+            console.log(errormessage);
+            signalingSocket.close();
         }
     }
     
     if (success) {
         clearTimeout(loginRetryTimeout);
+        isUserAuthenticated = true;
         console.log("Successfully logged in");
         loginButton.style.display = "none";
         modalLogin.style.display = "none";
@@ -411,10 +440,77 @@ function createOffer() {
     });
 }
 
+async function connectToSimServer() {
+    console.log('Connecting to simulation server...');
+
+    return new Promise((resolve, reject) => {
+        simServer = new WebSocket(simURL);
+
+        simConnectionTimeout = setTimeout(() => {
+            try {
+                simServer.close();
+            } catch (error) {
+                console.log(error);
+            }
+            reject(new Error('Connection timed out'));
+        }, 3000);
+
+        simServer.onopen = () => {
+            clearTimeout(simConnectionTimeout);
+            simReconnectAttempts = 0; 
+            isConnectedToSimServer = true;
+            console.log("Connected to simulation server",  simServer);
+            resolve();
+        };
+
+        simServer.onmessage = async (event) => {
+            const message = JSON.parse(event.data);
+            console.log("Received message from simulation server:", message);
+        };
+
+        simServer.onclose = () => {
+            clearTimeout(simConnectionTimeout);
+            isConnectedToSimServer = false;
+            console.log('Disconnected from simulation server');
+            showSnackbar('Disconnected from simulation server');
+        };
+
+        simServer.onerror = (error) => {
+            clearTimeout(simConnectionTimeout);
+            isConnectedToSimServer = false;
+            console.error('WebSocket error:', error);
+            reject(error);
+        };
+    });
+}
+
+function sendToSimServer(message) {
+    simServer.send(message);
+};
+
+function handleSimReconnect() {
+    if (simReconnectAttempts < maxReconnectAttempts) {
+        simReconnectAttempts++;
+        const delay = reconnectDelay * simReconnectAttempts; 
+        console.log(`Reconnecting in ${delay / 1000} seconds... (Attempt ${simReconnectAttempts})`);
+        setTimeout(connectToSimServer, delay);
+    } else {
+        console.log('Max reconnect attempts reached. Please refresh the page.');
+    }
+}
+
 async function start() {
     if (!signalingSocket || signalingSocket.readyState !== WebSocket.OPEN) {
         showSnackbar('You must be logged in to start streaming.');
         return;
+    } else {
+        simURL = simServerInput.value;
+        if (simURL) {
+            document.cookie = `simserver=${encodeURIComponent(simURL)}; max-age=31536000; path=/`;
+            if(!isConnectedToSimServer) {
+                await connectToSimServer();
+            }
+        }
     }
 
     startButton.textContent = 'End';
@@ -430,7 +526,6 @@ async function start() {
 }
 
 async function createPeerConnection() {
-    
     peerConnection = new RTCPeerConnection(configuration);
 
     localStream.getTracks().forEach(track => {
@@ -527,15 +622,21 @@ function handleInputChannel(inputChannel) {
 
     inputChannel.onmessage = (event) => {
         let cmd;
-            try {
-                cmd = JSON.parse(event.data);
-            } catch (e) {
-                console.error('Error parsing command:', e);
-                handlingCMD = false;
-                return;
-            }
+        try {
+            cmd = JSON.parse(event.data);
+        } catch (e) {
+            console.error('Error parsing command:', e);
+            return;
+        }
+        
+        cmd.type = 'tracking';
+    
+        if (isConnectedToSimServer) {
+            sendToSimServer(JSON.stringify(cmd));
+            console.log("sent to sim server:", cmd);
+        } else {
             console.log('Command received:', cmd);
-            // Handle the command here
+        }
     };
 
     inputChannel.onclose = () => {
@@ -579,6 +680,14 @@ function endStream() {
     startButton.textContent = 'Start';
     startButton.onclick = start;
     stopAutoRedeem();
+    if(isConnectedToSimServer) {
+        try {
+            simServer.close();
+            isConnectedToSimServer = false;
+        } catch (error) {
+            console.log(error);
+        }
+    }
     if (peerConnection) {
         peerConnection.close();
         peerConnection = null;
