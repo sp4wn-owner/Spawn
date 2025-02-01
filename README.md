@@ -12,7 +12,7 @@ Spawn is telepresence software for advanced robots. Its quick setup time facilit
 ## Key Features:
 
 - Free to use  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Because most connections are direct peer-to-peer, we avoid the need for an expensive network of servers to route data and process or store media. This allows us to offer this service for free. Should we see an overwhelming number of connections requiring third-party data routing then we may implement a paid option for this service.
+    &nbsp;&nbsp;&nbsp;&nbsp;- Because most connections are direct peer-to-peer, we avoid the need for an expensive network of servers to route data and process or store media. Should we see an overwhelming number of connections requiring data routing then we may implement a paid option for this service.
 
 - Real-time control  
     &nbsp;&nbsp;&nbsp;&nbsp;- Experience ultra-low latency enabling near real-time control over the internet. 
