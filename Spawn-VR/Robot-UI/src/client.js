@@ -516,7 +516,7 @@ async function start() {
     startButton.textContent = 'End';
     startButton.onclick = endStream;
     try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: isAudioEnabled });
         localVideo.srcObject = localStream;
         createPeerConnection();
         pushLive();
