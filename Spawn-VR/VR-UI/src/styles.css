@@ -204,6 +204,7 @@ input:focus {
     z-index: 3;
     left: 5px;
     top: 5px;
+    margin: 0;
 }
 
 #confirm-login-button {
