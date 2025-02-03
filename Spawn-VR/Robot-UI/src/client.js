@@ -1,7 +1,7 @@
-// Basic template for simulating your robot in the browser. Open the console to inspect incoming data from the VR client. 
+// Basic template for simulating your robot in the browser. Open the console to inspect incoming data from the VR client.
+// Connect to your socket server in your simulator to forward the tracking data.
 // Your robot's hardware and software may require a custom client script to ensure compatibility with Spawn.
-// ENTER USERNAME AND PASSWORD HERE
-let username; // Username should be all lowercase
+let username;
 let password;
 
 // SECURITY PARAMETERS
@@ -13,9 +13,6 @@ const handleSecretCodeAuth = false; // true to handle secret code authentication
 const secretCode = ""; // update this to set your secret code for handling authentication locally
 const allowVisibilityToggle = true; // true to update 'isVisible' from our database || false disables updates of 'isVisible' #default is true
 let isVisible = false; //true to add your robot to the public live feed || false prevents your robot from showing up in the public live feed. You'll need to follow your robot to see it in the feed (in this situation your username doubles as a private key so only those who know your username will be able to access). To access on Spawn go to https://sp4wn.com/[username] #default is true
-
-// Server URL
-const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
 
 // UI Elements
 const startButton = document.getElementById('startButton');
@@ -54,6 +51,7 @@ const maxReconnectAttempts = 5;
 let reconnectAttempts = 0;
 let simReconnectAttempts = 0;
 const reconnectDelay = 2000;
+const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
 
 document.addEventListener('DOMContentLoaded', () => {
     let simServerCookie = getCookie('simserverurl');

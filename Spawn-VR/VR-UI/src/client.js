@@ -1,11 +1,7 @@
-// This web client represents the user and serves as a basic template to quickly start testing VR teleoperation. Open the console to inspect outgoing data. 
-// ENTER USERNAME, PASSWORD, AND THE ROBOT'S USERNAME
-let username; // Username should be all lowercase
-let password; // Password for the user
-let robotUsername; // Username of the robot you want to control
-
-// Server URL
-const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
+// This web client represents the user and serves as a basic UI to quickly start testing VR teleoperation. Open the console to inspect outgoing data. 
+let username;
+let password;
+let robotUsername;
 
 // UI Elements
 const loginButton = document.getElementById('login-button');
@@ -48,6 +44,7 @@ const maxReconnectAttempts = 20;
 let reconnectAttempts = 0;
 const reconnectDelay = 2000;
 let isGuest = true;
+const wsUrl = 'https://sp4wn-signaling-server.onrender.com';
 
 document.addEventListener('DOMContentLoaded', () => {
     let robotCookie = getCookie('robotusername');
