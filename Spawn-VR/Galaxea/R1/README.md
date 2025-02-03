@@ -18,5 +18,5 @@ After spawning your Galaxea model in the Isaac Sim environment, deploy the simHa
 In the Robot-UI, add your websocket URL in the input field and then start streaming.
 
 ## Step 3
-From the VR-UI, connect to your robot by clicking the 'spawn' button. Tracking data will be proxied from the Robot-UI to the simHandler script thus interfacing with ROS to manipulate the Galaxea in a simulated environment.
+From the VR-UI, connect to your robot by clicking the 'spawn' button. Tracking data will be proxied from the Robot-UI to the simHandler script thus interfacing with ROS to manipulate the Galaxea R1 model in a simulated environment.
 
