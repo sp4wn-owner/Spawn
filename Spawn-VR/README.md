@@ -15,7 +15,7 @@ The platform is functional. Test it out by opening two browser tabs: one for the
 - On [Spawn](https://sp4wn.com), create at least one account for your robot. 
 
 ### Robot login
-- Enter your username and password, and then click the "Start" button to connect to Spawn. The Robot-UI can be run locally or through our [portal](https://robot-csyy.onrender.com). Open the developer tools to inspect incoming tracking data. Connect to your simulation server to forward tracking data. See "simserver.py" for a demo script. 
+- Enter your username and password, and then click the "Start" button to connect to Spawn. The Robot-UI can be run locally or through our [portal](https://robot-csyy.onrender.com). Open the developer tools to inspect incoming tracking data. Connect to your simulation server to forward tracking data. See "demoServer.py" under Isaac Sim for a demo script. 
 
 ### VR login
 - You'll be automatically logged in as a guest, but you're welcome to log in with your username and password. Just enter your robot's username and then click the "Spawn" button to connect to your robot. The VR-UI requires HTTPS, so you'll either need to install a certificate to run it locally or use a hosting provider. You may also use our [portal](https://spawn-vr.onrender.com). 
