@@ -1,4 +1,4 @@
-After starting neck_server.py, connect to your ws using the Robot-UI by entering the URL and clicking start. Then on the VR-UI enter your robot's username and click "Spawn". After connecting, click "Enter VR". Now you should see all head tracking data [w,x,y,z] being proxied to your neck_server. 
+After starting neck_server.py, connect to your ws using the [Robot-UI](https://robot-csyy.onrender.com) by entering the URL and clicking start. Then on the [VR-UI](https://spawn-vr.onrender.com) enter your robot's username and click "Spawn". After connecting, click "Enter VR". Now you should see all head tracking data [w,x,y,z] being proxied to your neck_server. 
 
 From the neck_server script, uncomment the block to forward this data to serial_handler.py. From there, it forwards the data to your ESP32.
 
