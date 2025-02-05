@@ -26,9 +26,6 @@ BluetoothSerial BTSerial;
 int speedVar = 48000;
 int accVar = 36000;
 
-// Calculate the distance per step
-#define DISTANCE_PER_STEP (LEADSCREW_PITCH / STEPS_PER_REV) / 8
-
 // Create a FastAccelStepperEngine object
 FastAccelStepperEngine engine = FastAccelStepperEngine();
 
@@ -58,39 +55,45 @@ float previousJoint4Angle = 0.0;
 float previousJoint5Angle = 0.0;
 float previousJoint6Angle = 0.0;
 
+float speedMultiplier = 1.0;
+float accelMultiplier = 1.0;
+
 // Function to calculate forward kinematics
-void forwardKinematics(float joint1Angle, float joint2Angle, float &x, float &y) {
-    x = link1Length * cos(joint1Angle) + link2Length * cos(joint1Angle + joint2Angle);
-    y = link1Length * sin(joint1Angle) + link2Length * sin(joint1Angle + joint2Angle);
+void forwardKinematics(float joint1Angle, float joint2Angle, float joint3Angle, float &x, float &y, float &z) {
+    x = link1Length * cos(joint1Angle) + link2Length * cos(joint1Angle + joint2Angle) + link3Length * cos(joint1Angle + joint2Angle + joint3Angle);
+    y = link1Length * sin(joint1Angle) + link2Length * sin(joint1Angle + joint2Angle) + link3Length * sin(joint1Angle + joint2Angle + joint3Angle);
+    z = link3Length * sin(joint3Angle);
 }
 
 // Error function
-float calculateError(float currentX, float currentY, float targetX, float targetY) {
-    return sqrt(pow(targetX - currentX, 2) + pow(targetY - currentY, 2));
+float calculateError(float currentX, float currentY, float currentZ, float targetX, float targetY, float targetZ) {
+    return sqrt(pow(targetX - currentX, 2) + pow(targetY - currentY, 2) + pow(targetZ - currentZ, 2));
 }
 
 // Gradient descent IK solver
-bool gradientDescentIK(float targetX, float targetY, float &joint1Angle, float &joint2Angle) {
+bool gradientDescentIK(float targetX, float targetY, float targetZ, float &joint1Angle, float &joint2Angle, float &joint3Angle) {
     const float learningRate = 0.01;
     const int maxIterations = 1000;
     float error = FLT_MAX;
 
     for (int i = 0; i < maxIterations; i++) {
-        float currentX, currentY;
-        forwardKinematics(joint1Angle, joint2Angle, currentX, currentY);
-        error = calculateError(currentX, currentY, targetX, targetY);
+        float currentX, currentY, currentZ;
+        forwardKinematics(joint1Angle, joint2Angle, joint3Angle, currentX, currentY, currentZ);
+        error = calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ);
 
         if (error < 1e-3) {
             return true; // Solution found
         }
 
-        // Compute gradients
-        float gradient1 = (forwardKinematics(joint1Angle + learningRate, joint2Angle, currentX, currentY), calculateError(currentX, currentY, targetX, targetY)) - error;
-        float gradient2 = (forwardKinematics(joint1Angle, joint2Angle + learningRate, currentX, currentY), calculateError(currentX, currentY, targetX, targetY)) - error;
+        // Compute gradients for all three angles
+        float gradient1 = (forwardKinematics(joint1Angle + learningRate, joint2Angle, joint3Angle, currentX, currentY, currentZ), calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ)) - error;
+        float gradient2 = (forwardKinematics(joint1Angle, joint2Angle + learningRate, joint3Angle, currentX, currentY, currentZ), calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ)) - error;
+        float gradient3 = (forwardKinematics(joint1Angle, joint2Angle, joint3Angle + learningRate, currentX, currentY, currentZ), calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ)) - error;
 
         // Update joint angles
         joint1Angle -= learningRate * gradient1;
         joint2Angle -= learningRate * gradient2;
+        joint3Angle -= learningRate * gradient3;
     }
 
     return false; // Solution not found within the maximum number of iterations
@@ -167,25 +170,18 @@ void controlJoints(float joint1Angle, float joint2Angle, float joint3Angle = 0, 
 }
 
 void moveHeadToPosition(float targetX, float targetY, float targetZ, float roll, float pitch, float yaw) {
-    // Solve inverse kinematics to get the new joint angles
     float joint1Angle = previousJoint1Angle; // Initial guess
     float joint2Angle = previousJoint2Angle; // Initial guess
-    float joint3Angle = previousJoint3Angle; // Initial guess
-    float joint4Angle = previousJoint4Angle; // Initial guess
-    float joint5Angle = previousJoint5Angle; // Initial guess
-    float joint6Angle = previousJoint6Angle; // Initial guess
+    float joint3Angle = previousJoint3Angle; // Initial guess for third link
 
-    if (gradientDescentIK(targetX, targetY, joint1Angle, joint2Angle)) {
+    if (gradientDescentIK(targetX, targetY, targetZ, joint1Angle, joint2Angle, joint3Angle)) {
         // Call the function to control the joints with the new angles
-        controlJoints(joint1Angle, joint2Angle, pitch, roll, yaw, targetZ);
+        controlJoints(joint1Angle, joint2Angle, joint3Angle, pitch, roll, yaw, targetZ);
 
         // Save the new angles as the previous angles for the next iteration
         previousJoint1Angle = joint1Angle;
         previousJoint2Angle = joint2Angle;
-        previousJoint3Angle = pitch;
-        previousJoint4Angle = roll;
-        previousJoint5Angle = yaw;
-        previousJoint6Angle = targetZ;
+        previousJoint3Angle = joint3Angle; // Update this as well
     } else {
         Serial.println("Target position is out of reach.");
     }
