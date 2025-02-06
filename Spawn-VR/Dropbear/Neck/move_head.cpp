@@ -2,6 +2,7 @@
 #include <BluetoothSerial.h>
 #include <cmath>
 #include <float.h> // For FLT_MAX
+#include <ArduinoJson.h>
 
 BluetoothSerial BTSerial;
 
@@ -19,17 +20,11 @@ BluetoothSerial BTSerial;
 #define MOTOR6_STEP_PIN 21
 #define MOTOR6_DIR_PIN 13
 
-// Leadscrew parameters
-#define LEADSCREW_PITCH 2.0 // Pitch of the leadscrew in mm
-#define STEPS_PER_REV 6400  // Steps per revolution for the stepper motor
-
 int speedVar = 48000;
 int accVar = 36000;
 
-// Create a FastAccelStepperEngine object
 FastAccelStepperEngine engine = FastAccelStepperEngine();
 
-// Create pointers for each stepper motor
 FastAccelStepper *stepper1 = NULL;
 FastAccelStepper *stepper2 = NULL;
 FastAccelStepper *stepper3 = NULL;
@@ -41,22 +36,74 @@ const float link1Length = 10.0;
 const float link2Length = 10.0;
 const float link3Length = 10.0;
 
-const float pitchScale = 10.0;   // Adjust as needed
-const float rollScale = 10.0;    // Adjust as needed
-const float yawScale = 10.0;     // Adjust as needed for Z-axis movement
+// Assuming these scales relate to how the motors should react to quaternion components
+const float qxScale = 10.0;    // Adjust as needed for X-axis rotation
+const float qyScale = 10.0;    // Adjust as needed for Y-axis rotation
+const float qzScale = 10.0;    // Adjust as needed for Z-axis rotation
+const float qwScale = 10.0;    // Adjust as needed for the scalar part of the quaternion
 const float heightScale = 400.0; // Adjust as needed, based on the mechanics of your platform
-const float rollMovementScale = 10.0; // Adjust as needed for roll movement
-const float pitchMovementScale = 10.0; // Adjust as needed for roll movement
 
 float previousJoint1Angle = 0.0;
 float previousJoint2Angle = 0.0;
 float previousJoint3Angle = 0.0;
-float previousJoint4Angle = 0.0;
-float previousJoint5Angle = 0.0;
-float previousJoint6Angle = 0.0;
 
 float speedMultiplier = 1.0;
 float accelMultiplier = 1.0;
+
+struct TrainingData {
+    float targetX, targetY, targetZ;
+    float quatW, quatX, quatY, quatZ;
+    float joint1Angle, joint2Angle, joint3Angle;
+    float currentX, currentY, currentZ;
+};
+
+// Simple model parameters for linear regression
+float weights[3][7]; // 3 joint angles, each predicted by 7 inputs (x, y, z, w, x, y, z of quaternion)
+float learningRate = 0.001;
+
+// Initialize weights to small random values or zeros
+void initWeights() {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 7; ++j) {
+            weights[i][j] = 0.0; // or random value if you want more variability
+        }
+    }
+}
+
+// Predict joint angles from the current model
+void predictAngles(float targetX, float targetY, float targetZ, float quatW, float quatX, float quatY, float quatZ, 
+                   float &joint1Angle, float &joint2Angle, float &joint3Angle) {
+    float inputs[7] = {targetX, targetY, targetZ, quatW, quatX, quatY, quatZ};
+    
+    for (int i = 0; i < 3; ++i) {
+        float prediction = 0.0;
+        for (int j = 0; j < 7; j++) {
+            prediction += weights[i][j] * inputs[j];
+        }
+        if (i == 0) joint1Angle = prediction;
+        else if (i == 1) joint2Angle = prediction;
+        else joint3Angle = prediction;
+    }
+}
+
+// Update model with new data (session learning)
+void updateModel(float targetX, float targetY, float targetZ, float quatW, float quatX, float quatY, float quatZ, 
+                 float joint1Angle, float joint2Angle, float joint3Angle) {
+    float inputs[7] = {targetX, targetY, targetZ, quatW, quatX, quatY, quatZ};
+    float outputs[3] = {joint1Angle, joint2Angle, joint3Angle};
+    
+    for (int i = 0; i < 3; ++i) { // for each joint angle
+        float prediction = 0;
+        for (int j = 0; j < 7; j++) {
+            prediction += weights[i][j] * inputs[j];
+        }
+        float error = outputs[i] - prediction;
+        
+        for (int j = 0; j < 7; j++) {
+            weights[i][j] += learningRate * error * inputs[j]; // Gradient descent update rule
+        }
+    }
+}
 
 // Function to calculate forward kinematics
 void forwardKinematics(float joint1Angle, float joint2Angle, float joint3Angle, float &x, float &y, float &z) {
@@ -70,8 +117,26 @@ float calculateError(float currentX, float currentY, float currentZ, float targe
     return sqrt(pow(targetX - currentX, 2) + pow(targetY - currentY, 2) + pow(targetZ - currentZ, 2));
 }
 
-// Gradient descent IK solver
-bool gradientDescentIK(float targetX, float targetY, float targetZ, float &joint1Angle, float &joint2Angle, float &joint3Angle) {
+// Compute analytical gradients for efficiency
+void computeGradients(float joint1, float joint2, float joint3, float targetX, float targetY, float targetZ, float &grad1, float &grad2, float &grad3) {
+    float currentX, currentY, currentZ;
+    forwardKinematics(joint1, joint2, joint3, currentX, currentY, currentZ);
+
+    float epsilon = 0.001;
+    float x1, y1, z1, x2, y2, z2, x3, y3, z3;
+
+    forwardKinematics(joint1 + epsilon, joint2, joint3, x1, y1, z1);
+    grad1 = (calculateError(x1, y1, z1, targetX, targetY, targetZ) - calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ)) / epsilon;
+
+    forwardKinematics(joint1, joint2 + epsilon, joint3, x2, y2, z2);
+    grad2 = (calculateError(x2, y2, z2, targetX, targetY, targetZ) - calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ)) / epsilon;
+
+    forwardKinematics(joint1, joint2, joint3 + epsilon, x3, y3, z3);
+    grad3 = (calculateError(x3, y3, z3, targetX, targetY, targetZ) - calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ)) / epsilon;
+}
+
+// Gradient descent IK solver with improved convergence
+bool gradientDescentIK(float targetX, float targetY, float targetZ, float &joint1Angle, float &joint2Angle, float &joint3Angle, std::vector &data) {
     const float learningRate = 0.01;
     const int maxIterations = 1000;
     float error = FLT_MAX;
@@ -82,49 +147,38 @@ bool gradientDescentIK(float targetX, float targetY, float targetZ, float &joint
         error = calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ);
 
         if (error < 1e-3) {
-            return true; // Solution found
+            TrainingData newData = {targetX, targetY, targetZ, 0, 0, 0, 0, joint1Angle, joint2Angle, joint3Angle, currentX, currentY, currentZ};
+            data.push_back(newData);
+            return true;
         }
 
-        // Compute gradients for all three angles
-        float gradient1 = (forwardKinematics(joint1Angle + learningRate, joint2Angle, joint3Angle, currentX, currentY, currentZ), calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ)) - error;
-        float gradient2 = (forwardKinematics(joint1Angle, joint2Angle + learningRate, joint3Angle, currentX, currentY, currentZ), calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ)) - error;
-        float gradient3 = (forwardKinematics(joint1Angle, joint2Angle, joint3Angle + learningRate, currentX, currentY, currentZ), calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ)) - error;
+        float grad1, grad2, grad3;
+        computeGradients(joint1Angle, joint2Angle, joint3Angle, targetX, targetY, targetZ, grad1, grad2, grad3);
 
-        // Update joint angles
-        joint1Angle -= learningRate * gradient1;
-        joint2Angle -= learningRate * gradient2;
-        joint3Angle -= learningRate * gradient3;
+        // Update joint angles with gradients
+        joint1Angle -= learningRate * grad1;
+        joint2Angle -= learningRate * grad2;
+        joint3Angle -= learningRate * grad3;
+
+        // Simple learning rate adjustment (you might want something more sophisticated)
+        if (i > 0 && error > previousError) learningRate *= 0.9; // Decrease learning rate if error increases
+        previousError = error;
     }
 
-    return false; // Solution not found within the maximum number of iterations
+    return false;
 }
 
-// Function to convert quaternion to Euler angles
-void quaternionToEuler(float w, float x, float y, float z, float &roll, float &pitch, float &yaw) {
-    float t0 = 2.0 * (w * x + y * z);
-    float t1 = 1.0 - 2.0 * (x * x + y * y);
-    roll = atan2(t0, t1);
+// Control function now uses quaternion directly for movement
+void controlJoints(float joint1Angle, float joint2Angle, float joint3Angle, float quatW, float quatX, float quatY, float quatZ, float targetZ) {
+    int move1 = -joint1Angle * qxScale + joint2Angle * qyScale + joint3Angle * qzScale - quatW * qwScale;
+    int move2 = joint1Angle * qxScale - joint2Angle * qyScale - joint3Angle * qzScale - quatW * qwScale;
+    int move3 = -joint1Angle * qxScale - joint2Angle * qyScale - joint3Angle * qzScale - quatW * qwScale;
+    int move4 = joint1Angle * qxScale + joint2Angle * qyScale - joint3Angle * qzScale - quatW * qwScale;
+    int move5 = -joint1Angle * qxScale + joint2Angle * qyScale - joint3Angle * qzScale - quatW * qwScale;
+    int move6 = joint1Angle * qxScale - joint2Angle * qyScale + joint3Angle * qzScale - quatW * qwScale;
 
-    float t2 = 2.0 * (w * y - z * x);
-    t2 = t2 > 1.0 ? 1.0 : t2;
-    t2 = t2 < -1.0 ? -1.0 : t2;
-    pitch = asin(t2);
-
-    float t3 = 2.0 * (w * z + x * y);
-    float t4 = 1.0 - 2.0 * (y * y + z * z);
-    yaw = atan2(t3, t4);
-}
-
-void controlJoints(float joint1Angle, float joint2Angle, float joint3Angle = 0, float joint4Angle = 0, float joint5Angle = 0, float joint6Angle = 0) {
-    int move1 = -joint1Angle * pitchScale + joint2Angle * rollScale + joint3Angle * yawScale + joint4Angle * pitchMovementScale + joint5Angle * rollMovementScale;
-    int move2 = joint1Angle * pitchScale - joint2Angle * rollScale - joint3Angle * yawScale + joint4Angle * pitchMovementScale + joint5Angle * rollMovementScale;
-    int move3 = -joint1Angle * pitchScale - joint2Angle * rollScale - joint3Angle * yawScale - joint4Angle * pitchMovementScale + joint5Angle * rollMovementScale;
-    int move4 = joint1Angle * pitchScale + joint2Angle * rollScale - joint3Angle * yawScale - joint4Angle * pitchMovementScale - joint5Angle * rollMovementScale;
-    int move5 = -joint1Angle * pitchScale + joint2Angle * rollScale - joint3Angle * yawScale + joint4Angle * pitchMovementScale - joint5Angle * rollMovementScale;
-    int move6 = joint1Angle * pitchScale - joint2Angle * rollScale + joint3Angle * yawScale  + joint4Angle * pitchMovementScale - joint5Angle * rollMovementScale;
-
-    // Apply the height offset to each stepper
-    int heightMovement = joint6Angle * heightScale;
+    // Adjust for height (this assumes Z movement is uniform for all motors)
+    int heightMovement = targetZ * heightScale;
     move1 += heightMovement;
     move2 += heightMovement;
     move3 += heightMovement;
@@ -132,11 +186,9 @@ void controlJoints(float joint1Angle, float joint2Angle, float joint3Angle = 0, 
     move5 += heightMovement;
     move6 += heightMovement;
 
-    // Adjust the speed and acceleration based on the multipliers
     int newSpeed = speedVar * speedMultiplier;
     int newAccel = accVar * accelMultiplier;
 
-    // Move the steppers with the adjusted speed and acceleration
     if (stepper1) {
         stepper1->setSpeedInHz(newSpeed);
         stepper1->setAcceleration(newAccel);
@@ -169,19 +221,25 @@ void controlJoints(float joint1Angle, float joint2Angle, float joint3Angle = 0, 
     }
 }
 
-void moveHeadToPosition(float targetX, float targetY, float targetZ, float roll, float pitch, float yaw) {
-    float joint1Angle = previousJoint1Angle; // Initial guess
-    float joint2Angle = previousJoint2Angle; // Initial guess
-    float joint3Angle = previousJoint3Angle; // Initial guess for third link
+// Modify moveHeadToPosition to use and update the model
+void moveHeadToPosition(float targetX, float targetY, float targetZ, float quatW, float quatX, float quatY, float quatZ, std::vector<TrainingData> &data) {
+    float predictedJoint1Angle, predictedJoint2Angle, predictedJoint3Angle;
+    
+    // Predict initial guess with the model
+    predictAngles(targetX, targetY, targetZ, quatW, quatX, quatY, quatZ, 
+                  predictedJoint1Angle, predictedJoint2Angle, predictedJoint3Angle);
 
-    if (gradientDescentIK(targetX, targetY, targetZ, joint1Angle, joint2Angle, joint3Angle)) {
-        // Call the function to control the joints with the new angles
-        controlJoints(joint1Angle, joint2Angle, joint3Angle, pitch, roll, yaw, targetZ);
+    // Use gradient descent as usual but with a better starting point
+    if (gradientDescentIK(targetX, targetY, targetZ, predictedJoint1Angle, predictedJoint2Angle, predictedJoint3Angle, data)) {
+        controlJoints(predictedJoint1Angle, predictedJoint2Angle, predictedJoint3Angle, quatW, quatX, quatY, quatZ, targetZ);
 
-        // Save the new angles as the previous angles for the next iteration
-        previousJoint1Angle = joint1Angle;
-        previousJoint2Angle = joint2Angle;
-        previousJoint3Angle = joint3Angle; // Update this as well
+        // Update model with the solution found
+        updateModel(targetX, targetY, targetZ, quatW, quatX, quatY, quatZ, 
+                    predictedJoint1Angle, predictedJoint2Angle, predictedJoint3Angle);
+
+        previousJoint1Angle = predictedJoint1Angle;
+        previousJoint2Angle = predictedJoint2Angle;
+        previousJoint3Angle = predictedJoint3Angle;
     } else {
         Serial.println("Target position is out of reach.");
     }
@@ -193,6 +251,7 @@ void setup() {
 
     // Initialize the stepper engine
     engine.init();
+    initWeights(); // Initialize model weights
 
     // Create and configure the stepper motors
     stepper1 = engine.stepperConnectToPin(MOTOR1_STEP_PIN);
@@ -265,33 +324,30 @@ void setup() {
     if (stepper6) stepper6->setCurrentPosition(0);
 }
 
+std::vector trainingData;
+float previousError = FLT_MAX; // Used for learning rate adjustment
+
 void loop() {
-  if (BTSerial.available()) {
-    String jsonString = BTSerial.readStringUntil('\n');
-    
-    // Parse JSON
-    StaticJsonDocument<256> doc; // Adjust size according to your JSON structure
-    DeserializationError error = deserializeJson(doc, jsonString);
-    
-    if (error) {
-      Serial.print(F("deserializeJson() failed: "));
-      Serial.println(error.c_str());
-      return;
+    if (BTSerial.available()) {
+        String jsonString = BTSerial.readStringUntil('\n');
+        
+        StaticJsonDocument<256> doc;
+        DeserializationError error = deserializeJson(doc, jsonString);
+        
+        if (error) {
+            Serial.print(F("deserializeJson() failed: "));
+            Serial.println(error.c_str());
+            return;
+        }
+        
+        float targetX = doc["x"];
+        float targetY = doc["y"];
+        float targetZ = doc["z"];
+        float quatW = doc["quaternion"][0];
+        float quatX = doc["quaternion"][1];
+        float quatY = doc["quaternion"][2];
+        float quatZ = doc["quaternion"][3];
+
+        moveHeadToPosition(targetX, targetY, targetZ, quatW, quatX, quatY, quatZ, trainingData);
     }
-    
-    // Extract values from JSON (assuming JSON has fields like "x", "y", "z", "w", "x", "y", "z")
-    float targetX = doc["x"];
-    float targetY = doc["y"];
-    float targetZ = doc["z"];
-    float quatW = doc["quaternion"][0];
-    float quatX = doc["quaternion"][1];
-    float quatY = doc["quaternion"][2];
-    float quatZ = doc["quaternion"][3];
-
-    float roll, pitch, yaw;
-    quaternionToEuler(quatW, quatX, quatY, quatZ, roll, pitch, yaw);
-
-    // Use the parsed values
-    moveHeadToPosition(targetX, targetY, targetZ, roll, pitch, yaw);
-  }
 }
