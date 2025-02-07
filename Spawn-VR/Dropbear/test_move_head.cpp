@@ -1,10 +1,11 @@
-// TESTING WITH RANDOM QUATERNIONS
 #include <cmath>
 #include <float.h>
 #include <ArduinoJson.h>
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+
+bool autoTrain = true; // true enables auto training which reprocesses existing solutions to minimize error || false disables auto training. Set to false when live
 
 const float link1Length = 10.0;
 const float link2Length = 10.0;
@@ -407,25 +408,50 @@ void loop() {
     float joint5Angle = previousJoint5Angle;
     float joint6Angle = previousJoint6Angle;
     
-    // Predict angles based on the generated data
-    predictAngles(targetX, targetY, targetZ, quatW, quatX, quatY, quatZ, 
-                  joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle);
+    float currentError = FLT_MAX;  // Initialize with highest possible float value
+    bool existingSolution = false;
+    float bestError = FLT_MAX;
+    size_t bestSolutionIndex = trainingData.size();  // An index out of bounds means no solution found
+
+    // Check if we have an existing solution for these coordinates
+    for (size_t i = 0; i < trainingData.size(); ++i) {
+        const auto& solution = trainingData[i];
+        if (solution.targetX == targetX && solution.targetY == targetY && solution.targetZ == targetZ &&
+            solution.quatW == quatW && solution.quatX == quatX && solution.quatY == quatY && solution.quatZ == quatZ) {
+            existingSolution = true;
+            // Calculate error for this existing solution
+            float tempX, tempY, tempZ;
+            forwardKinematics(solution.joint1Angle, solution.joint2Angle, solution.joint3Angle, 
+                              solution.joint4Angle, solution.joint5Angle, solution.joint6Angle, 
+                              quatW, quatX, quatY, quatZ, tempX, tempY, tempZ);
+            float error = calculateError(tempX, tempY, tempZ, targetX, targetY, targetZ, quatW, quatX, quatY, quatZ);
+            if (error < bestError) {
+                bestError = error;
+                bestSolutionIndex = i;
+            }
+        }
+    }
+
+    // Use the best existing solution if one was found
+    if (existingSolution && bestSolutionIndex < trainingData.size()) {
+        const auto& bestSolution = trainingData[bestSolutionIndex];
+        joint1Angle = bestSolution.joint1Angle;
+        joint2Angle = bestSolution.joint2Angle;
+        joint3Angle = bestSolution.joint3Angle;
+        joint4Angle = bestSolution.joint4Angle;
+        joint5Angle = bestSolution.joint5Angle;
+        joint6Angle = bestSolution.joint6Angle;
+        currentError = bestError;  // Set current error to the best found
+    } else {
+        // If no existing solution, predict angles
+        predictAngles(targetX, targetY, targetZ, quatW, quatX, quatY, quatZ, 
+                      joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle);
+    }
 
     // Use gradient descent with the generated data as the target
     if (gradientDescentIK(targetX, targetY, targetZ, joint1Angle, joint2Angle, joint3Angle, 
                           joint4Angle, joint5Angle, joint6Angle, trainingData, learningRate, 
                           quatW, quatX, quatY, quatZ)) {
-        // Update model with the solution found
-        updateModel(targetX, targetY, targetZ, quatW, quatX, quatY, quatZ, 
-                    joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle);
-
-        previousJoint1Angle = joint1Angle;
-        previousJoint2Angle = joint2Angle;
-        previousJoint3Angle = joint3Angle;
-        previousJoint4Angle = joint4Angle;
-        previousJoint5Angle = joint5Angle;
-        previousJoint6Angle = joint6Angle;
-
         Serial.println("Solution found");
         Serial.print("Generated Target Position: ");
         Serial.print(targetX); Serial.print(", "); Serial.print(targetY); Serial.print(", "); Serial.println(targetZ);
@@ -437,8 +463,40 @@ void loop() {
         Serial.print(joint5Angle); Serial.print(", "); 
         Serial.println(joint6Angle);
 
+        // Calculate the error for the new solution
+        float currentX, currentY, currentZ;
+        forwardKinematics(joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle, 
+                          quatW, quatX, quatY, quatZ, currentX, currentY, currentZ);
+        currentError = calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ, quatW, quatX, quatY, quatZ);
+
+        // Update model with the solution found if autoTrain is true
+        if (autoTrain) {
+            updateModel(targetX, targetY, targetZ, quatW, quatX, quatY, quatZ, 
+                        joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle);
+
+            // If we found a solution with lower error than any existing solution or if no solution existed, update or add it
+            if (currentError < bestError || !existingSolution) {
+                if (existingSolution && bestSolutionIndex < trainingData.size()) {
+                    trainingData.erase(trainingData.begin() + bestSolutionIndex);
+                }
+                TrainingData newData = {targetX, targetY, targetZ, quatW, quatX, quatY, quatZ, 
+                                        joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle,
+                                        currentX, currentY, currentZ};
+                trainingData.push_back(newData);
+            }
+        }
+
+        // Update previous angles for next iteration
+        previousJoint1Angle = joint1Angle;
+        previousJoint2Angle = joint2Angle;
+        previousJoint3Angle = joint3Angle;
+        previousJoint4Angle = joint4Angle;
+        previousJoint5Angle = joint5Angle;
+        previousJoint6Angle = joint6Angle;
+
         // Convert to motor steps and control motors here
         // ...
+
     } else {
         Serial.println("Generated position is out of reach.");
     }
