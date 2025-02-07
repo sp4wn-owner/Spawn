@@ -2,7 +2,7 @@
 After starting neck_server.py, connect to your ws using the [Robot-UI](https://robot-csyy.onrender.com) by entering the URL and clicking start. Then on the [VR-UI](https://spawn-vr.onrender.com) enter your robot's username and click "Spawn". After connecting, click "Enter VR". Now you should see all head tracking data [w,x,y,z] being proxied to your neck_server. 
 
 ### Example data from Robot-UI to neck_server.py
-![Alt text](https://github.com/sp4wn-owner/Spawn/blob/main/Spawn-VR/Dropbear/Neck/Images/wsdata.png)
+![Alt text](https://github.com/sp4wn-owner/Spawn/blob/main/Spawn-VR/Dropbear/Images/wsdata.png)
 
 From the neck_server script, uncomment the block to forward this data to serial_handler.py. From there, it forwards the data to your ESP32.
 
