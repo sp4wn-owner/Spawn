@@ -297,7 +297,7 @@ IKResult gradientDescentIK(float targetX, float targetY, float targetZ,
                          gradients[0], gradients[1], gradients[2], gradients[3], gradients[4], gradients[5]);
 
         // Update joint angles with gradients
-        float scales[6] = {pitchScale, rollScale, yawScale, 0.1, 0.1, 0.1}; // Example scales for each joint
+        float scales[6] = {pitchScale, rollScale, yawScale, standardScale, standardScale, standardScale}; // Example scales for each joint
         for (int j = 0; j < 6; j++) {
             jointAngles[j] -= learningRate * gradients[j] * scales[j];
         }
@@ -330,7 +330,7 @@ IKResult gradientDescentIK(float targetX, float targetY, float targetZ,
         const float DISTANCE_PER_STEP = ((2.0 / 6400) / 8) * 100; // From your motor setup, in degrees per step
         
         int steps[6];
-        float scales[6] = {pitchScale, rollScale, yawScale, 0.1, 0.1, 0.1}; // Declare scales here
+        float scales[6] = {pitchScale, rollScale, yawScale, standardScale, standardScale, standardScale}; // Declare scales here
         for (int i = 0; i < 6; i++) {
             steps[i] = (jointAngles[i] * (180.0 / M_PI) * scales[i]) / DISTANCE_PER_STEP;
         }
