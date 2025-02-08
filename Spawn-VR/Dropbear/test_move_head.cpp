@@ -4,6 +4,10 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <esp_system.h>
+#include <SD_MMC.h>
+#include <FS.h>
+#include <esp_vfs_fat.h>
 
 bool autoTrain = true; // true enables auto training which reprocesses existing solutions to minimize error || false disables auto training. Set to false when live
 
@@ -19,12 +23,12 @@ const float qwScale = 10.0;    // Adjust as needed for the scalar part of the qu
 const float heightScale = 400.0; // Adjust as needed, based on the mechanics of your platform
 
 // New scaling constants
-const float standardScale = 0.1;   // Adjust as needed
-const float pitchScale = 0.1;   // Adjust as needed
-const float rollScale = 0.1;    // Adjust as needed
-const float yawScale = 0.1;     // Adjust as needed for Z-axis movement
-const float rollMovementScale = 10.0; // Adjust as needed for roll movement
-const float pitchMovementScale = 10.0; // Adjust as needed for pitch movement
+const float standardScale = 0.1;
+const float pitchScale = 0.1;
+const float rollScale = 0.1;
+const float yawScale = 0.1;
+const float rollMovementScale = 10.0;
+const float pitchMovementScale = 10.0;
 
 float previousJoint1Angle = 0.0;
 float previousJoint2Angle = 0.0;
@@ -35,16 +39,24 @@ float previousJoint6Angle = 0.0;
 
 struct TrainingData {
     float targetX, targetY, targetZ;
+    float currentX, currentY, currentZ;
     float quatW, quatX, quatY, quatZ;
     float joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle;
-    float currentX, currentY, currentZ;
+    float error;
+};
+
+std::vector<TrainingData> trainingData;
+
+struct IKResult {
+    bool solutionFound;
+    float error;
 };
 
 // Function prototypes can be here to avoid "implicit declaration" warnings
 void initWeights();
 void predictAngles(float, float, float, float, float, float, float, float&, float&, float&, float&, float&, float&);
-bool gradientDescentIK(float, float, float, float&, float&, float&, float&, float&, float&, std::vector<TrainingData>&, float&, float, float, float, float);
-void updateModel(float, float, float, float, float, float, float, float, float, float, float, float, float);
+IKResult gradientDescentIK(float, float, float, float&, float&, float&, float&, float&, float&, std::vector<TrainingData>&, float&, float, float, float, float);
+unsigned int updateModel(float, float, float, float, float, float, float, float, float, float, float, float, float);
 void quaternionToRotationMatrix(float, float, float, float, float[3][3]);
 void forwardKinematics(float, float, float, float, float, float, float, float&, float&, float&);
 float calculateError(float, float, float, float, float, float, float, float, float, float);
@@ -53,22 +65,28 @@ void generatePositionalQuaternion(float&, float&, float&, float&);
 
 // Simple model parameters for linear regression
 float weights[6][7]; // 6 joint angles, each predicted by 7 inputs
-float learningRate = 0.1;
+float learningRate = 0.2;
 
 void initWeights() {
     // Seed the random number generator once
     static bool seeded = false;
     if (!seeded) {
-        srand(static_cast<unsigned int>(time(NULL)));  // Use C-style cast here since static_cast isn't working
+        srand(static_cast<unsigned int>(time(NULL))); 
         seeded = true;
     }
 
     for (int i = 0; i < 6; ++i) {
         for (int j = 0; j < 7; ++j) {
-            // Generate a small random value between -0.05 and 0.05
             weights[i][j] = ((float)rand() / RAND_MAX) * 0.1 - 0.05;
         }
     }
+}
+
+void checkFreeHeap() {
+    size_t freeHeap = ESP.getFreeHeap();
+    Serial.print("Free Heap: ");
+    Serial.print(freeHeap);
+    Serial.println(" bytes");
 }
 
 // Predict joint angles from the current model
@@ -95,9 +113,8 @@ void predictAngles(float targetX, float targetY, float targetZ, float quatW, flo
 }
 
 // Update model with new data (session learning)
-// Update model with new data (session learning)
-void updateModel(float targetX, float targetY, float targetZ, float quatW, float quatX, float quatY, float quatZ, 
-                 float joint1Angle, float joint2Angle, float joint3Angle, float joint4Angle, float joint5Angle, float joint6Angle) {
+unsigned int updateModel(float targetX, float targetY, float targetZ, float quatW, float quatX, float quatY, float quatZ, 
+                         float joint1Angle, float joint2Angle, float joint3Angle, float joint4Angle, float joint5Angle, float joint6Angle) {
     static unsigned int updateCount = 0; // Static counter for model updates
     updateCount++; // Increment each time updateModel is called
 
@@ -144,6 +161,7 @@ void updateModel(float targetX, float targetY, float targetZ, float quatW, float
             weights[i][j] += learningRate * error * inputs[j]; // Gradient descent update rule
         }
     }
+    return updateCount;
 }
 
 void quaternionToRotationMatrix(float quatW, float quatX, float quatY, float quatZ, float rotMat[3][3]) {
@@ -233,7 +251,7 @@ void computeGradients(float joint1, float joint2, float joint3, float joint4, fl
 }
 
 // Gradient descent IK solver with improved convergence
-bool gradientDescentIK(float targetX, float targetY, float targetZ, 
+IKResult gradientDescentIK(float targetX, float targetY, float targetZ, 
                        float &joint1Angle, float &joint2Angle, float &joint3Angle, 
                        float &joint4Angle, float &joint5Angle, float &joint6Angle, 
                        std::vector<TrainingData> &data, float &learningRate, 
@@ -288,7 +306,7 @@ bool gradientDescentIK(float targetX, float targetY, float targetZ,
         if (i > 5 && error > previousError) {
             learningRate *= 0.9; // Decrease learning rate if error increases
         } else if (error < previousError) {
-            learningRate = min(learningRate * 1.05, 0.1); // Increase learning rate but cap it
+            learningRate = min(learningRate * 1.05, 1.0); // Increase learning rate but cap it
         }
         previousError = error;
     }
@@ -339,7 +357,11 @@ bool gradientDescentIK(float targetX, float targetY, float targetZ,
     joint5Angle = jointAngles[4];
     joint6Angle = jointAngles[5];
 
-    return solutionFound;
+    IKResult result;
+    result.solutionFound = solutionFound;
+    result.error = error;
+
+    return result;
 }
 
 void generatePositionalQuaternion(float &w, float &x, float &y, float &z) {
@@ -385,12 +407,103 @@ float constrainPosition(float value) {
     return max(-1.0f, min(1.0f, value));
 }
 
-void setup() {
-    Serial.begin(115200);
-    initWeights(); // Initialize model weights
+void loadTrainingData(std::vector<TrainingData> &trainingData) {
+    File file = SD_MMC.open("/training_data.txt", FILE_READ);
+    if (file) {
+        // Read each line of the file
+        while (file.available()) {
+            String line = file.readStringUntil('\n');
+            TrainingData data;
+            // Parse the line to fill the TrainingData structure
+            // Assuming format: Target: x,y,z,w,x,y,z; Solution: j1,j2,j3,j4,j5,j6; Error: e
+            int targetStart = line.indexOf("Target:") + 7; // 7 is length of "Target:"
+            int targetEnd = line.indexOf(';', targetStart);
+            String targetData = line.substring(targetStart, targetEnd);
+            int solutionStart = line.indexOf("Solution:") + 9; // 9 is length of "Solution:"
+            int solutionEnd = line.indexOf(';', solutionStart);
+            String solutionData = line.substring(solutionStart, solutionEnd);
+            
+            // Parse target data
+            int commaIndex = 0;
+            for (int i = 0; i < 7; ++i) {
+                int nextComma = targetData.indexOf(',', commaIndex);
+                if (nextComma != -1) {
+                    if (i < 3) {
+                        ((float*)&data.targetX)[i] = targetData.substring(commaIndex, nextComma).toFloat();
+                    } else {
+                        ((float*)&data.quatW)[i - 3] = targetData.substring(commaIndex, nextComma).toFloat();
+                    }
+                    commaIndex = nextComma + 1;
+                } else {
+                    // Handle the last element
+                    if (i < 3) {
+                        ((float*)&data.targetX)[i] = targetData.substring(commaIndex).toFloat();
+                    } else {
+                        ((float*)&data.quatW)[i - 3] = targetData.substring(commaIndex).toFloat();
+                    }
+                    break;
+                }
+            }
+
+            // Parse solution data
+            commaIndex = 0;
+            for (int i = 0; i < 6; ++i) {
+                int nextComma = solutionData.indexOf(',', commaIndex);
+                if (nextComma != -1) {
+                    ((float*)&data.joint1Angle)[i] = solutionData.substring(commaIndex, nextComma).toFloat();
+                    commaIndex = nextComma + 1;
+                } else {
+                    // Handle the last element
+                    ((float*)&data.joint1Angle)[i] = solutionData.substring(commaIndex).toFloat();
+                    break;
+                }
+            }
+
+            // Note: We're skipping error parsing here for brevity, but you can add it if needed.
+            // Calculate current position if needed or set to target for simplicity
+            data.currentX = data.targetX;
+            data.currentY = data.targetY;
+            data.currentZ = data.targetZ;
+
+            trainingData.push_back(data);
+        }
+        file.close();
+        Serial.print("Loaded "); Serial.print(trainingData.size()); Serial.println(" training data entries.");
+    } else {
+        Serial.println("Failed to open training data file");
+    }
 }
 
-std::vector<TrainingData> trainingData;
+void setup() {
+    Serial.begin(115200);
+    delay(1000);
+
+    // Initialize SD card
+    if (!SD_MMC.begin()) {
+        Serial.println("Card Mount Failed");
+        Serial.print("Card Type: ");
+        Serial.println(SD_MMC.cardType());
+        Serial.print("Card Size: ");
+        Serial.println(SD_MMC.cardSize() / (1024.0 * 1024.0 * 1024.0), 2);
+        Serial.println("Please format the SD card on a computer if this error persists.");
+
+        return;
+    }
+    Serial.println("SD Card Mounted");
+    Serial.print("Card Type: ");
+    Serial.println(SD_MMC.cardType());
+    Serial.print("Card Size: ");
+    Serial.println(SD_MMC.cardSize() / (1024.0 * 1024.0 * 1024.0), 2);
+    uint64_t totalSpace = SD_MMC.totalBytes();
+    uint64_t usedSpace = SD_MMC.usedBytes();
+    Serial.print("Free Space: ");
+    Serial.print((totalSpace - usedSpace) / (1024.0 * 1024.0 * 1024.0), 2);
+    Serial.println(" GB");
+
+    initWeights();
+}
+
+static std::vector<TrainingData> lastUpdates;
 
 void loop() {
     float quatW, quatX, quatY, quatZ;
@@ -449,9 +562,11 @@ void loop() {
     }
 
     // Use gradient descent with the generated data as the target
-    if (gradientDescentIK(targetX, targetY, targetZ, joint1Angle, joint2Angle, joint3Angle, 
-                          joint4Angle, joint5Angle, joint6Angle, trainingData, learningRate, 
-                          quatW, quatX, quatY, quatZ)) {
+    IKResult ikResult = gradientDescentIK(targetX, targetY, targetZ, joint1Angle, joint2Angle, joint3Angle, 
+                                          joint4Angle, joint5Angle, joint6Angle, trainingData, learningRate, 
+                                          quatW, quatX, quatY, quatZ);
+
+    if (ikResult.solutionFound) {
         Serial.println("Solution found");
         Serial.print("Generated Target Position: ");
         Serial.print(targetX); Serial.print(", "); Serial.print(targetY); Serial.print(", "); Serial.println(targetZ);
@@ -462,26 +577,44 @@ void loop() {
         Serial.print(joint4Angle); Serial.print(", "); 
         Serial.print(joint5Angle); Serial.print(", "); 
         Serial.println(joint6Angle);
+        checkFreeHeap();
+        Serial.print("Vector Size: ");
+        Serial.println(trainingData.size());
+        Serial.print("Vector Capacity: ");
+        Serial.println(trainingData.capacity());
+        
+        // Use the error from gradientDescentIK
+        currentError = ikResult.error;
 
-        // Calculate the error for the new solution
+        // Calculate current position
         float currentX, currentY, currentZ;
         forwardKinematics(joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle, 
                           quatW, quatX, quatY, quatZ, currentX, currentY, currentZ);
-        currentError = calculateError(currentX, currentY, currentZ, targetX, targetY, targetZ, quatW, quatX, quatY, quatZ);
 
         // Update model with the solution found if autoTrain is true
-        if (autoTrain) {
-            updateModel(targetX, targetY, targetZ, quatW, quatX, quatY, quatZ, 
-                        joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle);
+       if (autoTrain) {
+            unsigned int count = updateModel(targetX, targetY, targetZ, quatW, quatX, quatY, quatZ, 
+                                            joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle);
+
+            // Store the new solution in the last 25 updates with actual current position
+            TrainingData newData = {currentX, currentY, currentZ,  // Use actual current position if available
+                                    targetX, targetY, targetZ, 
+                                    quatW, quatX, quatY, quatZ, 
+                                    joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle,
+                                    currentError};
+            lastUpdates.push_back(newData);
+
+            // Save best solutions to SD card every 25 updates
+            if (count % 25 == 0) {
+                saveBestSolutions();
+                lastUpdates.clear(); // Clear after saving best solutions
+            }
 
             // If we found a solution with lower error than any existing solution or if no solution existed, update or add it
             if (currentError < bestError || !existingSolution) {
                 if (existingSolution && bestSolutionIndex < trainingData.size()) {
                     trainingData.erase(trainingData.begin() + bestSolutionIndex);
                 }
-                TrainingData newData = {targetX, targetY, targetZ, quatW, quatX, quatY, quatZ, 
-                                        joint1Angle, joint2Angle, joint3Angle, joint4Angle, joint5Angle, joint6Angle,
-                                        currentX, currentY, currentZ};
                 trainingData.push_back(newData);
             }
         }
@@ -502,4 +635,186 @@ void loop() {
     }
 
     delay(1000);
+}
+
+void saveBestSolutions() {
+    std::vector<TrainingData> bestSolutions;
+    const size_t MAX_SOLUTIONS = 2500; // Define based on your memory constraints
+
+    Serial.print("Free Heap Before: ");
+    Serial.println(ESP.getFreeHeap());
+
+    File readFile = SD_MMC.open("/training_data.txt", FILE_READ);
+    if (!readFile) {
+        Serial.println("File does not exist, creating new file");
+        readFile = SD_MMC.open("/training_data.txt", FILE_WRITE);
+        if (readFile) {
+            readFile.close();
+        } else {
+            Serial.println("Error creating file");
+            return;
+        }
+        readFile = SD_MMC.open("/training_data.txt", FILE_READ);
+        if (!readFile) {
+            Serial.println("Error re-opening file for reading");
+            return;
+        }
+    }
+
+    if (readFile) {
+        // Load all existing solutions
+        while (readFile.available()) {
+            String line = readFile.readStringUntil('\n');
+            Serial.println("Line: " + line); 
+            if (bestSolutions.size() < MAX_SOLUTIONS) {
+                TrainingData data; 
+                if (parseLine(line, data)) { 
+                    bestSolutions.push_back(data);
+                } else {
+                    Serial.println("Failed to parse line: " + line);
+                }
+            } else {
+                Serial.println("Warning: Max solutions capacity reached, not adding more.");
+                break;
+            }
+        }
+        readFile.close();
+
+        Serial.print("Number of Solutions Loaded: ");
+        Serial.println(bestSolutions.size());
+
+        // Merge new solutions with existing ones, keeping only the best
+        for (const auto& newSolution : lastUpdates) {
+            bool isBetter = true;
+            float newError = newSolution.error;  // Use the error from the structure
+
+            for (auto& existingSolution : bestSolutions) {
+                if (existingSolution.targetX == newSolution.targetX && 
+                    existingSolution.targetY == newSolution.targetY && 
+                    existingSolution.targetZ == newSolution.targetZ) {
+                    float existingError = existingSolution.error; // Use stored error
+
+                    if (newError < existingError) { 
+                        existingSolution = newSolution; // Replace existing with new if it's better
+                    }
+                    isBetter = false;
+                    break;
+                }
+            }
+            if (isBetter && bestSolutions.size() < MAX_SOLUTIONS) {
+                bestSolutions.push_back(newSolution);
+            }
+        }
+
+        Serial.print("Number of Solutions After Merge: ");
+        Serial.println(bestSolutions.size());
+
+        // Print the most recent 25 solutions
+        Serial.println("Recent 25 Solutions:");
+        int count = 0;
+        for (auto it = bestSolutions.rbegin(); it != bestSolutions.rend() && count < 25; ++it, ++count) {
+            const auto& solution = *it;
+            Serial.print("Target: "); Serial.print(solution.targetX); Serial.print(","); 
+            Serial.print(solution.targetY); Serial.print(","); Serial.print(solution.targetZ); Serial.print(",");
+            Serial.print(solution.quatW); Serial.print(","); Serial.print(solution.quatX); Serial.print(","); 
+            Serial.print(solution.quatY); Serial.print(","); Serial.print(solution.quatZ); Serial.print(";");
+            Serial.print("Solution: "); Serial.print(solution.joint1Angle); Serial.print(","); 
+            Serial.print(solution.joint2Angle); Serial.print(","); Serial.print(solution.joint3Angle); Serial.print(",");
+            Serial.print(solution.joint4Angle); Serial.print(","); Serial.print(solution.joint5Angle); Serial.print(","); 
+            Serial.print(solution.joint6Angle); Serial.print(";");
+            Serial.print("Error: "); Serial.println(solution.error);
+        }
+
+        // Delete or rename the old file, then write new data
+        if (!SD_MMC.remove("/training_data.txt")) {
+            Serial.println("Error removing old file");
+            return;
+        }
+
+        File writeFile = SD_MMC.open("/training_data.txt", FILE_WRITE);
+        if (writeFile) {
+            for (const auto& solution : bestSolutions) {
+                writeFile.print("Target: "); writeFile.print(solution.targetX); writeFile.print(","); 
+                writeFile.print(solution.targetY); writeFile.print(","); writeFile.print(solution.targetZ); writeFile.print(",");
+                writeFile.print(solution.quatW); writeFile.print(","); writeFile.print(solution.quatX); writeFile.print(","); 
+                writeFile.print(solution.quatY); writeFile.print(","); writeFile.print(solution.quatZ); writeFile.print(";");
+                writeFile.print("Solution: "); writeFile.print(solution.joint1Angle); writeFile.print(","); 
+                writeFile.print(solution.joint2Angle); writeFile.print(","); writeFile.print(solution.joint3Angle); writeFile.print(",");
+                writeFile.print(solution.joint4Angle); writeFile.print(","); writeFile.print(solution.joint5Angle); writeFile.print(","); 
+                writeFile.print(solution.joint6Angle); writeFile.print(";");
+                writeFile.print("Error: "); writeFile.print(solution.error); // Write error
+                writeFile.println();
+            }
+            writeFile.close();
+            Serial.println("Data successfully written to SD card");
+        } else {
+            Serial.println("Error opening file for writing");
+        }
+
+        Serial.print("Free Heap After: ");
+        Serial.println(ESP.getFreeHeap());
+    } else {
+        Serial.println("Error opening file for reading after creation attempt");
+    }
+}
+
+bool parseLine(String line, TrainingData& data) {
+    int targetStart = line.indexOf("Target:") + 7;
+    int targetEnd = line.indexOf(';', targetStart);
+    String targetData = line.substring(targetStart, targetEnd);
+    int solutionStart = line.indexOf("Solution:") + 9;
+    int errorStart = line.indexOf("Error:") + 6;
+
+    // Parse target data
+    int commaIndex = 0;
+    for (int i = 0; i < 7; ++i) {
+        int nextComma = targetData.indexOf(',', commaIndex);
+        if (nextComma != -1) {
+            if (i < 3) {
+                ((float*)&data.targetX)[i] = targetData.substring(commaIndex, nextComma).toFloat();
+            } else {
+                ((float*)&data.quatW)[i - 3] = targetData.substring(commaIndex, nextComma).toFloat();
+            }
+            commaIndex = nextComma + 1;
+        } else {
+            if (i < 3) {
+                ((float*)&data.targetX)[i] = targetData.substring(commaIndex).toFloat();
+            } else {
+                ((float*)&data.quatW)[i - 3] = targetData.substring(commaIndex).toFloat();
+            }
+            break;
+        }
+    }
+
+    // Parse solution data
+    commaIndex = 0;
+    String solutionData = line.substring(solutionStart);
+    for (int i = 0; i < 6; ++i) {
+        int nextComma = solutionData.indexOf(',', commaIndex);
+        if (nextComma != -1) {
+            ((float*)&data.joint1Angle)[i] = solutionData.substring(commaIndex, nextComma).toFloat();
+            commaIndex = nextComma + 1;
+        } else {
+            // Handle the last element
+            ((float*)&data.joint1Angle)[i] = solutionData.substring(commaIndex).toFloat();
+            break;
+        }
+    }
+
+    // Parse error
+    if (errorStart != 5) { // 5 would be if "Error:" wasn't found
+        data.error = line.substring(errorStart).toFloat();
+    } else {
+        // If no error data, calculate it
+        data.error = calculateError(data.currentX, data.currentY, data.currentZ, 
+                                    data.targetX, data.targetY, data.targetZ, 
+                                    data.quatW, data.quatX, data.quatY, data.quatZ);
+    }
+
+    // For now, we assume current position equals target for simplicity
+    data.currentX = data.targetX;
+    data.currentY = data.targetY;
+    data.currentZ = data.targetZ;
+
+    return true; // Return false if parsing fails
 }
