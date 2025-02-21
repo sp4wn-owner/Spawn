@@ -1,5 +1,3 @@
-[![Features](https://img.shields.io/badge/-Features-blue?style=for-the-badge)](#Features)
-
 # [Spawn](https://sp4wn.com)
 
 Spawn is at the forefront of the humanoid gig economy, developing the essential infrastructure to enable real-time teleoperation of advanced robots.
