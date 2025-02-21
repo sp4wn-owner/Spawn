@@ -1,4 +1,4 @@
-# Teleoperating Galaxea R1
+# Galaxea R1 - Teleoperation
 
 ## Step 1
 Deploy the client and rosHandler scripts (to be completed).
@@ -20,7 +20,7 @@ In the Robot-UI, add your websocket URL in the input field and then start stream
 ## Step 3
 From the VR-UI, connect to your robot by clicking the 'spawn' button. Tracking data will be proxied from the Robot-UI to the simHandler script thus interfacing with ROS to manipulate the Galaxea R1 model in a simulated environment.
 
-## Teleoperation - In development
+## Robot Setup - In development
 
 ### Curl Node
 ```bash
@@ -32,7 +32,7 @@ curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 
-### WebRTC requires node-pre-gyp
+### Install node-pre-gyp
 ```bash
 sudo npm install -g @mapbox/node-pre-gyp
 ```
@@ -55,7 +55,7 @@ sudo chmod a+rw /dev/video0
 
 ### Get the client, serial_handler, and config scripts
 ```bash
-wget https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/client.js https://github.com/sp4wn-owner/Spawn/tree/main/Galaxea/R1/Dropbear/serial_handler.py https://github.com/sp4wn-owner/Spawn/tree/main/Galaxea/R1/Dropbear/config.js
+wget https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/client.js https://github.com/sp4wn-owner/Spawn/tree/main/Galaxea/R1/Dropbear/serial_handler.py https://github.com/sp4wn-owner/Spawn/tree/main/Galaxea/R1/config.js
 ```
 
 ### Update the config.js file with your username/password
