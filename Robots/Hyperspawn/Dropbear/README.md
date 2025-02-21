@@ -2,11 +2,9 @@
 After starting neck_server.py, connect to your ws using the [Robot-UI](https://robot-csyy.onrender.com) by entering the URL and clicking start. Then on the [VR-UI](https://spawn-vr.onrender.com) enter your robot's username and click "Spawn". After connecting, click "Enter VR". Now you should see all head tracking data [w,x,y,z] being proxied to your neck_server. 
 
 ### Example data from Robot-UI to neck_server.py
-![Alt text](https://github.com/sp4wn-owner/Spawn/blob/main/Spawn-VR/Dropbear/Images/wsdata.png)
+![Alt text](https://github.com/sp4wn-owner/Spawn/blob/main/Robots/Hyperspawn/Dropbear/Images/wsdata.png)
 
-From the neck_server script, uncomment the block to forward this data to serial_handler.py. From there, it forwards the data to your ESP32.
-
-Please note, the move_head script hasn't been tested yet so please review the calculations and make necessary adjustments to avoid damaging components. This script is merely a starting point and will probably require modifications. The objective is to minimize latency for real-time teleoperation of head movements with 6DoF. My proposed solution is to implement a learning-based approach paired with gradient descent. Over time, this should result in lower latency compared to existing time-consuming IK calculations.
+From the neck_server script, uncomment the block to forward this data to serial_handler.py. From there, it forwards the data to your ESP32. The move_head script includes learning and IK paired with gradient descent.
 
 ## Teleoperation
 
@@ -43,7 +41,7 @@ sudo chmod a+rw /dev/video0
 
 ### Get the client, serial_handler, and config scripts
 ```bash
-wget https://github.com/sp4wn-owner/Spawn/tree/main/Spawn-VR/Dropbear/client.js https://github.com/sp4wn-owner/Spawn/tree/main/Spawn-VR/Dropbear/serial_handler.py https://github.com/sp4wn-owner/Spawn/tree/main/Spawn-VR/Dropbear/config.js
+wget https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Hyperspawn/Dropbear/client.js https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Hyperspawn/Dropbear/serial_handler.py https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Hyperspawn/Dropbear/config.js
 ```
 
 ### Update the config.js file with your username/password
