@@ -55,7 +55,7 @@ sudo chmod a+rw /dev/video0
 
 ### Get the client, serial_handler, and config scripts
 ```bash
-wget https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/client.js https://github.com/sp4wn-owner/Spawn/tree/main/Galaxea/R1/Dropbear/serial_handler.py https://github.com/sp4wn-owner/Spawn/tree/main/Galaxea/R1/config.js
+wget https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/client.js https://github.com/sp4wn-owner/Spawn/tree/main/Galaxea/R1/rosHandler.py https://github.com/sp4wn-owner/Spawn/tree/main/Galaxea/R1/config.js
 ```
 
 ### Update the config.js file with your username/password
