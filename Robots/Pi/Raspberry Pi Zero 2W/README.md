@@ -77,7 +77,7 @@ sudo chmod a+rw /dev/video0
 
 ### Get the piclient, inputHandler, and config scripts
 ```bash
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/piclient.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/inputHandler.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Pi/Raspberry%20Pi%20Zero%202W/config.js
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Pi/Raspberry%20Pi%20Zero%202W/piclient.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Pi/Raspberry%20Pi%20Zero%202W/inputHandler.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Pi/Raspberry%20Pi%20Zero%202W/config.js
 ```
 
 ### Update the config.js file with your username/password
