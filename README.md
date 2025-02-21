@@ -2,7 +2,7 @@
 
 # [Spawn](https://sp4wn.com)
 
-Spawn is pioneering the humanoid gig economy by building the necessary infrastructure to support real-time teleoperation of advanced robots. 
+Spawn is at the forefront of the humanoid gig economy, developing the essential infrastructure to enable real-time teleoperation of advanced robots.
 
 ### Supported systems
 Our software is compatible with leading Linux distributions.
