@@ -3,7 +3,7 @@
 Spawn-VR is our web-based VR interface. Connect to your robot via a secure p2p connection.
 <div align="center">
   <a href="https://www.youtube.com/watch?v=sWy02gyUxlc&t=7s" target="_blank">
-    <img src="https://img.youtube.com/vi/sWy02gyUxlc/maxresdefault.jpg" alt="Video Thumbnail">
+    <img src="https://img.youtube.com/vi/sWy02gyUxlc/sddefault.jpg" alt="Video Thumbnail">
   </a>
 </div>
 
