@@ -36,8 +36,8 @@ let connectedUser;
 let configuration;
 let isStartingStream = false;
 
-async function startWebRTC() {
-    console.log('Starting WebRTC client...');
+async function start() {
+    console.log('Starting client...');
     await initializeSignalingAndStartCapture();
 
     peerConnection = new RTCPeerConnection(configuration);
@@ -275,7 +275,7 @@ async function createDataChannel(type) {
 let handlingCMD = false;
 
 function handleInputChannel(inputChannel) {
-    const inputProcess = spawn('node', ['inputHandler.js'], {
+    const inputProcess = spawn('node', ['vrHandler.js'], {
         stdio: ['pipe', 'pipe', 'pipe', 'ipc']
     });
 
@@ -636,6 +636,6 @@ function cleanup() {
 }
 
 (async () => {
-    await startWebRTC();
+    await start();
 })();
 

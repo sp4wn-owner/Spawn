@@ -1,9 +1,8 @@
 const WebSocket = require('ws');
 const { spawn } = require('child_process');
 const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
-const EventEmitter = require('events');
-const messageEmitter = new EventEmitter();
 const url = 'https://sp4wn-signaling-server.onrender.com';
+const pipins = require('@sp4wn/pipins');
 const config = require('./config');
 
 const username = config.username;
@@ -16,6 +15,10 @@ const handleSecretCodeAuth = config.handleSecretCodeAuth;
 const secretCode = config.secretCode;
 const allowVisibilityToggle = config.allowVisibilityToggle;
 let isVisible = config.isVisible;
+const gpioPins = config.gpioPins;
+const pwmChannels = config.pwmChannels;
+const period = config.period;
+const dutyCycle = config.dutyCycle;
 
 let isStreamToSpawn = false;
 let connectionTimeout;
@@ -23,7 +26,7 @@ let profilePicture;
 let mylocation;
 let description;
 let tokenrate;
-const botdevicetype = "dropbear";
+const botdevicetype = "pi";
 let peerConnection;
 let signalingSocket;
 let inputChannel;
@@ -35,7 +38,7 @@ let isStartingStream = false;
 
 async function start() {
     console.log('Starting client...');
-    await initializeSignalingAndStartServerUpdate();
+    await initializeSignalingAndStartCapture();
 
     peerConnection = new RTCPeerConnection(configuration);
     try {
@@ -176,7 +179,7 @@ async function connectToSignalingServer() {
     });
 }
 
-async function initializeSignalingAndStartServerUpdate() {
+async function initializeSignalingAndStartCapture() {
     while (true) {
         if (!signalingSocket || signalingSocket.readyState !== WebSocket.OPEN) {
             console.log("Connecting to signaling server...");
@@ -229,9 +232,24 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, config, vis
         description = des || console.log("No description");
         if (allowPrivateToggle && typeof priv === 'boolean') isPrivate = priv; else console.log("No private status");
         if (allowVisibilityToggle && typeof visibility === 'boolean') isVisible = visibility; else console.log("No visibility status");
+        
+        gpioPins.forEach(pin => {
+            pipins.exportPin(pin);
+            pipins.setPinDirection(pin, 'out');
+            pipins.writePinValue(pin, 0);
+            console.log(`GPIO pin ${pin} set as OUTPUT`);
+        });
 
-        updateServer();
-        startServerUpdate(15000);
+        pwmChannels.forEach(pin => {
+            pipins.exportPwm(pin);
+            pipins.setPwmPeriod(pin, period);
+            pipins.setPwmDutyCycle(pin, dutyCycle);
+            pipins.enablePwm(pin);
+            console.log(`PWM pin ${pin} enabled`);
+        });
+
+        captureImage();
+        startImageCapture(15000);
     }
  }
 
@@ -254,10 +272,10 @@ async function createDataChannel(type) {
     }
 }
 
-let handlingCMD = false; // Helps throttle incoming data. Current setup waits for data to be sent to serial connection before toggling back to false. You could further extend it to wait for a response from the Arduino. 
+let handlingCMD = false;
 
 function handleInputChannel(inputChannel) {
-    const inputProcess = spawn('python', ['serial_handler.py'], {
+    const inputProcess = spawn('node', ['vrHandler.js'], {
         stdio: ['pipe', 'pipe', 'pipe', 'ipc']
     });
 
@@ -269,14 +287,20 @@ function handleInputChannel(inputChannel) {
     inputChannel.onmessage = (event) => {
         if (!handlingCMD) {
             handlingCMD = true;
-            console.log('Command received:', event.data);
-            inputProcess.send(event.data);
-            //handlingCMD = false;
+            let cmd;
+            try {
+                cmd = JSON.parse(event.data);
+            } catch (e) {
+                console.error('Error parsing command:', e);
+                handlingCMD = false;
+                return;
+            }
+            console.log('Command received:', cmd);
+            inputProcess.send(cmd);
         }
     };
 
-    inputProcess.stdout.on('data', (data) => {
-        const response = data.toString().trim();
+    inputProcess.on('message', (response) => {
         console.log(`Message from input process: ${response}`);
         handlingCMD = false;
         if (inputChannel.readyState === 'open') {
@@ -381,22 +405,25 @@ function deletelive() {
     });
 }
 
-function startServerUpdate(interval) {
+function startImageCapture(interval) {
     if(intervalIds) {
-        stopServerUpdate();
+        stopImageCapture();
     }
     const intervalId = setInterval(() => {
-      updateServer(); 
+      captureImage(); 
     }, interval);
     intervalIds.push(intervalId);
 }
 
-function stopServerUpdate() {
+function stopImageCapture() {
     while (intervalIds.length > 0) {
        clearInterval(intervalIds.pop());
        deletelive();
     }
 }
+
+const EventEmitter = require('events');
+const messageEmitter = new EventEmitter();
 
 function sendPW(message) {
     return new Promise((resolve, reject) => {
@@ -537,7 +564,7 @@ async function iceAndOffer(name) {
         } else {
             try {
                 connectedUser = name;
-                stopServerUpdate();
+                stopImageCapture();
                 isStreamToSpawn = true;
                 await createOffer();
                 console.log("Offer created and sent");
@@ -570,7 +597,7 @@ function createOffer() {
     });
 }
 
-async function updateServer() {
+async function captureImage() {
     try {
         send({
             type: "storeimg",
@@ -584,12 +611,22 @@ async function updateServer() {
             visibility: isVisible
         });
     } catch (error) {
-        console.log("Failed to update server", error);
+        console.log("Failed to process and send image to server", error);
     }
 }
 
 function endScript() {
     console.log("Peer connection closed. Exiting script...");
+    gpioPins.forEach(pin => {
+        pipins.writePinValue(pin, 0);
+        console.log(`GPIO pin ${pin} turned OFF before exit`);
+        pipins.unexportPin(pin);
+        console.log(`GPIO pin ${pin} unexported on exit`);
+    });
+    pwmChannels.forEach(pin => {
+        pipins.unexportPwm(pin);
+        console.log(`PWM channel unexported on exit`);
+    });
     process.exit(0);
 }
 
@@ -601,3 +638,4 @@ function cleanup() {
 (async () => {
     await start();
 })();
+
