@@ -39,6 +39,14 @@ dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
 ```
 CTRL+X then Y then Enter to save
 
+### Change permission of PWM sys files
+```bash
+sudo chown root:gpio /sys/class/pwm/pwmchip0/pwm0/period
+sudo chown root:gpio /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+sudo chmod 664 /sys/class/pwm/pwmchip0/pwm0/period
+sudo chmod 664 /sys/class/pwm/pwmchip0/pwm0/duty_cycle
+```
+
 ### Reboot your Pi
 ```bash
 sudo reboot

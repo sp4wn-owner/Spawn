@@ -1,9 +1,17 @@
 const WebSocket = require('ws');
-const { spawn } = require('child_process');
+const { exec, spawn } = require('child_process');
 const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
 const url = 'https://sp4wn-signaling-server.onrender.com';
 const pipins = require('@sp4wn/pipins');
 const config = require('./config');
+
+// Video constraints
+let constraints = {
+    video: {
+        width: { exact: 640 },
+        height: { exact: 480 },
+    },
+};
 
 const username = config.username;
 const password = config.password;
@@ -112,7 +120,7 @@ async function connectToSignalingServer() {
 
             switch (message.type) {
                 case "authenticated":
-                    handleLogin(message.success, message.errormessage, message.pic, message.tokenrate, message.location, message.description, message.priv, message.visibility, message.configuration);
+                    await handleLogin(message.success, message.errormessage, message.pic, message.tokenrate, message.location, message.description, message.priv, message.visibility, message.configuration);
                     resolve();
                     break;
 
@@ -205,7 +213,7 @@ function send(message) {
     signalingSocket.send(JSON.stringify(message));
  };
  
-function handleLogin(success, errormessage, pic, tr, loc, des, priv, config, visibility) {
+async function handleLogin(success, errormessage, pic, tr, loc, des, priv, config, visibility) {
     if (!success) {
         if (errormessage == "User is already logged in") {
             setTimeout(() => {
@@ -232,21 +240,24 @@ function handleLogin(success, errormessage, pic, tr, loc, des, priv, config, vis
         description = des || console.log("No description");
         if (allowPrivateToggle && typeof priv === 'boolean') isPrivate = priv; else console.log("No private status");
         if (allowVisibilityToggle && typeof visibility === 'boolean') isVisible = visibility; else console.log("No visibility status");
-        
-        gpioPins.forEach(pin => {
-            pipins.exportPin(pin);
-            pipins.setPinDirection(pin, 'out');
-            pipins.writePinValue(pin, 0);
-            console.log(`GPIO pin ${pin} set as OUTPUT`);
-        });
 
-        pwmChannels.forEach(pin => {
-            pipins.exportPwm(pin);
-            pipins.setPwmPeriod(pin, period);
-            pipins.setPwmDutyCycle(pin, dutyCycle);
-            pipins.enablePwm(pin);
-            console.log(`PWM pin ${pin} enabled`);
-        });
+        async function setupPwm(pin, period, dutyCycle) {
+            return new Promise((resolve) => {
+                pipins.exportPwm(pin);
+                pipins.setPwmPeriod(pin, period);
+                pipins.setPwmDutyCycle(pin, dutyCycle);
+                pipins.enablePwm(pin);
+                console.log(`PWM pin ${pin} enabled`);
+                setTimeout(resolve, 100);
+            });
+        }
+
+        async function initializePwmChannels(pwmChannels, period, dutyCycle) {
+            for (const pin of pwmChannels) {
+                await setupPwm(pin, period, dutyCycle);
+            }
+        }
+        await initializePwmChannels(pwmChannels, period, dutyCycle);
 
         captureImage();
         startImageCapture(15000);
@@ -353,49 +364,91 @@ function handleVideoChannel(videoChannel) {
 }
 
 let v4l2Process = null;
-const delayBeforeOpening = 0; 
-
-function startStream() {
-    if(isStartingStream) {
+async function startStream() {
+    if (isStartingStream) {
+        console.log("Stream is already running, skipping start...");
         return;
     }
 
-    function startCameraStream() {
-        console.log("starting camera");
+    async function checkCameraType() {
+        return new Promise((resolve, reject) => {
+            exec('lsusb', (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`exec error: ${error}`);
+                    reject(error);
+                    return;
+                }
+
+                const usbDevices = stdout.split('\n');
+                const usbCamera = usbDevices.find(device => device.toLowerCase().includes('camera'));
+
+                if (usbCamera) {
+                    console.log('USB camera detected:', usbCamera);
+                    resolve('MJPG');
+                } else {
+                    console.log('No USB camera detected, assuming Pi camera.');
+                    resolve('H264');
+                }
+            });
+        });
+    }
+
+    async function startCameraStream(format) {
+        console.log(`Starting camera stream with format: ${format}...`);
         isStartingStream = true;
 
-        setTimeout(() => {
-            v4l2Process = spawn('v4l2-ctl', [
+        function spawnV4L2(width, height, format, fps) {
+            console.log(`Spawning v4l2-ctl with format: ${format} at ${width}x${height}, FPS: ${fps}`);
+            return spawn('v4l2-ctl', [
                 '--stream-mmap',
                 '--stream-to=-',
                 '--device=/dev/video0',
-                '--set-fmt-video=width=640,height=480,pixelformat=H264',
-            ]);            
+                `--set-fmt-video=width=${width},height=${height},pixelformat=${format}`,
+                `--set-parm=${fps}`,
+            ]);
+        }
 
-            v4l2Process.stdout.on('data', (chunk) => {
-          
-                if (isStreamToSpawn) {
-                  if (videoChannel && videoChannel.readyState === "open") {
-                    try {
-                        videoChannel.send(chunk);
-                      } catch (error) {
-                        console.error('Error sending to Data Channel:', error);
-                      }
-                  }
+        let width = constraints.video.width.exact;
+        let height = constraints.video.height.exact;
+        let fps;
+        if (botdevicetype === 'pi') {
+            fps = 10;
+        } else {
+            fps = undefined;
+        }
+
+        v4l2Process = spawnV4L2(width, height, format, fps);
+
+        v4l2Process.stdout.on('data', (chunk) => {
+            const formatLabel = format === 'H264' ? 'H.264' : 'MJPEG';
+            console.log(`Received ${formatLabel} chunk: ${chunk.length} bytes`);
+            if (isStreamToSpawn && videoChannel && videoChannel.readyState === 'open') {
+                try {
+                    videoChannel.send(chunk, { binary: true });
+                } catch (error) {
+                    console.error('Error sending to Data Channel:', error.message);
                 }
-            });
+            } else {
+                console.warn('Data received but not sent: channel not open or streaming disabled');
+            }
+        });
 
-            v4l2Process.on('exit', (code) => {
-                //console.log(`v4l2-ctl process exited with code ${code}`);
-            });
+        v4l2Process.stderr.on('data', (error) => {
+            console.error(`Stream error: ${error.toString()}`);
+        });
 
-            v4l2Process.stderr.on('data', (error) => {
-                //console.error(`Error from v4l2-ctl: ${error}`);
-            });
-
-        }, delayBeforeOpening);
+        v4l2Process.on('exit', (code) => {
+            console.log(`v4l2-ctl exited with code ${code}`);
+            isStartingStream = false;
+        });
     }
-    startCameraStream(); 
+
+    try {
+        const format = await checkCameraType();
+        await startCameraStream(format);
+    } catch (error) {
+        console.error('Failed to start camera stream:', error);
+    }
 }
 
 function deletelive() {
@@ -617,12 +670,6 @@ async function captureImage() {
 
 function endScript() {
     console.log("Peer connection closed. Exiting script...");
-    gpioPins.forEach(pin => {
-        pipins.writePinValue(pin, 0);
-        console.log(`GPIO pin ${pin} turned OFF before exit`);
-        pipins.unexportPin(pin);
-        console.log(`GPIO pin ${pin} unexported on exit`);
-    });
     pwmChannels.forEach(pin => {
         pipins.unexportPwm(pin);
         console.log(`PWM channel unexported on exit`);
