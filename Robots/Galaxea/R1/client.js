@@ -364,7 +364,7 @@ async function startStream() {
             console.log(`Received H.264 chunk: ${chunk.length} bytes at 15 FPS`);
             if (isStreamToSpawn && videoChannel && videoChannel.readyState === 'open') {
                 try {
-                    videoChannel.send(data);
+                    videoChannel.send(chunk);
                 } catch (error) {
                     console.error('Error sending to Data Channel:', error.message);
                 }
