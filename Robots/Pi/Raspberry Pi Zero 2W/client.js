@@ -432,7 +432,7 @@ async function startStream() {
             console.log(`Received ${formatLabel} chunk: ${chunk.length} bytes`);
             if (isStreamToSpawn && videoChannel && videoChannel.readyState === 'open') {
                 try {
-                    videoChannel.send(chunk, { binary: true });
+                    videoChannel.send(chunk);
                 } catch (error) {
                     console.error('Error sending to Data Channel:', error.message);
                 }
