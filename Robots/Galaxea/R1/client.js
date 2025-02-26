@@ -1,10 +1,18 @@
 const WebSocket = require('ws');
-const { spawn } = require('child_process');
+const { exec, spawn } = require('child_process');
 const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
 const EventEmitter = require('events');
 const messageEmitter = new EventEmitter();
 const url = 'https://sp4wn-signaling-server.onrender.com';
 const config = require('./config');
+
+// Video constraints
+let constraints = {
+    video: {
+        width: { exact: 640 },
+        height: { exact: 480 },
+    },
+};
 
 const username = config.username;
 const password = config.password;
@@ -23,7 +31,7 @@ let profilePicture;
 let mylocation;
 let description;
 let tokenrate;
-const botdevicetype = "dropbear";
+const botdevicetype = "galaxea-r1";
 let peerConnection;
 let signalingSocket;
 let inputChannel;
@@ -329,49 +337,99 @@ function handleVideoChannel(videoChannel) {
 }
 
 let v4l2Process = null;
-const delayBeforeOpening = 0; 
-
-function startStream() {
-    if(isStartingStream) {
+async function startStream() {
+    if (isStartingStream) {
+        console.log("Stream is already running, skipping start...");
         return;
     }
 
-    function startCameraStream() {
-        console.log("starting camera");
+    async function checkCameraType() {
+        return new Promise((resolve, reject) => {
+            exec('lsusb', (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`exec error: ${error}`);
+                    reject(error);
+                    return;
+                }
+
+                const usbDevices = stdout.split('\n');
+                const usbCamera = usbDevices.find(device => device.toLowerCase().includes('camera'));
+
+                if (usbCamera) {
+                    console.log('USB camera detected:', usbCamera);
+
+                    exec('v4l2-ctl --list-formats-ext', (error, stdout, stderr) => {
+                        if (error) {
+                            console.error(`exec error: ${error}`);
+                            reject(error);
+                            return;
+                        }
+
+                        if (stdout.includes('H.264')) {
+                            resolve('H264');
+                        } else {
+                            resolve('MJPG');
+                        }
+                    });
+                } else {
+                    console.log('No USB camera detected, assuming Pi camera.');
+                    resolve('H264');
+                }
+            });
+        });
+    }
+
+    async function startCameraStream(format) {
+        console.log(`Starting camera stream with format: ${format}...`);
         isStartingStream = true;
 
-        setTimeout(() => {
-            v4l2Process = spawn('v4l2-ctl', [
+        function spawnV4L2(width, height, format, fps) {
+            console.log(`Spawning v4l2-ctl with format: ${format} at ${width}x${height}, FPS: ${fps}`);
+            return spawn('v4l2-ctl', [
                 '--stream-mmap',
                 '--stream-to=-',
                 '--device=/dev/video0',
-                '--set-fmt-video=width=640,height=480,pixelformat=H264',
-            ]);            
+                `--set-fmt-video=width=${width},height=${height},pixelformat=${format}`,
+                `--set-parm=${fps}`,
+            ]);
+        }
 
-            v4l2Process.stdout.on('data', (chunk) => {
-          
-                if (isStreamToSpawn) {
-                  if (videoChannel && videoChannel.readyState === "open") {
-                    try {
-                        videoChannel.send(chunk);
-                      } catch (error) {
-                        console.error('Error sending to Data Channel:', error);
-                      }
-                  }
+        let width = constraints.video.width.exact;
+        let height = constraints.video.height.exact;
+        let fps = botdevicetype === 'pi' ? 10 : undefined;
+
+        v4l2Process = spawnV4L2(width, height, format, fps);
+
+        v4l2Process.stdout.on('data', (chunk) => {
+            const formatLabel = format === 'H264' ? 'H.264' : 'MJPEG';
+            console.log(`Received ${formatLabel} chunk: ${chunk.length} bytes`);
+            if (isStreamToSpawn && videoChannel && videoChannel.readyState === 'open') {
+                try {
+                    videoChannel.send(chunk, { binary: true });
+                } catch (error) {
+                    console.error('Error sending to Data Channel:', error.message);
                 }
-            });
+            } else {
+                console.warn('Data received but not sent: channel not open or streaming disabled');
+            }
+        });
 
-            v4l2Process.on('exit', (code) => {
-                //console.log(`v4l2-ctl process exited with code ${code}`);
-            });
+        v4l2Process.stderr.on('data', (error) => {
+            console.error(`Stream error: ${error.toString()}`);
+        });
 
-            v4l2Process.stderr.on('data', (error) => {
-                //console.error(`Error from v4l2-ctl: ${error}`);
-            });
-
-        }, delayBeforeOpening);
+        v4l2Process.on('exit', (code) => {
+            console.log(`v4l2-ctl exited with code ${code}`);
+            isStartingStream = false;
+        });
     }
-    startCameraStream(); 
+
+    try {
+        const format = await checkCameraType();
+        await startCameraStream(format);
+    } catch (error) {
+        console.error('Failed to start camera stream:', error);
+    }
 }
 
 function deletelive() {

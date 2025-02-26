@@ -384,7 +384,20 @@ async function startStream() {
 
                 if (usbCamera) {
                     console.log('USB camera detected:', usbCamera);
-                    resolve('MJPG');
+
+                    exec('v4l2-ctl --list-formats-ext', (error, stdout, stderr) => {
+                        if (error) {
+                            console.error(`exec error: ${error}`);
+                            reject(error);
+                            return;
+                        }
+
+                        if (stdout.includes('H.264')) {
+                            resolve('H264');
+                        } else {
+                            resolve('MJPG');
+                        }
+                    });
                 } else {
                     console.log('No USB camera detected, assuming Pi camera.');
                     resolve('H264');
@@ -410,12 +423,7 @@ async function startStream() {
 
         let width = constraints.video.width.exact;
         let height = constraints.video.height.exact;
-        let fps;
-        if (botdevicetype === 'pi') {
-            fps = 10;
-        } else {
-            fps = undefined;
-        }
+        let fps = botdevicetype === 'pi' ? 10 : undefined;
 
         v4l2Process = spawnV4L2(width, height, format, fps);
 
