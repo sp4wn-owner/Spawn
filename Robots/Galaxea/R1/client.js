@@ -1,16 +1,17 @@
 const WebSocket = require('ws');
-const { exec, spawn } = require('child_process');
+const { spawn } = require('child_process');
 const { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } = require('wrtc');
 const EventEmitter = require('events');
 const messageEmitter = new EventEmitter();
 const url = 'https://sp4wn-signaling-server.onrender.com';
 const config = require('./config');
 
-// Video constraints
-let constraints = {
+// Video contraints for ZED 2 camera
+const constraints = {
     video: {
-        width: { exact: 640 },
-        height: { exact: 480 },
+        width: { exact: 1920 },
+        height: { exact: 1080 },
+        frameRate: { exact: 30 },
     },
 };
 
@@ -336,76 +337,34 @@ function handleVideoChannel(videoChannel) {
     };
 }
 
-let v4l2Process = null;
+let zedProcess;
+
 async function startStream() {
     if (isStartingStream) {
         console.log("Stream is already running, skipping start...");
         return;
     }
 
-    async function checkCameraType() {
-        return new Promise((resolve, reject) => {
-            exec('lsusb', (error, stdout, stderr) => {
-                if (error) {
-                    console.error(`exec error: ${error}`);
-                    reject(error);
-                    return;
-                }
-
-                const usbDevices = stdout.split('\n');
-                const usbCamera = usbDevices.find(device => device.toLowerCase().includes('camera'));
-
-                if (usbCamera) {
-                    console.log('USB camera detected:', usbCamera);
-
-                    exec('v4l2-ctl --list-formats-ext', (error, stdout, stderr) => {
-                        if (error) {
-                            console.error(`exec error: ${error}`);
-                            reject(error);
-                            return;
-                        }
-
-                        if (stdout.includes('H.264')) {
-                            resolve('H264');
-                        } else {
-                            resolve('MJPG');
-                        }
-                    });
-                } else {
-                    console.log('No USB camera detected, assuming Pi camera.');
-                    resolve('H264');
-                }
-            });
-        });
-    }
-
-    async function startCameraStream(format) {
-        console.log(`Starting camera stream with format: ${format}...`);
+    async function startZedStream() {
+        console.log("Starting ZED 2 H.264 stream at 2K (2208x1242 per eye, 4416x1242 side-by-side) at 15 FPS...");
         isStartingStream = true;
 
-        function spawnV4L2(width, height, format, fps) {
-            console.log(`Spawning v4l2-ctl with format: ${format} at ${width}x${height}, FPS: ${fps}`);
-            return spawn('v4l2-ctl', [
-                '--stream-mmap',
-                '--stream-to=-',
-                '--device=/dev/video0',
-                `--set-fmt-video=width=${width},height=${height},pixelformat=${format}`,
-                `--set-parm=${fps}`,
-            ]);
-        }
+        const width = constraints.video.width.exact;
+        const height = constraints.video.height.exact;
+        const fps = constraints.video.frameRate.exact;
 
-        let width = constraints.video.width.exact;
-        let height = constraints.video.height.exact;
-        let fps = botdevicetype === 'pi' ? 10 : undefined;
+        zedProcess = spawn('python3', [
+            'camera.py',
+            `--width=${width}`,
+            `--height=${height}`,
+            `--fps=${fps}`,
+        ]);
 
-        v4l2Process = spawnV4L2(width, height, format, fps);
-
-        v4l2Process.stdout.on('data', (chunk) => {
-            const formatLabel = format === 'H264' ? 'H.264' : 'MJPEG';
-            console.log(`Received ${formatLabel} chunk: ${chunk.length} bytes`);
+        zedProcess.stdout.on('data', (chunk) => {
+            console.log(`Received H.264 chunk: ${chunk.length} bytes at 15 FPS`);
             if (isStreamToSpawn && videoChannel && videoChannel.readyState === 'open') {
                 try {
-                    videoChannel.send(chunk, { binary: true });
+                    videoChannel.send(data);
                 } catch (error) {
                     console.error('Error sending to Data Channel:', error.message);
                 }
@@ -414,21 +373,30 @@ async function startStream() {
             }
         });
 
-        v4l2Process.stderr.on('data', (error) => {
-            console.error(`Stream error: ${error.toString()}`);
+        zedProcess.stderr.on('data', (error) => {
+            console.error(`ZED stream error: ${error.toString()}`);
         });
 
-        v4l2Process.on('exit', (code) => {
-            console.log(`v4l2-ctl exited with code ${code}`);
+        zedProcess.on('exit', (code) => {
+            console.log(`ZED process exited with code ${code}`);
+            isStartingStream = false;
+            if (code !== 0) {
+                console.error('ZED stream stopped unexpectedly, restarting in 1s...');
+                setTimeout(() => startStream(), 1000);
+            }
+        });
+
+        zedProcess.on('error', (error) => {
+            console.error(`ZED process error: ${error.message}`);
             isStartingStream = false;
         });
     }
 
     try {
-        const format = await checkCameraType();
-        await startCameraStream(format);
+        await startZedStream();
     } catch (error) {
-        console.error('Failed to start camera stream:', error);
+        console.error('Failed to start ZED stream:', error);
+        isStartingStream = false;
     }
 }
 
