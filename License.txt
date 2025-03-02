@@ -1,8 +1,11 @@
-Copyright (c) 2025 Spawn [Spawn-VR] [https://sp4wn.com]
+Copyright (c) 2025 Spawn [https://sp4wn.com]
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use the Software for non-commercial purposes, including without limitation the rights to use, copy, modify, merge, publish, and distribute copies of the Software, subject to the following conditions:
 
 1. The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-2. Any business entity using or integrating this software must pay a licensing fee. 
+2. For non-commercial use, the Software may be used free of charge. 
+3. Any commercial use of the Software requires a licensing fee. Commercial use includes, but is not limited to, using the Software for business purposes, integrating the Software into commercial products, or distributing the Software for a fee.
+
+For commercial licenses, please contact max.power.spawn@gmail.com.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
