@@ -6,7 +6,7 @@ const messageEmitter = new EventEmitter();
 const url = 'https://sp4wn-signaling-server.onrender.com';
 const config = require('./config');
 
-// Video contraints for ZED 2 camera
+// Constraints for ZED 2 camera
 const constraints = {
     video: {
         width: { exact: 1920 },
