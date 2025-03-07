@@ -53,9 +53,9 @@ npm install node ws wrtc
 sudo chmod a+rw /dev/video0
 ```
 
-### Get the client, serial_handler, and config scripts
+### Get the client, serial_handler, config, and camera scripts
 ```bash
-wget https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/client.js https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/rosHandler.py https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/config.js
+wget https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/client.js https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/rosHandler.py https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/config.js https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/camera.py
 ```
 
 ### Update the config.js file with your username/password
