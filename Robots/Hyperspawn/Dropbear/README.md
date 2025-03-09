@@ -10,38 +10,9 @@ From the neck_server script, uncomment the block to forward this data to serial_
 
 ### Curl Node
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-```
-
-### Install Node.js
-```bash
-sudo apt-get install -y nodejs
-```
-
-### WebRTC requires node-pre-gyp
-```bash
-sudo npm install -g @mapbox/node-pre-gyp
-```
-
-### Make bot directory for your script
-```bash
-mkdir bot
-cd bot
-```
-
-### Install node modules in bot directory
-```bash
-npm install node ws wrtc
-```
-
-### Enable camera access
-```bash
-sudo chmod a+rw /dev/video0
-```
-
-### Get the client, serial_handler, and config scripts
-```bash
-wget https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Hyperspawn/Dropbear/client.js https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Hyperspawn/Dropbear/serial_handler.py https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Hyperspawn/Dropbear/config.js
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Hyperspawn/Dropbear/setup.sh
+chmod +x setup.sh
+./setup.sh
 ```
 
 ### Update the config.js file with your username/password
