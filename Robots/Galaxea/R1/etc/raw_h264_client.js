@@ -6,6 +6,15 @@ const messageEmitter = new EventEmitter();
 const url = 'https://sp4wn-signaling-server.onrender.com';
 const config = require('./config');
 
+// Constraints for ZED 2 camera
+const constraints = {
+    video: {
+        width: { exact: 1920 },
+        height: { exact: 1080 },
+        frameRate: { exact: 30 },
+    },
+};
+
 const username = config.username;
 const password = config.password;
 const allowAllUsers = config.allowAllUsers;
@@ -337,13 +346,22 @@ async function startStream() {
     }
 
     async function startZedStream() {
-        console.log("Starting camera stream...");
+        console.log("Starting ZED 2 H.264 stream at 2K (2208x1242 per eye, 4416x1242 side-by-side)...");
         isStartingStream = true;
 
-        const zedProcess = spawn('python3', ['head_camera_topic.py']);
+        const width = constraints.video.width.exact;
+        const height = constraints.video.height.exact;
+        const fps = constraints.video.frameRate.exact;
+
+        zedProcess = spawn('python3', [
+            'raw_h264_camera.py',
+            `--width=${width}`,
+            `--height=${height}`,
+            `--fps=${fps}`,
+        ]);
 
         zedProcess.stdout.on('data', (chunk) => {
-            console.log(`Received H.264 chunk: ${chunk.length}`);
+            console.log(`Received H.264 chunk: ${chunk.length} bytes at ${fps} FPS`);
             if (isStreamToSpawn && videoChannel && videoChannel.readyState === 'open') {
                 try {
                     videoChannel.send(chunk);
