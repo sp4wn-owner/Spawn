@@ -31,8 +31,7 @@ npm install node ws wrtc
 # Download scripts from GitHub
 echo "Downloading client.js, rosHandler.py, config.js, and camera.py..."
 wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Hyperspawn/Dropbear/client.js
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Hyperspawn/Dropbear/rosHandler.py
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Hyperspawn/Dropbear/serial_handler.py
 wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Hyperspawn/Dropbear/config.js
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Hyperspawn/Dropbear/head_camera_topic.py
 
 echo "Setup complete!"
