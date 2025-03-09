@@ -8,7 +8,7 @@ From the neck_server script, uncomment the block to forward this data to serial_
 
 ## Teleoperation
 
-### Curl Node
+### Easy install
 ```bash
 wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Hyperspawn/Dropbear/setup.sh
 chmod +x setup.sh
