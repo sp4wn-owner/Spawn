@@ -22,40 +22,11 @@ From the VR-UI, connect to your robot by clicking the 'spawn' button. Tracking d
 
 ## Robot Setup - In development
 
-### Curl Node
+### Easy install
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-```
-
-### Install Node.js
-```bash
-sudo apt-get install -y nodejs
-```
-
-### Install node-pre-gyp
-```bash
-sudo npm install -g @mapbox/node-pre-gyp
-```
-
-### Make bot directory for your script
-```bash
-mkdir bot
-cd bot
-```
-
-### Install node modules in bot directory
-```bash
-npm install node ws wrtc
-```
-
-### Enable camera access
-```bash
-sudo chmod a+rw /dev/video0
-```
-
-### Get the client, serial_handler, config, and camera scripts
-```bash
-wget https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/client.js https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/rosHandler.py https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/config.js https://github.com/sp4wn-owner/Spawn/tree/main/Robots/Galaxea/R1/camera.py
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Galaxea/R1/setup.sh
+chmod +x setup.sh
+./setup.sh
 ```
 
 ### Update the config.js file with your username/password
