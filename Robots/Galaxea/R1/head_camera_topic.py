@@ -8,9 +8,7 @@ def image_callback(msg):
     process_image(format, compressed_image_data)
 
 def process_image(format, image_data):
-    # Print the format and size of the data as an example
     print(f'Received compressed image data in {format} format: {len(image_data)} bytes')
-    # Write the data to stdout
     sys.stdout.buffer.write(image_data)
     sys.stdout.flush()
 
