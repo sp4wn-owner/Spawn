@@ -6,9 +6,7 @@ After starting neck_server.py, connect to your ws using the [Robot-UI](https://r
 
 From the neck_server script, uncomment the block to forward this data to serial_handler.py. From there, it forwards the data to your ESP32. The move_head script includes learning and IK paired with gradient descent.
 
-## Teleoperation
-
-### Easy install
+## Installation
 ```bash
 wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Hyperspawn/Dropbear/setup.sh
 chmod +x setup.sh

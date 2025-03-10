@@ -1,14 +1,12 @@
 # Galaxea R1 - Teleoperation
 
 ## Step 1
-Follow the robot setup instructions.
+Follow the installation instructions.
 
 ## Step 2
 From the [VR-UI](https://spawn-vr.onrender.com), connect to your Galaxea robot. Then 'enter immersive' to start transmitting tracking data. 
 
-## Robot Setup - In development
-
-### Easy install
+## Installation
 ```bash
 wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Galaxea/R1/setup.sh
 chmod +x setup.sh

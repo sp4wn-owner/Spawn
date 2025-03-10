@@ -16,6 +16,7 @@
 - Breadboard jumper wires 
 - Soldering iron (If you'd like to fuse the wires to the motor connectors so they don't disconnect)
 
+## Installation
 ### From a clean install of Raspberry Pi OS (I'm using the headless lite version), update your Pi
 ```bash
 sudo apt update -y && sudo apt full-upgrade -y
@@ -51,41 +52,11 @@ sudo chmod 664 /sys/class/pwm/pwmchip0/pwm0/duty_cycle
 ```bash
 sudo reboot
 ```
-
-### Curl Node
+### Install
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-```
-
-### Install Node.js
-```bash
-sudo apt-get install -y nodejs
-```
-
-### WebRTC requires node-pre-gyp
-```bash
-sudo npm install -g @mapbox/node-pre-gyp
-```
-
-### Make bot directory for your script
-```bash
-mkdir bot
-cd bot
-```
-
-### Install node modules in bot directory
-```bash
-npm install node ws wrtc @sp4wn/pipins
-```
-
-### Enable camera access
-```bash
-sudo chmod a+rw /dev/video0
-```
-
-### Get the piclient, vrHandler, and config scripts
-```bash
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Pi/Raspberry%20Pi%20Zero%202W/client.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Pi/Raspberry%20Pi%20Zero%202W/vrHandler.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Pi/Raspberry%20Pi%20Zero%202W/config.js
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Pi/Raspberry%20Pi%20Zero%202W/setup.sh
+chmod +x setup.sh
+./setup.sh
 ```
 
 ### Update the config.js file with your username/password
