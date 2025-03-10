@@ -210,6 +210,15 @@ input:focus {
 #confirm-login-button {
     width: 100%;
 }
+#login-container a {
+    color: grey;
+    padding-top: 10px;
+    text-decoration: none;
+}
+
+#login-container a:hover {
+    color: black;
+}
 
 #robot-username-input {
     position: absolute;
