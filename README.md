@@ -6,7 +6,7 @@ Spawn is at the forefront of the humanoid gig economy, developing the essential 
 Our software is compatible with leading Linux distributions.
 
 ### Getting started
-Please refer to the Robots directory for setup instructions and Spawn-VR for teleoperating your robot using VR. 
+Please refer to the Robots directory for setup instructions.
 
 ## Key features
 - Real-time control  
@@ -16,7 +16,7 @@ Please refer to the Robots directory for setup instructions and Spawn-VR for tel
     &nbsp;&nbsp;&nbsp;&nbsp;- Operates seamlessly over any network and designed with Starlink connectivity in mind. Robots connected via satellite can be nearly anywhere in the world.
 
 - Secure  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Optionally handle your own security. Passwords/codes are securely hashed and all data is encrypted. No personal information is requested nor retained. Update the security parameters in the config.js file.
+    &nbsp;&nbsp;&nbsp;&nbsp;- Optionally handle your robot's security. Passwords/codes are securely hashed and all data is encrypted. No personal information is requested nor retained. Update the security parameters in the config.js file.
 
 - Token system (cryptocurrency)  
     &nbsp;&nbsp;&nbsp;&nbsp;- Transform your telepresence robots into revenue-generating assets or pay users for controlling them (i.e.remote telepresence gig). We take 20% of token redemptions to maintain and grow the platform. Setting your robot's token rate to a negative number will deduct tokens from your account to the user while a positive token rate will deduct tokens from the user to your account. Setting the token rate to zero will enable free access. Our system functions similar to a centralized exchange with automatic deposits and withdrawals.
