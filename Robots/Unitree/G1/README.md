@@ -1,26 +1,12 @@
 # Unitree G1 EDU
 
 ## Step 1
-Deploy the client and rosHandler scripts (to be completed) to the robot.
+Follow the installation instructions.
 
 ## Step 2
-Run the client script on the robot.
+On [Spawn](https://sp4wn.com), connect to your robot (sp4wn.com/username). Then 'enter immersive' to start transmitting tracking data. 
 
-## Step 3
-From the VR interface, connect to your robot. Then 'enter immersive' to start transmitting tracking data. 
-
-# Isaac Sim
-
-## Step 1
-After spawning your model in the Isaac Sim environment, deploy the simHandler script and start the server.
-
-## Step 2
-In the Robot-UI, add your websocket URL in the input field and then start streaming.
-
-## Step 3
-From the VR-UI, connect to your robot by clicking the 'spawn' button. Tracking data will be proxied from the Robot-UI to the simHandler script thus interfacing with ROS to manipulate the model in a simulated environment.
-
-## Robot Setup - In development
+## Installation - Not ready
 
 ### Curl Node
 ```bash

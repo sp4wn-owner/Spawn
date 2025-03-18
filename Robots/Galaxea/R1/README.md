@@ -4,7 +4,7 @@
 Follow the installation instructions.
 
 ## Step 2
-From the [VR-UI](https://spawn-vr.onrender.com), connect to your Galaxea robot. Then 'enter immersive' to start transmitting tracking data. 
+On [Spawn](https://sp4wn.com), connect to your robot (sp4wn.com/username). Then 'enter immersive' to start transmitting tracking data. 
 
 ## Installation
 ```bash
