@@ -1,12 +1,12 @@
-# Galaxea R1 - Teleoperation
+# Teleoperation Guide
 
 ## Step 1
-Follow the installation instructions.
+Follow the installation instructions for your system. If you're unsure or don't see your robot/system, send us a message. Although most linux-based systems have similar instructions, there may be small differences such as the camera setup in the client script and how the robot handles the received commands/data in the handler script. Ideally, we'd like manufacturers to preload this software, enabling out-of-the-box global P2P teleoperation capabilities.
 
 ## Step 2
 On [Spawn](https://sp4wn.com), connect to your robot (sp4wn.com/username). Then 'Enter VR' to start transmitting tracking data. 
 
-## Installation
+## Demo Installation - Refer to respective robot directory for updated scripts
 ```bash
 wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Galaxea/R1/setup.sh
 chmod +x setup.sh
@@ -95,13 +95,3 @@ sudo journalctl -u client.service -f
 ```bash
 ls /dev/ | grep video
 ```
-# Isaac Sim
-
-## Step 1
-After spawning your Galaxea model in the Isaac Sim environment, deploy the simHandler script and start the server.
-
-## Step 2
-In the Robot-UI, add your websocket URL in the input field and then start streaming.
-
-## Step 3
-From the VR-UI, connect to your robot by clicking the 'spawn' button. Tracking data will be proxied from the Robot-UI to the simHandler script thus interfacing with ROS to manipulate the Galaxea R1 model in a simulated environment.
