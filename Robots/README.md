@@ -8,9 +8,7 @@ On [Spawn](https://sp4wn.com), connect to your robot (sp4wn.com/username). Then 
 
 ## Demo Installation - Refer to respective robot directory for updated scripts
 ```bash
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Galaxea/R1/setup.sh
-chmod +x setup.sh
-./setup.sh
+sudo sh -c "wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/main/Robots/Galaxea/R1/setup.sh && chmod +x setup.sh && ./setup.sh"
 ```
 
 ### Update the config.js file with your username/password
