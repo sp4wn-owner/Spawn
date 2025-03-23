@@ -5,16 +5,9 @@ const url = 'https://sp4wn-signaling-server.onrender.com';
 const pipins = require('@sp4wn/pipins');
 const config = require('./config');
 
-// Video constraints
-let constraints = {
-    video: {
-        width: { exact: 640 },
-        height: { exact: 480 },
-    },
-};
-
 const username = config.username;
 const password = config.password;
+const constraints = config.constraints;
 const allowAllUsers = config.allowAllUsers;
 const allowedUsers = config.allowedUsers;
 const allowPrivateToggle = config.allowPrivateToggle;
@@ -42,6 +35,7 @@ let videoChannel;
 let intervalIds = [];
 let connectedUser;
 let configuration;
+let v4l2Process = null;
 let isStartingStream = false;
 
 async function start() {
@@ -122,17 +116,6 @@ async function connectToSignalingServer() {
                 case "authenticated":
                     await handleLogin(message.success, message.errormessage, message.pic, message.tokenrate, message.location, message.description, message.priv, message.visibility, message.configuration);
                     resolve();
-                    break;
-
-                case 'offer':
-                    if (peerConnection) {
-                        await peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer));
-                        const answer = await peerConnection.createAnswer();
-                        await peerConnection.setLocalDescription(answer);
-                        signalingSocket.send(JSON.stringify({ type: 'answer', answer }));
-                    } else {
-                        console.log("no answer peer connection");
-                    }
                     break;
 
                 case 'answer':
@@ -363,7 +346,6 @@ function handleVideoChannel(videoChannel) {
     };
 }
 
-let v4l2Process = null;
 async function startStream() {
     if (isStartingStream) {
         console.log("Stream is already running, skipping start...");
@@ -412,18 +394,23 @@ async function startStream() {
 
         function spawnV4L2(width, height, format, fps) {
             console.log(`Spawning v4l2-ctl with format: ${format} at ${width}x${height}, FPS: ${fps}`);
-            return spawn('v4l2-ctl', [
+            const args = [
                 '--stream-mmap',
                 '--stream-to=-',
                 '--device=/dev/video0',
                 `--set-fmt-video=width=${width},height=${height},pixelformat=${format}`,
-                `--set-parm=${fps}`,
-            ]);
+            ];
+
+            if (format === 'MJPEG' && fps) {
+                args.push(`--set-parm=${fps}`);
+            }
+
+            return spawn('v4l2-ctl', args);
         }
 
         let width = constraints.video.width.exact;
         let height = constraints.video.height.exact;
-        let fps = botdevicetype === 'pi' ? 10 : undefined;
+        let fps = constraints.video.fps.ideal;
 
         v4l2Process = spawnV4L2(width, height, format, fps);
 

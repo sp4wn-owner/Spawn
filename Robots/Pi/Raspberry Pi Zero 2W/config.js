@@ -2,6 +2,15 @@
 const username = ""; // Username should be all lowercase
 const password = "";
 
+// VIDEO PARAMETERS
+const constraints = {
+  video: {
+    width: { exact: 640 },
+    height: { exact: 480 },
+    fps: { ideal: 10, max: 15 }
+  },
+};
+
 // SECURITY PARAMETERS
 const allowAllUsers = true; // true to allow all users to connect to your robot || false to only allow users specified in 'allowedUsers' #default is true
 const allowedUsers = ['user1', 'user2']; // Update this if you'd like to restrict access to specific usernames
@@ -22,6 +31,7 @@ const dutyCycle = 0; // 1 ms duty cycle (5%)
 module.exports = {
   username,
   password,
+  constraints,
   allowAllUsers,
   allowedUsers,
   allowPrivateToggle,
