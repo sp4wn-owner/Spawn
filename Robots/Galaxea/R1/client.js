@@ -113,17 +113,6 @@ async function connectToSignalingServer() {
                     resolve();
                     break;
 
-                case 'offer':
-                    if (peerConnection) {
-                        await peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer));
-                        const answer = await peerConnection.createAnswer();
-                        await peerConnection.setLocalDescription(answer);
-                        signalingSocket.send(JSON.stringify({ type: 'answer', answer }));
-                    } else {
-                        console.log("no answer peer connection");
-                    }
-                    break;
-
                 case 'answer':
                     if (peerConnection) {
                         try {
