@@ -3,7 +3,7 @@
 ## Step 1
 Follow the installation instructions. Communication with arms is over the can0 and can1. Please refer to AgileX's [GitHub](https://github.com/agilexrobotics/piper_sdk/blob/master/README(EN).MD) for setting up communication. 
 
-No ROS required. Our vrHandler script is currently untested with the hardware so use with caution and update as needed. May be compatible with Raspberry Pi.
+Our vrHandler script is currently untested with the hardware so use with caution and update as needed. May be compatible with Raspberry Pi.
 
 ## Step 2
 On [Spawn](https://sp4wn.com), connect to your robot (sp4wn.com/username). Then 'Enter VR' to start transmitting tracking data. 
