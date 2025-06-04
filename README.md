@@ -1,6 +1,6 @@
 # [Spawn](https://sp4wn.com)
 
-Spawn is developing the essential infrastructure to enable real-time teleoperation and monetization of advanced robots.
+Spawn is an AI/teleoperation platform for advanced robots.
 
 ### Supported systems
 Our software is compatible with leading Linux distributions.
