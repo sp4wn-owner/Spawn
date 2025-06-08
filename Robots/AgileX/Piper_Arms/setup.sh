@@ -30,8 +30,8 @@ npm install node ws wrtc
 
 # Download scripts from GitHub
 echo "Downloading client.js, vrHandler.py, config.js, and camera.py..."
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/Robots/AgileX/Piper_Arms/client.js
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/Robots/AgileX/Piper_Arms/vrHandler.py
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/Robots/AgileX/Piper_Arms/config.js
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/blob/main/Robots/AgileX/Piper_Arms/client.js
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/blob/main/Robots/AgileX/Piper_Arms/vrHandler.py
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/blob/main/Robots/AgileX/Piper_Arms/config.js
 
 echo "Setup complete!"

@@ -54,7 +54,7 @@ sudo reboot
 ```
 ### Install
 ```bash
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/Robots/Pi/Raspberry%20Pi%20Zero%202W/setup.sh
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/blob/main/Robots/Pi/Raspberry%20Pi%20Zero%202W/setup.sh
 chmod +x setup.sh
 ./setup.sh
 ```

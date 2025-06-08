@@ -72,7 +72,7 @@ On [Spawn](https://sp4wn.com), connect to your robot (sp4wn.com/username). Then 
 
 ## Installation
 ```bash
-sudo sh -c "wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/Robots/AgileX/Piper_Arms/setup.sh && chmod +x setup.sh && ./setup.sh"
+sudo sh -c "wget https://github.com/sp4wn-owner/Spawn/blob/main/Robots/AgileX/Piper_Arms/setup.sh && chmod +x setup.sh && ./setup.sh"
 ```
 
 ### Update the config.js file with your username/password

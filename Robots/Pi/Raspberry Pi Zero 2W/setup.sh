@@ -20,4 +20,4 @@ npm install node ws wrtc @sp4wn/pipins
 sudo chmod a+rw /dev/video0
 
 # Get the piclient, vrHandler, and config scripts
-wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/Robots/Pi/Raspberry%20Pi%20Zero%202W/client.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/Robots/Pi/Raspberry%20Pi%20Zero%202W/vrHandler.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/Robots/Pi/Raspberry%20Pi%20Zero%202W/config.js
+wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/blob/main/Robots/Pi/Raspberry%20Pi%20Zero%202W/client.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/blob/main/Robots/Pi/Raspberry%20Pi%20Zero%202W/vrHandler.js https://raw.githubusercontent.com/sp4wn-owner/Spawn/blob/main/Robots/Pi/Raspberry%20Pi%20Zero%202W/config.js
