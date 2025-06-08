@@ -5,6 +5,8 @@ import numpy as np
 import can
 import tf.transformations as tf
 import atexit
+import sys
+import json
 
 class C_PiperForwardKinematics:
     def __init__(self, dh_is_offset=0x00):
@@ -231,38 +233,52 @@ class PiperArmsControl:
         arm_joints = [f"{prefix}_joint{i+1}" for i in range(6)]
         joint_controls = [c for c in self.joint_controls if c['jointName'].startswith(f"{prefix}_") and not c.get('isGripper', False)]
         joint_updates = {}
-        joint_max_delta = {f"{prefix}_joint{i+1}": (4.0 if i >= 3 else 3.5 if i < 2 else 3.0) * delta_time for i in range(6)}
+        joint_max_delta = {
+            f"{prefix}_joint1": 3.5 * delta_time,
+            f"{prefix}_joint2": 3.5 * delta_time,
+            f"{prefix}_joint3": 3.0 * delta_time,
+            f"{prefix}_joint4": 4.0 * delta_time,
+            f"{prefix}_joint5": 4.0 * delta_time,
+            f"{prefix}_joint6": 4.0 * delta_time
+        }
 
+        # Compute yaw (joint1) with offset
         joint1_control = joint_controls[0]
         xy_dist = np.sqrt(target[0]**2 + target[2]**2 + 1e-10)
+        yaw_offset = -0.3 if hand == 'left' else 0.3  # Yaw offset: -0.3 for left, +0.3 for right
         yaw = np.arctan2(target[1], xy_dist)
         if hand == 'left':
-            yaw = -yaw
+            yaw = -yaw + yaw_offset
+        else:
+            yaw = yaw + yaw_offset
         joint_updates[arm_joints[0]] = max(joint1_control['lowerLimit'], min(joint1_control['upperLimit'], yaw))
         if self.debug:
-            print(f"{prefix}_joint1 (yaw): {joint_updates[arm_joints[0]]:.3f} rad, xyDist={xy_dist:.3f}")
+            print(f"{prefix}_joint1 (yaw with offset {yaw_offset:.3f}): {joint_updates[arm_joints[0]]:.3f} rad, xyDist={xy_dist:.3f}")
 
+        # Transform target to joint2 frame
         yaw_angle = joint_updates[arm_joints[0]]
         cos_yaw = np.cos(-yaw_angle)
         sin_yaw = np.sin(-yaw_angle)
         target_in_joint2 = np.array([
-            target[0] * cos_yaw + target[1] * sin_yaw,
-            -target[0] * sin_yaw + target[1] * cos_yaw,
+            target[0] * cos_yaw + target[1] * (-sin_yaw if hand == 'right' else sin_yaw),
+            -target[0] * sin_yaw + target[1] * (cos_yaw if hand == 'right' else cos_yaw),
             target[2]
         ])
         if self.debug:
             print(f"{prefix} target in joint2 frame: x={target_in_joint2[0]:.3f}, y={target_in_joint2[1]:.3f}, z={target_in_joint2[2]:.3f}")
 
+        # Compute pitch (joint2)
         joint2_control = joint_controls[1]
-        pitch = np.arctan2(-target_in_joint2[2], target_in_joint2[0])
-        joint_updates[arm_joints[1]] = max(joint2_control['lowerLimit'], min(joint2_control['upperLimit'], pitch + 1.57))
+        pitch = np.arctan2(-target_in_joint2[2], target_in_joint2[0]) + 1.57
+        joint_updates[arm_joints[1]] = max(joint2_control['lowerLimit'], min(joint2_control['upperLimit'], pitch))
         if self.debug:
             print(f"{prefix}_joint2 (pitch after +1.57): {joint_updates[arm_joints[1]]:.3f} rad")
 
+        # Transform target to joint3 frame and compute elbow (joint3)
         pitch_angle = joint_updates[arm_joints[1]] - 1.5708
         wrist_target = target - np.array([0, 0, link_lengths['wristToGripper']])
         wrist_target = np.array([
-            wrist_target[0] * cos_yaw + wrist_target[1] * sin_yaw,
+            wrist_target[0] * cos_yaw + wrist_target[1] * (-sin_yaw if hand == 'right' else sin_yaw),
             -wrist_target[0] * sin_yaw + wrist_target[1] * cos_yaw,
             wrist_target[2]
         ])
@@ -278,6 +294,7 @@ class PiperArmsControl:
 
         joint3_control = joint_controls[2]
         wrist_dist = np.linalg.norm(wrist_target)
+        wrist_dist_xz = np.sqrt(wrist_target[0]**2 + wrist_target[2]**2 + 1e-10)
         max_wrist_dist = link_lengths['upperArm'] + link_lengths['forearm'] - 0.01
         if wrist_dist > max_wrist_dist:
             wrist_target *= max_wrist_dist / wrist_dist
@@ -295,6 +312,7 @@ class PiperArmsControl:
         if self.debug:
             print(f"{prefix}_joint3 (elbow after -0.74): {joint_updates[arm_joints[2]]:.3f} rad")
 
+        # Compute wrist joints (joint4, joint5, joint6) for orientation
         if target_orientation and all(np.isfinite(target_orientation)):
             base_quat = tf.quaternion_from_euler(-np.pi / 2, 0, np.pi / 2, 'rxyz')
             base_quat_inv = tf.quaternion_conjugate(base_quat)
@@ -304,8 +322,10 @@ class PiperArmsControl:
             elbow_quat = tf.quaternion_from_euler(0, joint_updates[arm_joints[2]] + 0.74175, 0, 'ryzx')
             arm_quat = tf.quaternion_multiply(tf.quaternion_multiply(yaw_quat, pitch_quat), elbow_quat)
             wrist_quat = tf.quaternion_multiply(tf.quaternion_conjugate(arm_quat), target_quat)
-            wrist_euler = tf.euler_from_quaternion(wrist_quat, 'rzyx')
-            wrist_angles = [wrist_euler[0], wrist_euler[1], -wrist_euler[2]]
+            wrist_euler = tf.euler_from_quaternion(wrist_quat, 'xzy')
+            wrist_euler = list(wrist_euler)  # Convert to list for modification
+            wrist_euler[1] += 1.8708 if hand == 'left' else 2.1708  # Apply wrist offset
+            wrist_angles = [-wrist_euler[1], wrist_euler[2], wrist_euler[0]]  # Map to joint4, joint5, joint6
             wrist_joint_controls = [joint_controls[i] for i in range(3, 6)]
             for i, (angle, control) in enumerate(zip(wrist_angles, wrist_joint_controls)):
                 joint_updates[arm_joints[3 + i]] = max(control['lowerLimit'], min(control['upperLimit'], angle))
@@ -318,6 +338,7 @@ class PiperArmsControl:
             if self.debug:
                 print(f"{prefix} wrist angles set to 0 (no valid orientation)")
 
+        # Apply smoothing to joint angles
         theta = []
         for joint_name in arm_joints:
             angle = joint_updates[joint_name]
@@ -439,30 +460,18 @@ class PiperArmsControl:
 
 def main():
     control = PiperArmsControl()
-    # Example VR data (replace with actual VR input source)
-    controller_data = {
-        'left': {
-            'pose': {
-                'position': [0.1, 1.6, 0.2],
-                'orientation': [0, 0, 0, 1]
-            },
-            'buttons': [0.3, 0.0, 0.0, 0.0, 0.0, 0.0],
-            'axes': [0.0, 0.0, 0.0, 0.0]
-        },
-        'right': {
-            'pose': {
-                'position': [-0.1, 1.6, 0.2],
-                'orientation': [0, 0, 0, 1]
-            },
-            'buttons': [0.7, 0.0, 0.0, 0.0, 0.0, 0.0],
-            'axes': [0.0, 0.0, 0.0, 0.0]
-        }
-    }
     try:
-        while True:
-            response = control.process_vr_data(controller_data)
-            print(f"Response: {response}")
-            time.sleep(control.delta_time)
+        for line in sys.stdin:
+            try:
+                # Parse JSON data from stdin
+                controller_data = json.loads(line.strip())
+                response = control.process_vr_data(controller_data)
+                print(f"Response: {response}", flush=True)
+                time.sleep(control.delta_time)
+            except json.JSONDecodeError as e:
+                print(f"Error decoding JSON: {e}", flush=True)
+            except Exception as e:
+                print(f"Error processing input: {e}", flush=True)
     except KeyboardInterrupt:
         print("Script interrupted, resetting joints and shutting down...")
         # The atexit handler will take care of resetting joints and shutting down CAN interfaces

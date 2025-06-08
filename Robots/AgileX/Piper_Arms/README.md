@@ -3,7 +3,69 @@
 ## Step 1
 Follow the installation instructions. Communication with arms is over the can0 and can1. Please refer to AgileX's [GitHub](https://github.com/agilexrobotics/piper_sdk/blob/master/README(EN).MD) for setting up communication. 
 
-Our vrHandler script is currently untested with the hardware so use with caution and update as needed. May be compatible with Raspberry Pi.
+Our vrHandler script is currently untested with the hardware. You'll most likely need to update the IK to be compatible with your setup. This is the JSON output being received by the vrHandler: 
+
+```bash
+{
+  "head": {
+    "position": {
+      "x": 0.0,
+      "y": 1.6,
+      "z": 0.0
+    },
+    "orientation": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0,
+      "w": 1.0
+    }
+  },
+  "controllers": [
+    {
+      "gamepad": {
+        "hand": "left",
+        "buttons": [
+          { "pressed": false, "value": 0.0 },
+          { "pressed": true, "value": 1.0 }
+        ],
+        "axes": [0.0, 0.0]
+      },
+      "gripPosition": {
+        "x": -0.4,
+        "y": 1.2,
+        "z": 0.6
+      },
+      "gripOrientation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 1.0
+      }
+    },
+    {
+      "gamepad": {
+        "hand": "right",
+        "buttons": [
+          { "pressed": false, "value": 0.0 },
+          { "pressed": false, "value": 0.0 }
+        ],
+        "axes": [0.0, 0.0]
+      },
+      "gripPosition": {
+        "x": 0.4,
+        "y": 1.2,
+        "z": 0.6
+      },
+      "gripOrientation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 1.0
+      }
+    }
+  ]
+}
+```
 
 ## Step 2
 On [Spawn](https://sp4wn.com), connect to your robot (sp4wn.com/username). Then 'Enter VR' to start transmitting tracking data. 
