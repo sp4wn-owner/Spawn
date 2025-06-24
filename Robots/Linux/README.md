@@ -1,14 +1,8 @@
-# Galaxea R1 - Teleoperation
+# Teleoperation
 
-## Step 1
-Follow the installation instructions.
-
-## Step 2
-On [Spawn](https://sp4wn.com), connect to your robot (sp4wn.com/username). Then 'Enter VR' to start transmitting tracking data. 
-
-## Installation
+## Step 1 - Install scripts
 ```bash
-sudo sh -c "wget https://raw.githubusercontent.com/sp4wn-owner/Spawn/Robots/Galaxea/R1/setup.sh && chmod +x setup.sh && ./setup.sh"
+sudo sh -c "wget https://github.com/sp4wn-owner/Spawn/blob/main/Robots/Linux/setup.sh && chmod +x setup.sh && ./setup.sh"
 ```
 
 ### Update the config.js file with your username/password
@@ -22,6 +16,75 @@ This script connects your robot to Spawn.
 ```bash
 sudo node client.js
 ```
+
+## Step 2 - Access robot
+On [Spawn](https://sp4wn.com), connect to your robot (sp4wn.com/username) using a VR headset. Then click 'Enter VR'. 
+
+## Notes
+Our vrHandler script is currently untested with the hardware. You'll need to update it to be compatible with your setup and the following tracking data: 
+
+```bash
+{
+  "head": {
+    "position": {
+      "x": 0.0,
+      "y": 1.6,
+      "z": 0.0
+    },
+    "orientation": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0,
+      "w": 1.0
+    }
+  },
+  "controllers": [
+    {
+      "gamepad": {
+        "hand": "left",
+        "buttons": [
+          { "pressed": false, "value": 0.0 },
+          { "pressed": true, "value": 1.0 }
+        ],
+        "axes": [0.0, 0.0]
+      },
+      "gripPosition": {
+        "x": -0.4,
+        "y": 1.2,
+        "z": 0.6
+      },
+      "gripOrientation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 1.0
+      }
+    },
+    {
+      "gamepad": {
+        "hand": "right",
+        "buttons": [
+          { "pressed": false, "value": 0.0 },
+          { "pressed": false, "value": 0.0 }
+        ],
+        "axes": [0.0, 0.0]
+      },
+      "gripPosition": {
+        "x": 0.4,
+        "y": 1.2,
+        "z": 0.6
+      },
+      "gripOrientation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 1.0
+      }
+    }
+  ]
+}
+```
+
 ## Optional
 
 ### Starting script at boot and restarting after cleanup
@@ -93,13 +156,3 @@ sudo journalctl -u client.service -f
 ```bash
 ls /dev/ | grep video
 ```
-# Isaac Sim
-
-## Step 1
-After spawning your Galaxea model in the Isaac Sim environment, deploy the simHandler script and start the server.
-
-## Step 2
-In the Robot-UI, add your websocket URL in the input field and then start streaming.
-
-## Step 3
-From the VR-UI, connect to your robot by clicking the 'spawn' button. Tracking data will be proxied from the Robot-UI to the simHandler script thus interfacing with ROS to manipulate the Galaxea R1 model in a simulated environment.
