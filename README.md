@@ -9,9 +9,6 @@ Please refer to the Robots directory for setup instructions.
 - Real-time control  
     &nbsp;&nbsp;&nbsp;&nbsp;- Experience ultra-low latency enabling near real-time control over the internet via direct peer-to-peer connections. 
 
--  Network agnostic  
-    &nbsp;&nbsp;&nbsp;&nbsp;- Operates seamlessly over nearly any network and designed with Starlink connectivity in mind. Robots connected via satellite can be nearly anywhere in the world.
-
 - Secure  
     &nbsp;&nbsp;&nbsp;&nbsp;- Optionally handle your robot's security. Passwords/codes are securely hashed and all data is encrypted. No personal information is requested nor retained. Update the security parameters in the config.js file.
 
