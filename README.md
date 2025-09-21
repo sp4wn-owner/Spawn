@@ -1,6 +1,6 @@
 # [Spawn](https://sp4wn.com)
 
-Spawn is an AI/teleoperation platform for advanced robots. We handle all the networking, security, and authentication so you can quickly start teleoperating your robot or device within minutes. Best of all, it's free for non-commercial use. 
+Spawn is an VR teleoperation platform for advanced robots. We handle all the networking, security, and authentication so you can quickly start teleoperating your robot or device within minutes. Best of all, it's free for non-commercial use. 
 
 ### Getting started
 Please refer to the Robots directory for setup instructions.
