@@ -1,6 +1,6 @@
 # [Spawn](https://sp4wn.com)
 
-Spawn is an VR teleoperation platform for advanced robots. We handle all the networking, security, and authentication so you can quickly start teleoperating your robot or device within minutes.
+VR teleoperation platform for advanced robots. We handle all the networking, security, and authentication so you can quickly start teleoperating your robot or device within minutes.
 
 ### Getting started
 Please refer to the Robots directory for setup instructions.
